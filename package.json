@@ -1,0 +1,23 @@
+{
+  "name": "opra",
+  "description": "Single page app builder",
+  "main": "opra.js",
+  "version": "0.0.4",
+  "author": "Jakob Mattsson <jakob.mattsson@gmail.com> (jakobmattsson.se)",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/jakobmattsson/opra.git"
+  },
+  "engines": {
+    "node": "*"
+  },
+  "dependencies": {
+    "express": "2.5.6",
+    "less": "1.2.1",
+    "async": "0.1.15",
+    "uglify-js": "1.2.5",
+    "clean-css": "0.3.2",
+    "html-minifier": "0.4.5",
+    "coffee-script": "1.2.0"
+  }
+}
