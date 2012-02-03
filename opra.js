@@ -96,7 +96,7 @@ var build = function(indexFile, settings, callback) {
             callback(err);
             return;
           }
-          less.render(content, actualCallback);
+          less.render(content, { paths: [path.dirname(filePath)] }, actualCallback);
         });
       } else {
         fs.readFile(filePath, encoding, actualCallback);
