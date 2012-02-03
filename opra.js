@@ -40,29 +40,37 @@ var build = function(indexFile, settings, callback) {
     return matches.map(function(match) {
       return {
         match: match,
-        files: match.replace(prefix, "").replace(postfix, "").split('\n').filter(function(s) {
+        files: match.replace(prefix, "").replace(postfix, "").split('\n').map(function(s) {
+          return s.split('#')[0];
+        }).filter(function(s) {
           return s.trim();
+        }).map(function(s) {
+          var data = s.split('@');
+          return {
+            name: data[0].trim(),
+            params: data.length > 1 ? data[1].split(',').map(function(p) { return p.trim(); }) : [],
+            spaces: s.match(/^\s*/)[0] || ''
+          };
         })
       };
     });
   };
   var filesToStylesheets = function(files, callback) {
     var result = files.map(function(file) {
-      return file.match(/^\s*/)[0].slice(2) + '<link rel="stylesheet" type="text/css" href="' + file.trim() + '">'
+      return file.spaces.slice(2) + '<link rel="stylesheet" type="text/css" href="' + file.name + '">'
     }).join('\n');
     callback(null, result);
   };
   var filesToScripts = function(files, callback) {
     var result = files.map(function(file) {
-      return file.match(/^\s*/)[0].slice(2) + '<script type="text/javascript" src="' + file.trim() + '"></script>'
+      return file.spaces.slice(2) + '<script type="text/javascript" src="' + file.name + '"></script>'
     }).join('\n');
     callback(null, result);
   };
   var filesToInlineStyles = function(files, callback) {
     async.mapSeries(files, function(file, callback) {
-      var fullspaces = file.match(/^\s*/)[0];
-      var spaces = fullspaces.slice(2);
-      var filePath = path.join(assetRoot, file.trim());
+      var spaces = file.spaces.slice(2);
+      var filePath = path.join(assetRoot, file.name);
 
       var actualCallback = function(err, data) {
         if (err) {
@@ -71,18 +79,18 @@ var build = function(indexFile, settings, callback) {
         }
 
         data = data.trim().split('\n').map(function(s) {
-          return fullspaces + s;
+          return file.spaces + s;
         }).join('\n');
         data = "\n" + data + "\n" + spaces;
 
-        if (isCompressed) {
+        if (isCompressed && file.params.indexOf('nocompress') === -1) {
           data = cleanCSS.process(data);
         }
 
         callback(null, spaces + '<style type="text/css">' + data + "</style>");
       };
 
-      if (file.match(/\.less$/)) {
+      if (file.name.match(/\.less$/)) {
         fs.readFile(filePath, encoding, function(err, content) {
           if (err) {
             callback(err);
@@ -103,9 +111,8 @@ var build = function(indexFile, settings, callback) {
   };
   var filesToInlineScripts = function(files, callback) {
     async.mapSeries(files, function(file, callback) {
-      var fullspaces = file.match(/^\s*/)[0];
-      var spaces = fullspaces.slice(2);
-      var filePath = path.join(assetRoot, file.trim());
+      var spaces = file.spaces.slice(2);
+      var filePath = path.join(assetRoot, file.name);
       var actualCallback = function(err, data) {
         if (err) {
           callback(err);
@@ -113,18 +120,18 @@ var build = function(indexFile, settings, callback) {
         }
 
         data = data.trim().split('\n').map(function(s) {
-          return fullspaces + s;
+          return file.spaces + s;
         }).join('\n');
         data = "\n" + data + "\n" + spaces;
 
-        if (isCompressed) {
+        if (isCompressed && file.params.indexOf('nocompress') === -1) {
           data = uglifier(data);
         }
 
         callback(null, spaces + '<script type="text/javascript">' + data + "</script>");
       };
 
-      if (file.match(/\.coffee$/)) {
+      if (file.name.match(/\.coffee$/)) {
         fs.readFile(filePath, encoding, function(err, content) {
           if (err) {
             callback(err);
