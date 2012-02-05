@@ -96,7 +96,10 @@ var build = function(indexFile, settings, callback) {
           }
         }
 
-        callback(null, spaces + '<style type="text/css">' + data + "</style>");
+        var csstag = '<style type="text/css">' + data + "</style>";
+        var jstag = '<script type="text/javascript">' + data + "</script>";
+
+        callback(null, spaces + (isCss ? csstag : jstag));
       };
 
       if (file.name.match(/\.less$/)) {
@@ -141,7 +144,10 @@ var build = function(indexFile, settings, callback) {
           }
         }
 
-        callback(null, spaces + '<script type="text/javascript">' + data + "</script>");
+        var csstag = '<style type="text/css">' + data + "</style>";
+        var jstag = '<script type="text/javascript">' + data + "</script>";
+
+        callback(null, spaces + (isCss ? csstag : jstag));
       };
 
       if (file.name.match(/\.coffee$/)) {
