@@ -77,7 +77,6 @@ var build = function(indexFile, settings, callback) {
     async.mapSeries(files, function(file, callback) {
       var spaces = file.spaces.slice(2);
       var filePath = path.join(assetRoot, file.name);
-
       var actualCallback = function(err, data) {
         if (err) {
           callback(err);
@@ -161,7 +160,6 @@ var build = function(indexFile, settings, callback) {
         callback(err);
         return;
       }
-
       callback(err, data.join('\n'));
     });
   }
