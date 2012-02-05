@@ -191,7 +191,7 @@ var build = function(indexFile, settings, callback) {
         include = files[0].spaces.slice(2) + '<script type="text/javascript" src="' + filename + '"></script>'
       }
 
-      callback(err, include, [{ name: path.join(assetRoot, filename), content: data.join('\n') }]);
+      callback(err, include, [{ name: path.join(assetRoot, filename), content: data.join(isCompressed ? ';' : '\n') }]);
     });
   };
 
