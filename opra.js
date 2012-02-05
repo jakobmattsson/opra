@@ -133,6 +133,8 @@ var build = function(indexFile, settings, callback) {
 
       if (file.name.match(/\.less$/)) {
         compileLess(filePath, actualCallback);
+      } else if (file.name.match(/\.coffee$/)) {
+        compileCoffee(filePath, actualCallback);
       } else {
         fs.readFile(filePath, encoding, actualCallback);
       }
@@ -173,7 +175,9 @@ var build = function(indexFile, settings, callback) {
         callback(null, spaces + (isCss ? csstag : jstag));
       };
 
-      if (file.name.match(/\.coffee$/)) {
+      if (file.name.match(/\.less$/)) {
+        compileLess(filePath, actualCallback);
+      } else if (file.name.match(/\.coffee$/)) {
         compileCoffee(filePath, actualCallback);
       } else {
         fs.readFile(filePath, encoding, actualCallback);
