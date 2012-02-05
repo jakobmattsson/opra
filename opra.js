@@ -24,6 +24,35 @@ var build = function(indexFile, settings, callback) {
   var jsfile = settings.jsfile;
   var cssfile = settings.cssfile;
 
+
+  var compileCoffee = function(filePath, callback) {
+    fs.readFile(filePath, encoding, function(err, content) {
+      if (err) {
+        callback(err);
+        return;
+      }
+
+      try {
+        var code = coffee.compile(content);
+      } catch (e) {
+        callback(e)
+        return;
+      }
+
+      callback(null, code);
+    });
+  };
+  var compileLess = function(filePath, callback) {
+    fs.readFile(filePath, encoding, function(err, content) {
+      if (err) {
+        callback(err);
+        return;
+      }
+      less.render(content, { paths: [path.dirname(filePath)] }, callback);
+    });
+  };
+
+
   var safeReplace = function(str, target, newString) {
     var i = str.indexOf(target);
     return str.slice(0, i) + newString + str.slice(i + target.length);
@@ -103,13 +132,7 @@ var build = function(indexFile, settings, callback) {
       };
 
       if (file.name.match(/\.less$/)) {
-        fs.readFile(filePath, encoding, function(err, content) {
-          if (err) {
-            callback(err);
-            return;
-          }
-          less.render(content, { paths: [path.dirname(filePath)] }, actualCallback);
-        });
+        compileLess(filePath, actualCallback);
       } else {
         fs.readFile(filePath, encoding, actualCallback);
       }
@@ -151,21 +174,7 @@ var build = function(indexFile, settings, callback) {
       };
 
       if (file.name.match(/\.coffee$/)) {
-        fs.readFile(filePath, encoding, function(err, content) {
-          if (err) {
-            callback(err);
-            return;
-          }
-
-          try {
-            var code = coffee.compile(content);
-          } catch (e) {
-            callback(e)
-            return;
-          }
-
-          actualCallback(null, code);
-        });
+        compileCoffee(filePath, actualCallback);
       } else {
         fs.readFile(filePath, encoding, actualCallback);
       }
