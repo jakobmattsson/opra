@@ -89,7 +89,11 @@ var build = function(indexFile, settings, callback) {
         data = "\n" + data + "\n" + spaces;
 
         if (isCompressed && file.params.indexOf('nocompress') === -1) {
-          data = cleanCSS.process(data);
+          if (isCss) {
+            data = cleanCSS.process(data);
+          } else {
+            data = uglifier(data);
+          }
         }
 
         callback(null, spaces + '<style type="text/css">' + data + "</style>");
@@ -130,7 +134,11 @@ var build = function(indexFile, settings, callback) {
         data = "\n" + data + "\n" + spaces;
 
         if (isCompressed && file.params.indexOf('nocompress') === -1) {
-          data = uglifier(data);
+          if (isCss) {
+            data = cleanCSS.process(data);
+          } else {
+            data = uglifier(data);
+          }
         }
 
         callback(null, spaces + '<script type="text/javascript">' + data + "</script>");
