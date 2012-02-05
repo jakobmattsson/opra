@@ -57,19 +57,23 @@ var build = function(indexFile, settings, callback) {
       };
     });
   };
-  var filesToStylesheets = function(files, callback) {
+  var filesToMultipleInclude = function(isCss, files, callback) {
     var result = files.map(function(file) {
-      return file.spaces.slice(2) + '<link rel="stylesheet" type="text/css" href="' + file.name + '">'
+      var css ='<link rel="stylesheet" type="text/css" href="' + file.name + '">';
+      var js = '<script type="text/javascript" src="' + file.name + '"></script>';
+      return file.spaces.slice(2) + (isCss ? css : js);
     }).join('\n');
     callback(null, result);
   };
-  var filesToScripts = function(files, callback) {
-    var result = files.map(function(file) {
-      return file.spaces.slice(2) + '<script type="text/javascript" src="' + file.name + '"></script>'
-    }).join('\n');
-    callback(null, result);
+
+  var filesToInline = function(isCss, files, callback) {
+    if (isCss)
+      filesToInlineStyles(isCss, files, callback);
+    else
+      filesToInlineScripts(isCss, files, callback);
   };
-  var filesToInlineStyles = function(files, callback) {
+
+  var filesToInlineStyles = function(isCss, files, callback) {
     async.mapSeries(files, function(file, callback) {
       var spaces = file.spaces.slice(2);
       var filePath = path.join(assetRoot, file.name);
@@ -111,7 +115,7 @@ var build = function(indexFile, settings, callback) {
       callback(err, data.join('\n'));
     });
   };
-  var filesToInlineScripts = function(files, callback) {
+  var filesToInlineScripts = function(isCss, files, callback) {
     async.mapSeries(files, function(file, callback) {
       var spaces = file.spaces.slice(2);
       var filePath = path.join(assetRoot, file.name);
@@ -161,7 +165,7 @@ var build = function(indexFile, settings, callback) {
       callback(err, data.join('\n'));
     });
   }
-  var filesToInclude = function(css) { return function(files, callback) {
+  var filesToInclude = function(css, files, callback) {
     var filename = css ? cssfile : jsfile;
 
     async.mapSeries(files, function(file, callback) {
@@ -225,7 +229,7 @@ var build = function(indexFile, settings, callback) {
 
       callback(err, include, [{ name: path.join(assetRoot, filename), content: d }]);
     });
-  }; };
+  };
 
   fs.readFile(indexFile, encoding, function(err, content) {
     if (err) {
@@ -236,50 +240,34 @@ var build = function(indexFile, settings, callback) {
     var styleData = getMatches(content, "<!--OPRA-STYLES", "-->");
     var jsData = getMatches(content, "<!--OPRA-SCRIPTS", "-->");
 
+    var reducer = function(isCss) {
+      return function(next_content, d, callback) {
+        var f = isInline ? filesToInline : filesToMultipleInclude;
+
+        if (isCss ? cssfile : jsfile) {
+          f = filesToInclude;
+        }
+
+        f(isCss, d.files, function(err, data, outfiles) {
+          if (err) {
+            callback(err);
+            return;
+          }
+
+          async.forEach(outfiles || [], function(file, callback) {
+            fs.writeFile(file.name, file.content, encoding, callback);
+          }, function(err) {
+            callback(err, safeReplace(next_content, d.match, data));
+          });
+        });
+      };
+    };
+
     async.waterfall([
       function(callback) {
-        async.reduce(styleData, content, function(next_content, d, callback) {
-          var f = isInline ? filesToInlineStyles : filesToStylesheets;
-
-          if (cssfile) {
-            f = filesToInclude(true);
-          }
-
-          f(d.files, function(err, data, outfiles) {
-            if (err) {
-              callback(err);
-              return;
-            }
-
-            async.forEach(outfiles || [], function(file, callback) {
-              fs.writeFile(file.name, file.content, encoding, callback);
-            }, function(err) {
-              callback(err, safeReplace(next_content, d.match, data));
-            });
-          });
-        }, callback);
+        async.reduce(styleData, content, reducer(true), callback);
       }, function(cnt, callback) {
-        async.reduce(jsData, cnt, function(next_content, d, callback) {
-          var f = isInline ? filesToInlineScripts : filesToScripts;
-
-          if (jsfile) {
-            f = filesToInclude(false);
-          }
-
-          f(d.files, function(err, data, outfiles) {
-            if (err) {
-              callback(err);
-              return;
-            }
-
-            async.forEach(outfiles || [], function(file, callback) {
-              fs.writeFile(file.name, file.content, encoding, callback);
-            }, function(err) {
-              callback(err, safeReplace(next_content, d.match, data));
-            });
-          });
-
-        }, callback);
+        async.reduce(jsData, cnt, reducer(false), callback);
       }
     ], function(err, result) {
 
