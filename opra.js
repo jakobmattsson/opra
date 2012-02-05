@@ -4,7 +4,7 @@ var express = require('express');
 var coffee = require('coffee-script');
 var less = require('less');
 var async = require('async');
-var uglify = require('uglify');
+var uglify = require('uglify-js');
 var cleanCSS = require('clean-css');
 var htmlMinifier = require('html-minifier');
 
