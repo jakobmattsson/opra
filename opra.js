@@ -96,13 +96,6 @@ var build = function(indexFile, settings, callback) {
   };
 
   var filesToInline = function(isCss, files, callback) {
-    if (isCss)
-      filesToInlineStyles(isCss, files, callback);
-    else
-      filesToInlineScripts(isCss, files, callback);
-  };
-
-  var filesToInlineStyles = function(isCss, files, callback) {
     async.mapSeries(files, function(file, callback) {
       var spaces = file.spaces.slice(2);
       var filePath = path.join(assetRoot, file.name);
@@ -146,50 +139,6 @@ var build = function(indexFile, settings, callback) {
       callback(err, data.join('\n'));
     });
   };
-  var filesToInlineScripts = function(isCss, files, callback) {
-    async.mapSeries(files, function(file, callback) {
-      var spaces = file.spaces.slice(2);
-      var filePath = path.join(assetRoot, file.name);
-      var actualCallback = function(err, data) {
-        if (err) {
-          callback(err);
-          return;
-        }
-
-        data = data.trim().split('\n').map(function(s) {
-          return file.spaces + s;
-        }).join('\n');
-        data = "\n" + data + "\n" + spaces;
-
-        if (isCompressed && file.params.indexOf('nocompress') === -1) {
-          if (isCss) {
-            data = cleanCSS.process(data);
-          } else {
-            data = uglifier(data);
-          }
-        }
-
-        var csstag = '<style type="text/css">' + data + "</style>";
-        var jstag = '<script type="text/javascript">' + data + "</script>";
-
-        callback(null, spaces + (isCss ? csstag : jstag));
-      };
-
-      if (file.name.match(/\.less$/)) {
-        compileLess(filePath, actualCallback);
-      } else if (file.name.match(/\.coffee$/)) {
-        compileCoffee(filePath, actualCallback);
-      } else {
-        fs.readFile(filePath, encoding, actualCallback);
-      }
-    }, function(err, data) {
-      if (err) {
-        callback(err);
-        return;
-      }
-      callback(err, data.join('\n'));
-    });
-  }
   var filesToInclude = function(css, files, callback) {
     var filename = css ? cssfile : jsfile;
 
@@ -211,28 +160,20 @@ var build = function(indexFile, settings, callback) {
         }
 
         if (isCompressed && file.params.indexOf('nocompress') === -1) {
-          data = uglifier(data);
+          if (css) {
+            data = cleanCSS.process(data);
+          } else {
+            data = uglifier(data);
+          }
         }
 
         callback(null, data);
       };
 
-      if (file.name.match(/\.coffee$/)) {
-        fs.readFile(filePath, encoding, function(err, content) {
-          if (err) {
-            callback(err);
-            return;
-          }
-
-          try {
-            var code = coffee.compile(content);
-          } catch (e) {
-            callback(e)
-            return;
-          }
-
-          actualCallback(null, code);
-        });
+      if (file.name.match(/\.less$/)) {
+        compileLess(filePath, actualCallback);
+      } else if (file.name.match(/\.coffee$/)) {
+        compileCoffee(filePath, actualCallback);
       } else {
         fs.readFile(filePath, encoding, actualCallback);
       }
@@ -250,9 +191,7 @@ var build = function(indexFile, settings, callback) {
         include = files[0].spaces.slice(2) + '<script type="text/javascript" src=' + filename + '></script>'
       }
 
-      var d = data.join('\n')
-
-      callback(err, include, [{ name: path.join(assetRoot, filename), content: d }]);
+      callback(err, include, [{ name: path.join(assetRoot, filename), content: data.join('\n') }]);
     });
   };
 
