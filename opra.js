@@ -188,7 +188,7 @@ var build = function(indexFile, settings, callback) {
       if (css) {
         include = files[0].spaces.slice(2) + '<link rel="stylesheet" type="text/css" href="' + filename + '">';
       } else {
-        include = files[0].spaces.slice(2) + '<script type="text/javascript" src=' + filename + '></script>'
+        include = files[0].spaces.slice(2) + '<script type="text/javascript" src="' + filename + '"></script>'
       }
 
       callback(err, include, [{ name: path.join(assetRoot, filename), content: data.join('\n') }]);
