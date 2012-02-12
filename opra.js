@@ -88,12 +88,28 @@ var build = function(indexFile, settings, callback) {
   };
   var filesToMultipleInclude = function(isCss, files, callback) {
     var result = files.map(function(file) {
-      var css ='<link rel="stylesheet" type="text/css" href="' + file.name + '">';
+      var css = '<link rel="stylesheet" type="text/css" media="' + paramsToMediaType(file.params) + '" href="' + file.name + '">';
       var js = '<script type="text/javascript" src="' + file.name + '"></script>';
-      return file.spaces.slice(2) + (isCss ? css : js);
+      return file.spaces.slice(2) + wrappIE(file.params, isCss ? css : js);
     }).join('\n');
     callback(null, result);
   };
+
+  var wrappIE = function(params, str) {
+    if (params.indexOf("ie7") !== -1) {
+      return "<!--[if IE 7]>" + str + "<![endif]-->";
+    }
+    return str;
+  };
+  var paramsToMediaType = function(params) {
+    if (params.indexOf("screen") !== -1) {
+      return 'screen';
+    }
+    if (params.indexOf("print") !== -1) {
+      return 'print';
+    }
+    return 'all';
+  }
 
   var filesToInline = function(isCss, files, callback) {
     async.mapSeries(files, function(file, callback) {
@@ -118,10 +134,10 @@ var build = function(indexFile, settings, callback) {
           }
         }
 
-        var csstag = '<style type="text/css">' + data + "</style>";
+        var csstag = '<style type="text/css" media="' + paramsToMediaType(file.params) + '">' + data + "</style>";
         var jstag = '<script type="text/javascript">' + data + "</script>";
 
-        callback(null, spaces + (isCss ? csstag : jstag));
+        callback(null, spaces + wrappIE(file.params, isCss ? csstag : jstag));
       };
 
       if (file.name.match(/\.less$/)) {
@@ -184,11 +200,12 @@ var build = function(indexFile, settings, callback) {
       }
 
       var include = null;
+      var params = files[0].params; // this is a hack. files should already be grouped according to parameters!!!
 
       if (css) {
-        include = files[0].spaces.slice(2) + '<link rel="stylesheet" type="text/css" href="' + filename + '">';
+        include = files[0].spaces.slice(2) + wrappIE(params, '<link rel="stylesheet" media="' + paramsToMediaType(file.params) + '" type="text/css" href="' + filename + '">');
       } else {
-        include = files[0].spaces.slice(2) + '<script type="text/javascript" src="' + filename + '"></script>'
+        include = files[0].spaces.slice(2) + wrappIE(params, '<script type="text/javascript" src="' + filename + '"></script>');
       }
 
       callback(err, include, [{ name: path.join(assetRoot, filename), content: data.join(isCompressed ? ';' : '\n') }]);
