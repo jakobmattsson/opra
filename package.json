@@ -11,6 +11,9 @@
   "engines": {
     "node": "*"
   },
+  "devDependencies": {
+    "sugar": "1.2.2"
+  },
   "dependencies": {
     "express": "2.5.6",
     "less": "1.2.1",

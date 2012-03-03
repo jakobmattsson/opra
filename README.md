@@ -19,3 +19,8 @@ Supports coffeescript and less out of the box.
     // express mumbo-jumbo here...
 
     app.use(opra.serve(__dirname + '/public', { inline: true }));
+
+
+### Spec
+
+Run them like this: `mocha --require spec/lib.js spec/*`
