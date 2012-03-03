@@ -23,7 +23,6 @@ var build = function(indexFile, settings, callback) {
   var jsfile = settings.jsfile;
   var cssfile = settings.cssfile;
 
-
   var compileCoffee = function(filePath, callback) {
     fs.readFile(filePath, encoding, function(err, content) {
       if (err) {
@@ -50,17 +49,6 @@ var build = function(indexFile, settings, callback) {
       less.render(content, { paths: [path.dirname(filePath)] }, callback);
     });
   };
-
-  var endsWith = function(str, ends) {
-    return ends.some(function(end) {
-      return end == str.slice(-end.length);
-    });
-  };
-
-  var safeReplace = function(str, target, newString) {
-    var i = str.indexOf(target);
-    return str.slice(0, i) + newString + str.slice(i + target.length);
-  };
   var uglifier = function(code) {
     var jsp = uglify.parser;
     var pro = uglify.uglify;
@@ -70,6 +58,43 @@ var build = function(indexFile, settings, callback) {
     ast = pro.ast_squeeze(ast);
     return pro.gen_code(ast);
   };
+  var endsWith = function(str, ends) {
+    return ends.some(function(end) {
+      return end == str.slice(-end.length);
+    });
+  };
+  var safeReplace = function(str, target, newString) {
+    var i = str.indexOf(target);
+    return str.slice(0, i) + newString + str.slice(i + target.length);
+  };
+  var safeReplaceAll = function(str, target, newString) {
+    while (true) {
+      var i = str.indexOf(target);
+
+      if (i === -1) {
+        return str;
+      }
+
+      str = str.slice(0, i) + newString + str.slice(i + target.length);
+    }
+  };
+
+  var wrappIE = function(params, str) {
+    if (params.indexOf("ie7") !== -1) {
+      return "<!--[if IE 7]>" + str + "<![endif]-->";
+    }
+    return str;
+  };
+  var paramsToMediaType = function(params) {
+    if (params.indexOf("screen") !== -1) {
+      return 'screen';
+    }
+    if (params.indexOf("print") !== -1) {
+      return 'print';
+    }
+    return 'all';
+  }
+
   var getMatches = function(content, prefix, postfix) {
     var matches = content.match(new RegExp(" *" + prefix + "[^>]*" + postfix, "g")) || [];
     return matches.map(function(match) {
@@ -99,23 +124,6 @@ var build = function(indexFile, settings, callback) {
     }).join('\n');
     callback(null, result);
   };
-
-  var wrappIE = function(params, str) {
-    if (params.indexOf("ie7") !== -1) {
-      return "<!--[if IE 7]>" + str + "<![endif]-->";
-    }
-    return str;
-  };
-  var paramsToMediaType = function(params) {
-    if (params.indexOf("screen") !== -1) {
-      return 'screen';
-    }
-    if (params.indexOf("print") !== -1) {
-      return 'print';
-    }
-    return 'all';
-  }
-
   var filesToInline = function(_______________________, files, callback) {
     async.mapSeries(files, function(file, callback) {
       var spaces = file.spaces.slice(2);
@@ -162,7 +170,7 @@ var build = function(indexFile, settings, callback) {
       callback(err, data.join('\n'));
     });
   };
-  var filesToInclude = function(css, files, callback) {
+  var filesToInclude = function(__________css, files, callback) {
     var filename = css ? cssfile : jsfile;
 
     async.mapSeries(files, function(file, callback) {
