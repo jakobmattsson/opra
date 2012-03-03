@@ -89,7 +89,7 @@ var build = function(indexFile, settings, callback) {
   };
   var filesToMultipleInclude = function(isCss, files, callback) {
     var result = files.map(function(file) {
-      var css = '<link rel="stylesheet" type="text/css" media="' + paramsToMediaType(file.params) + '" href="' + file.name + '">';
+      var css = '<link rel="stylesheet" type="text/css" media="' + paramsToMediaType(file.params) + '" href="' + file.name + '" />';
       var js = '<script type="text/javascript" src="' + file.name + '"></script>';
       return file.spaces.slice(2) + wrappIE(file.params, isCss ? css : js);
     }).join('\n');
