@@ -263,9 +263,12 @@ var build = function(indexFile, settings, callback) {
   });
 }
 var serve = function(path, settings) {
+  settings = settings || {};
+  settings.url = settings.url || '/index.html';
+
   return function(req, res, next) {
-    if (req.url === '/' || req.url === '/index.html') {
-      build(path + '/index.html', settings, function(err, result) {
+    if (settings.url == req.url) {
+      build(path + req.url, settings, function(err, result) {
         if (err) {
           next();
           return;
