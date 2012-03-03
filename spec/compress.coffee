@@ -2,8 +2,13 @@ test 'compress = true', {
   'index.html': """
     <html>
       <!--OPRA-SCRIPTS
-        one.js
+
+        # comment
+
+        one.js # another comment
         two.js
+
+        # three.js
       -->
       <!--OPRA-STYLES
         three.css
