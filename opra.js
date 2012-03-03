@@ -149,9 +149,9 @@ var build = function(indexFile, settings, callback) {
   var globMatches = function(matches, callback) {
     async.map(matches, function(match, callback) {
       async.map(match.files, function(file, callback) {
-        var globbedFiles = glob.sync(file.name, { nonull: true });
+        var globbedFiles = glob.sync(file.name, { nonull: true, cwd: assetRoot, root: assetRoot });
         callback(null, globbedFiles.map(function(globbedFile) {
-          return { name: globbedFile, params: file.params, spaces: file.spaces };
+          return { name: path.relative(assetRoot, globbedFile), params: file.params, spaces: file.spaces };
         }));
       }, function(err, result) {
         callback(err, {
@@ -207,7 +207,7 @@ var build = function(indexFile, settings, callback) {
           if (isCompressed && d.file.params.indexOf('nocompress') === -1) {
             if (filetype(d.file.name) == 'css') {
               d.content = cleanCSS.process(d.content);
-            } else {
+            } else if (filetype(d.file.name) == 'js') {
               d.content = uglifier(d.content);
             }
           }
