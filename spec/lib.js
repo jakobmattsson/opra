@@ -22,7 +22,7 @@ var mockReadFile = block(function() {
 });
 
 var opraOK = function(done, settings, output) {
-  opra.build('index.html', function(err, res) {
+  opra.build('index.html', settings, function(err, res) {
     should.ifError(err);
     res.should.equal(output);
     done();
