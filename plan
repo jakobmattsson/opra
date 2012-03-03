@@ -1,0 +1,3 @@
+* Detect evil strings like </script> and </style> inside the inline code
+* Implement support for "global" params (for setting nocompress for a bunch of files for example)
+* When concatenating, take params into account so not a single file is produced at all times
