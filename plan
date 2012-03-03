@@ -1,3 +1,9 @@
 * Detect evil strings like </script> and </style> inside the inline code
 * Implement support for "global" params (for setting nocompress for a bunch of files for example)
 * When concatenating, take params into account so not a single file is produced at all times
+* Template files
+* Add a data-path attribute to all generated tags, to include the original name of the file
+* Include images inline in css
+* Optionally concat all inline files
+* Wildcards in inclusion paths
+* Parameter to output tags valid accoring to different doctypes (html5, xhtml, html-transitional etc)
