@@ -51,6 +51,11 @@ var build = function(indexFile, settings, callback) {
     });
   };
 
+  var endsWith = function(str, ends) {
+    return ends.some(function(end) {
+      return end == str.slice(-end.length);
+    });
+  };
 
   var safeReplace = function(str, target, newString) {
     var i = str.indexOf(target);
@@ -85,8 +90,9 @@ var build = function(indexFile, settings, callback) {
       };
     });
   };
-  var filesToMultipleInclude = function(isCss, files, callback) {
+  var filesToMultipleInclude = function(______________________, files, callback) {
     var result = files.map(function(file) {
+      var isCss = endsWith(file.name, ['.css', '.less']);
       var css = '<link rel="stylesheet" type="text/css" media="' + paramsToMediaType(file.params) + '" href="' + file.name + '" />';
       var js = '<script type="text/javascript" src="' + file.name + '"></script>';
       return file.spaces.slice(2) + wrappIE(file.params, isCss ? css : js);
@@ -110,7 +116,7 @@ var build = function(indexFile, settings, callback) {
     return 'all';
   }
 
-  var filesToInline = function(isCss, files, callback) {
+  var filesToInline = function(_______________________, files, callback) {
     async.mapSeries(files, function(file, callback) {
       var spaces = file.spaces.slice(2);
       var filePath = path.join(assetRoot, file.name);
@@ -119,6 +125,8 @@ var build = function(indexFile, settings, callback) {
           callback(err);
           return;
         }
+
+        var isCss = endsWith(file.name, ['.css', '.less']);
 
         data = data.trim().split('\n').map(function(s) {
           return file.spaces + s;
