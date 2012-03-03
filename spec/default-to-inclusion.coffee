@@ -7,7 +7,8 @@ test 'default to include files', {
       -->
       <!--OPRA-STYLES
         three.css
-        four.css
+        four.css @ screen
+        five.css @ print
       -->
     </html>
   """
@@ -16,6 +17,7 @@ test 'default to include files', {
     <script type="text/javascript" src="one.js"></script>
     <script type="text/javascript" src="two.js"></script>
     <link rel="stylesheet" type="text/css" media="all" href="three.css" />
-    <link rel="stylesheet" type="text/css" media="all" href="four.css" />
+    <link rel="stylesheet" type="text/css" media="screen" href="four.css" />
+    <link rel="stylesheet" type="text/css" media="print" href="five.css" />
   </html>
 """
