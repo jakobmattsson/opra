@@ -1,4 +1,5 @@
 var fs = require('fs');
+var url = require('url');
 var path = require('path');
 var express = require('express');
 var coffee = require('coffee-script');
@@ -267,8 +268,10 @@ var serve = function(path, settings) {
   settings.url = settings.url || '/index.html';
 
   return function(req, res, next) {
-    if (settings.url == req.url) {
-      build(path + req.url, settings, function(err, result) {
+    var pathname = url.parse(req.url).pathname;
+
+    if (settings.url == pathname) {
+      build(path + pathname, settings, function(err, result) {
         if (err) {
           next();
           return;
