@@ -1,7 +1,7 @@
-test 'dont detect type automatically', {
+test 'type-detection', {
   'index.html': """
     <html>
-      <!--OPRA-SCRIPTS
+      <!--OPRA
         one.css
         one.js
         one.coffee
@@ -28,7 +28,7 @@ test 'dont detect type automatically', {
   """
 }, { inline: true }, """
   <html>
-    <style type="text/css" media="all">
+    <style type="text/css">
       a {
         color: red
       }
@@ -46,7 +46,7 @@ test 'dont detect type automatically', {
       
       }).call(this);
     </script>
-    <style type="text/css" media="all">
+    <style type="text/css">
       a {
         color: #f938ab;
       }

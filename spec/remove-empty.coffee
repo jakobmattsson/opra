@@ -1,13 +1,13 @@
-test 'should remove empty opra-tags', {
+test 'remove-empty', {
   'index.html': """
     <html>
-      <!--OPRA-SCRIPTS
+      <!--OPRA
 
       -->
-      <!--OPRA-STYLES
+      <!--OPRA
 
       -->
-      <!--OPRA-FAKE
+      <!--FAKE
 
       -->
     </html>
@@ -16,7 +16,7 @@ test 'should remove empty opra-tags', {
   <html>
 
 
-    <!--OPRA-FAKE
+    <!--FAKE
 
     -->
   </html>

@@ -1,7 +1,7 @@
-test 'dont detect type automatically', {
+test 'type-detection-include', {
   'index.html': """
     <html>
-      <!--OPRA-SCRIPTS
+      <!--OPRA
         one.css
         one.js
         one.coffee
@@ -11,7 +11,7 @@ test 'dont detect type automatically', {
   """
 }, { }, """
   <html>
-    <link rel="stylesheet" type="text/css" media="all" href="one.css" />
+    <link rel="stylesheet" type="text/css" href="one.css" />
     <script type="text/javascript" src="one.js"></script>
     <script type="text/javascript" src="one.coffee"></script>
     <link rel="stylesheet" type="text/css" media="screen" href="one.less" />

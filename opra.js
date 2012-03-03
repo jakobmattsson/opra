@@ -7,6 +7,7 @@ var less = require('less');
 var async = require('async');
 var uglify = require('uglify-js');
 var cleanCSS = require('clean-css');
+var glob = require("glob");
 
 var build = function(indexFile, settings, callback) {
 
@@ -22,18 +23,25 @@ var build = function(indexFile, settings, callback) {
   var isCompressed = settings.compress || false;
   var jsfile = settings.jsfile;
   var cssfile = settings.cssfile;
+  var showPaths = settings.paths;
+  var concatFiles = settings.concat;
 
+  var isUndefined = function(x) {
+    return typeof x == 'undefined';
+  };
   var compileCoffee = function(filePath, callback) {
     fs.readFile(filePath, encoding, function(err, content) {
+      var code = null;
+
       if (err) {
         callback(err);
         return;
       }
 
       try {
-        var code = coffee.compile(content);
+        code = coffee.compile(content);
       } catch (e) {
-        callback(e)
+        callback(e);
         return;
       }
 
@@ -79,8 +87,23 @@ var build = function(indexFile, settings, callback) {
     }
   };
 
-  var wrappIE = function(params, str) {
+  var filetype = function(filename) {
+    if (endsWith(filename, ['.css', '.less'])) {
+      return 'css';
+    }
+    if (endsWith(filename, ['.js', '.coffee'])) {
+      return 'js';
+    }
+    return 'other';
+  };
+  var iewrap = function(params) {
     if (params.indexOf("ie7") !== -1) {
+      return "ie7";
+    }
+    return undefined;
+  };
+  var wrappIE = function(params, str) {
+    if (iewrap(params) == 'ie7') {
       return "<!--[if IE 7]>" + str + "<![endif]-->";
     }
     return str;
@@ -92,8 +115,16 @@ var build = function(indexFile, settings, callback) {
     if (params.indexOf("print") !== -1) {
       return 'print';
     }
-    return 'all';
-  }
+    return undefined;
+  };
+
+  var createTag = function(name, attributes, content) {
+    return "<" + name + Object.keys(attributes).filter(function(key) {
+      return !isUndefined(attributes[key]);
+    }).map(function(key) {
+      return " " + key + '="' + attributes[key] + '"';
+    }).join('') + (typeof content == 'string' ? ">" + content + "</" + name + ">" : " />");
+  };
 
   var getMatches = function(content, prefix, postfix) {
     var matches = content.match(new RegExp(" *" + prefix + "[^>]*" + postfix, "g")) || [];
@@ -115,49 +146,45 @@ var build = function(indexFile, settings, callback) {
       };
     });
   };
+  var globMatches = function(matches, callback) {
+    async.map(matches, function(match, callback) {
+      async.map(match.files, function(file, callback) {
+        var globbedFiles = glob.sync(file.name, { nonull: true });
+        callback(null, globbedFiles.map(function(globbedFile) {
+          return { name: globbedFile, params: file.params, spaces: file.spaces };
+        }));
+      }, function(err, result) {
+        callback(err, {
+          match: match.match,
+          files: (result || []).reduce(function(mem, item) {
+            return mem.concat(item);
+          }, [])
+        });
+      });
+    }, callback);
+  };
+
   var filesToMultipleInclude = function(______________________, files, callback) {
-    var result = files.map(function(file) {
+    var result = files.filter(function(file) {
+      return filetype(file.name) != 'other';
+    }).map(function(file) {
       var isCss = endsWith(file.name, ['.css', '.less']);
-      var css = '<link rel="stylesheet" type="text/css" media="' + paramsToMediaType(file.params) + '" href="' + file.name + '" />';
-      var js = '<script type="text/javascript" src="' + file.name + '"></script>';
+      var css = createTag('link', { rel: 'stylesheet', type: 'text/css', media: paramsToMediaType(file.params), href: file.name });
+      var js = createTag('script', { type: 'text/javascript', src: file.name }, '');
       return file.spaces.slice(2) + wrappIE(file.params, isCss ? css : js);
     }).join('\n');
     callback(null, result);
   };
   var filesToInline = function(_______________________, files, callback) {
     async.mapSeries(files, function(file, callback) {
-      var spaces = file.spaces.slice(2);
       var filePath = path.join(assetRoot, file.name);
       var actualCallback = function(err, data) {
-        if (err) {
-          callback(err);
-          return;
-        }
-
-        var isCss = endsWith(file.name, ['.css', '.less']);
-
-        data = data.trim().split('\n').map(function(s) {
-          return file.spaces + s;
-        }).join('\n');
-        data = "\n" + data + "\n" + spaces;
-
-        if (isCompressed && file.params.indexOf('nocompress') === -1) {
-          if (isCss) {
-            data = cleanCSS.process(data);
-          } else {
-            data = uglifier(data);
-          }
-        }
-
-        var csstag = '<style type="text/css" media="' + paramsToMediaType(file.params) + '">' + data + "</style>";
-        var jstag = '<script type="text/javascript">' + data + "</script>";
-
-        callback(null, spaces + wrappIE(file.params, isCss ? csstag : jstag));
+        callback(err, { file: file, content: data });
       };
 
-      if (file.name.match(/\.less$/)) {
+      if (endsWith(file.name, ['.less'])) {
         compileLess(filePath, actualCallback);
-      } else if (file.name.match(/\.coffee$/)) {
+      } else if (endsWith(file.name, ['.coffee'])) {
         compileCoffee(filePath, actualCallback);
       } else {
         fs.readFile(filePath, encoding, actualCallback);
@@ -167,7 +194,58 @@ var build = function(indexFile, settings, callback) {
         callback(err);
         return;
       }
-      callback(err, data.join('\n'));
+
+      var tagify = function(data) {
+        return data.map(function(d) {
+
+          var spaces = d.file.spaces.slice(2);
+          d.content = d.content.trim().split('\n').map(function(s) {
+            return d.file.spaces + s;
+          }).join('\n');
+          d.content = "\n" + d.content + "\n" + spaces;
+
+          if (isCompressed && d.file.params.indexOf('nocompress') === -1) {
+            if (filetype(d.file.name) == 'css') {
+              d.content = cleanCSS.process(d.content);
+            } else {
+              d.content = uglifier(d.content);
+            }
+          }
+
+          var csstag = createTag('style', { type: 'text/css', media: paramsToMediaType(d.file.params), 'data-path': showPaths ? d.file.name : undefined }, d.content);
+          var jstag = createTag('script', { type: filetype(d.file.name) == 'js' ? 'text/javascript' : 'text/x-opra', 'data-path': showPaths ? d.file.name : undefined }, d.content);
+          return spaces + wrappIE(d.file.params, filetype(d.file.name) == 'css' ? csstag : jstag);
+        }).join('\n');
+      };
+
+      if (concatFiles) {
+        var re = data.reduce(function(groups, d) {
+          if (groups.length === 0) {
+            groups.push([d]);
+          } else {
+            var last = groups.slice(-1)[0][0];
+            if (filetype(d.file.name) == filetype(last.file.name) &&
+              iewrap(d.file.params) == iewrap(last.file.params) &&
+              (d.file.params.indexOf('nocompress') === -1) == (last.file.params.indexOf('nocompress') === -1) &&
+              paramsToMediaType(d.file.params) == paramsToMediaType(last.file.params)) {
+              groups.slice(-1)[0].push(d);
+            } else {
+              groups.push([d]);
+            }
+          }
+          return groups;
+        }, []);
+
+        var d2 = re.map(function(g) {
+          return { file: g[0].file, content: g.map(function(x) {
+            return x.content.trim();
+          }).join('\n') };
+        });
+
+        callback(null, tagify(d2));
+      } else {
+        callback(err, tagify(data));
+      }
     });
   };
   var filesToInclude = function(__________css, files, callback) {
@@ -218,9 +296,9 @@ var build = function(indexFile, settings, callback) {
       var params = files[0].params; // this is a hack. files should already be grouped according to parameters!!!
 
       if (css) {
-        include = files[0].spaces.slice(2) + wrappIE(params, '<link rel="stylesheet" media="' + paramsToMediaType(file.params) + '" type="text/css" href="' + filename + '">');
+        include = files[0].spaces.slice(2) + wrappIE(params, createTag('link', { rel: 'stylesheet', media: paramsToMediaType(file.params), type: 'text/css', href: filename }));
       } else {
-        include = files[0].spaces.slice(2) + wrappIE(params, '<script type="text/javascript" src="' + filename + '"></script>');
+        include = files[0].spaces.slice(2) + wrappIE(params, createTag('script', { type: 'text/javascript', src: filename }, ''));
       }
 
       callback(err, include, [{ name: path.join(assetRoot, filename), content: data.join(isCompressed ? ';' : '\n') }]);
@@ -233,11 +311,9 @@ var build = function(indexFile, settings, callback) {
       return;
     }
 
-    var styleData = getMatches(content, "<!--OPRA-STYLES", "-->");
-    var jsData = getMatches(content, "<!--OPRA-SCRIPTS", "-->");
-
-    var reducer = function(isCss) {
-      return function(next_content, d, callback) {
+    globMatches(getMatches(content, "<!--OPRA", "-->"), function(err, matches) {
+      async.reduce(matches, content, function(next_content, d, callback) {
+        var isCss = true;
         var f = isInline ? filesToInline : filesToMultipleInclude;
 
         if (isCss ? cssfile : jsfile) {
@@ -256,18 +332,10 @@ var build = function(indexFile, settings, callback) {
             callback(err, safeReplace(next_content, d.match, data));
           });
         });
-      };
-    };
-
-    async.waterfall([
-      function(callback) {
-        async.reduce(styleData, content, reducer(true), callback);
-      }, function(cnt, callback) {
-        async.reduce(jsData, cnt, reducer(false), callback);
-      }
-    ], callback);
+      }, callback);
+    });
   });
-}
+};
 var serve = function(path, settings) {
   settings = settings || {};
   settings.url = settings.url || '/index.html';
@@ -281,7 +349,7 @@ var serve = function(path, settings) {
           next();
           return;
         }
-        res.send(result, { 'Content-Type': 'text/html' })
+        res.send(result, { 'Content-Type': 'text/html' });
       });
     } else {
       next();

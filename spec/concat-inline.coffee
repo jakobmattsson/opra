@@ -1,4 +1,4 @@
-test 'inline', {
+test 'concat-inline', {
   'index.html': """
     <html>
       <!--OPRA
@@ -6,7 +6,13 @@ test 'inline', {
         two.js
       -->
       <!--OPRA
+        one.js
+        two.js
         three.css
+        two.js
+      -->
+      <!--OPRA
+        one.js
       -->
     </html>
   """
@@ -20,17 +26,27 @@ test 'inline', {
   'three.css': """
     a { color: red }
   """
-}, { inline: true }, """
+}, { inline: true, concat: true }, """
   <html>
     <script type="text/javascript">
       alert(1)
       1 + 1
+      alert(2)
     </script>
     <script type="text/javascript">
+      alert(1)
+      1 + 1
       alert(2)
     </script>
     <style type="text/css">
       a { color: red }
     </style>
+    <script type="text/javascript">
+      alert(2)
+    </script>
+    <script type="text/javascript">
+      alert(1)
+      1 + 1
+    </script>
   </html>
 """

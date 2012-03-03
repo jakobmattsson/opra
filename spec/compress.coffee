@@ -1,7 +1,7 @@
-test 'compress = true', {
+test 'compress', {
   'index.html': """
     <html>
-      <!--OPRA-SCRIPTS
+      <!--OPRA
 
         # comment
 
@@ -10,7 +10,7 @@ test 'compress = true', {
 
         # three.js
       -->
-      <!--OPRA-STYLES
+      <!--OPRA
         three.css
       -->
     </html>
@@ -19,6 +19,6 @@ test 'compress = true', {
   <html>
     <script type="text/javascript" src="one.js"></script>
     <script type="text/javascript" src="two.js"></script>
-    <link rel="stylesheet" type="text/css" media="all" href="three.css" />
+    <link rel="stylesheet" type="text/css" href="three.css" />
   </html>
 """

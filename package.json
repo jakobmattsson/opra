@@ -17,6 +17,7 @@
   "dependencies": {
     "express": "2.5.6",
     "less": "1.2.1",
+    "glob": "3.1.4",
     "async": "0.1.15",
     "uglify-js": "1.2.5",
     "clean-css": "0.3.2",

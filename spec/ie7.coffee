@@ -1,11 +1,11 @@
-test 'default to include files', {
+test 'ie7', {
   'index.html': """
     <html>
-      <!--OPRA-SCRIPTS
+      <!--OPRA
         one.js
         two.js @ ie7
       -->
-      <!--OPRA-STYLES
+      <!--OPRA
         three.css
         four.css @ ie7
       -->
@@ -15,7 +15,7 @@ test 'default to include files', {
   <html>
     <script type="text/javascript" src="one.js"></script>
     <!--[if IE 7]><script type="text/javascript" src="two.js"></script><![endif]-->
-    <link rel="stylesheet" type="text/css" media="all" href="three.css" />
-    <!--[if IE 7]><link rel="stylesheet" type="text/css" media="all" href="four.css" /><![endif]-->
+    <link rel="stylesheet" type="text/css" href="three.css" />
+    <!--[if IE 7]><link rel="stylesheet" type="text/css" href="four.css" /><![endif]-->
   </html>
 """

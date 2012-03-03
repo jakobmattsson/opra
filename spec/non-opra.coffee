@@ -1,4 +1,4 @@
-test 'should return an unmodified string if the there are no opra-tags', {
+test 'non-opra', {
   'index.html': """
     hello
   """
