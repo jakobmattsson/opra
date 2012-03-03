@@ -7,7 +7,6 @@ var less = require('less');
 var async = require('async');
 var uglify = require('uglify-js');
 var cleanCSS = require('clean-css');
-var htmlMinifier = require('html-minifier');
 
 var build = function(indexFile, settings, callback) {
 
@@ -21,7 +20,6 @@ var build = function(indexFile, settings, callback) {
   var assetRoot = settings.assetRoot || path.dirname(indexFile);
   var isInline = settings.inline || false;
   var isCompressed = settings.compress || false;
-  var isMarkupCompressed = settings.compressHTML || false;
   var jsfile = settings.jsfile;
   var cssfile = settings.cssfile;
 
@@ -251,16 +249,7 @@ var build = function(indexFile, settings, callback) {
       }, function(cnt, callback) {
         async.reduce(jsData, cnt, reducer(false), callback);
       }
-    ], function(err, result) {
-
-      // Removed this until it's better understood
-      //
-      // if (isMarkupCompressed) {
-      //   content = htmlMinifier.minify(content, { });
-      // }
-
-      callback(err, result);
-    });
+    ], callback);
   });
 }
 var serve = function(path, settings) {
