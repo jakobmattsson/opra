@@ -7,7 +7,7 @@ var less = require('less');
 var async = require('async');
 var uglify = require('uglify-js');
 var cleanCSS = require('clean-css');
-var glob = require("glob");
+var glob = require('glob');
 
 var build = function(indexFile, settings, callback) {
 
