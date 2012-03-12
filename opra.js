@@ -86,6 +86,16 @@ var build = function(indexFile, settings, callback) {
       str = str.slice(0, i) + newString + str.slice(i + target.length);
     }
   };
+  var execAll = function(regexp, str) {
+    var match;
+    var matches = [];
+
+    while ((match = regexp.exec(str)) != null) {
+      matches.push(match);
+    }
+
+    return matches;
+  };
 
   var filetype = function(filename) {
     if (endsWith(filename, ['.css', '.less'])) {
@@ -127,7 +137,14 @@ var build = function(indexFile, settings, callback) {
   };
 
   var getMatches = function(content, prefix, postfix) {
-    var matches = content.match(new RegExp(" *" + prefix + "[^>]*" + postfix, "g")) || [];
+    var reg = new RegExp(" *" + prefix + " *(@ *[a-zA-Z0-9])?\n[^>]*" + postfix, "g");
+
+    var m1 = execAll(reg, content);
+
+    var matches = m1.map(function(x) {
+      return x[0];
+    });
+
     return matches.map(function(match) {
       return {
         match: match,
