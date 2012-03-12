@@ -286,17 +286,29 @@ var build = function(indexFile, settings, callback) {
         callback(err);
         return;
       }
-
-
-      if (ft == 'js') {
-        var js = fileParams.spaces + createTag('script', { type: 'text/javascript', src: fileParams.filename }, '');
-        callback(null, js);
-      } else if (ft == 'css') {
-        var css = fileParams.spaces + createTag('link', { rel: 'stylesheet', type: 'text/css', href: fileParams.filename });
-        callback(null, css);
-      } else {
-        callback("fail");
+      if (data.length !== 1) {
+        callback("Invalid number of files produced while concatenating");
+        return;
       }
+
+      var outFile = path.join(assetRoot, fileParams.filename);
+
+      fs.writeFile(outFile, data[0].content, encoding, function(err) {
+        if (err) {
+          callback(err);
+          return;
+        }
+
+        if (ft == 'js') {
+          var js = fileParams.spaces + createTag('script', { type: 'text/javascript', src: fileParams.filename }, '');
+          callback(null, js);
+        } else if (ft == 'css') {
+          var css = fileParams.spaces + createTag('link', { rel: 'stylesheet', type: 'text/css', href: fileParams.filename });
+          callback(null, css);
+        } else {
+          callback("Invalid filetype '" + fileType + "'! Use 'js' or 'css'.");
+        }
+      });
     });
   };
 
