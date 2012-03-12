@@ -1,24 +1,36 @@
-# test 'concat', {
-#   'index.html': """
-#     <html>
-#       <!--OPRA-SCRIPTS @ foo.js
-#         one.js
-#         two.js
-#       -->
-#       <!--OPRA-SCRIPTS @ bar.js
-#         one.js
-#       -->
-#       <!--OPRA-STYLES @ c.css screen
-#         three.css
-#         four.css @ screen
-#         five.css @ print
-#       -->
-#     </html>
-#   """
-# }, {}, """
-#   <html>
-#     <script type="text/javascript" src="foo.js"></script>
-#     <script type="text/javascript" src="bar.js"></script>
-#     <link rel="stylesheet" type="text/css" media="screen" href="c.css" />
-#   </html>
-# """
+test 'concat', {
+  'index.html': """
+    <html>
+      <!--OPRA foo.js
+        f1.js
+        f2.js
+      -->
+      <!--OPRA bar.js
+        f1.js
+      -->
+      <!--OPRA c.css
+        c1.css
+        c2.css
+        c1.css
+      -->
+    </html>
+  """
+  'f1.js': """
+    alert(1)
+  """
+  'f2.js': """
+    alert(2)
+  """
+  'c1.css': """
+    color: black;
+  """
+  'c2.css': """
+    color: red;
+  """
+}, { concat: true }, """
+  <html>
+    <script type="text/javascript" src="foo.js"></script>
+    <script type="text/javascript" src="bar.js"></script>
+    <link rel="stylesheet" type="text/css" href="c.css" />
+  </html>
+"""
