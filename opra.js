@@ -344,6 +344,7 @@ var serve = function(path, settings) {
     if (settings.url == pathname) {
       build(path + pathname, settings, function(err, result) {
         if (err) {
+          console.log("OPRA ERROR: While compiling " + pathname + " the following was caught:", err);
           next();
           return;
         }
