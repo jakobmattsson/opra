@@ -2,3 +2,4 @@ node_modules
 bar.js
 c.css
 foo.js
+npm-debug.log
