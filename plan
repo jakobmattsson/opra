@@ -5,3 +5,9 @@
 * Parameter to output tags valid accoring to different doctypes (html5, xhtml, html-transitional etc)
 * Test assetRoot
 * Test all kinds of errors that can occur
+* For every parameter "x" there should also be "always-x" and "never-x". Those will override anything set in build/serve.
+  - inline (global and local)
+  - compress (global and local)
+  - paths (global and local)
+  - concat (only global)
+* Should be possible to add a timestamp in the names of the generated files
