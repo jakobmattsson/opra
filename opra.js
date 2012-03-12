@@ -204,7 +204,7 @@ var build = function(indexFile, settings, callback) {
           }).join('\n');
           d.content = "\n" + d.content + "\n" + spaces;
 
-          if (isCompressed && d.file.params.indexOf('nocompress') === -1) {
+          if (isCompressed && d.file.params.indexOf('never-compress') === -1) {
             if (filetype(d.file.name) == 'css') {
               d.content = cleanCSS.process(d.content);
             } else if (filetype(d.file.name) == 'js') {
@@ -226,7 +226,7 @@ var build = function(indexFile, settings, callback) {
             var last = groups.slice(-1)[0][0];
             if (filetype(d.file.name) == filetype(last.file.name) &&
               iewrap(d.file.params) == iewrap(last.file.params) &&
-              (d.file.params.indexOf('nocompress') === -1) == (last.file.params.indexOf('nocompress') === -1) &&
+              (d.file.params.indexOf('never-compress') === -1) == (last.file.params.indexOf('never-compress') === -1) &&
               paramsToMediaType(d.file.params) == paramsToMediaType(last.file.params)) {
               groups.slice(-1)[0].push(d);
             } else {
@@ -268,7 +268,7 @@ var build = function(indexFile, settings, callback) {
           data = "\n" + data + "\n" + spaces;
         }
 
-        if (isCompressed && file.params.indexOf('nocompress') === -1) {
+        if (isCompressed && file.params.indexOf('never-compress') === -1) {
           if (css) {
             data = cleanCSS.process(data);
           } else {
