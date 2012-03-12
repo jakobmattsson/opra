@@ -19,10 +19,11 @@ var build = function(indexFile, settings, callback) {
 
   var encoding = settings.encoding || 'utf8';
   var assetRoot = settings.assetRoot || path.dirname(indexFile);
-  var isInline = settings.inline || false;
-  var isCompressed = settings.compress || false;
-  var showPaths = settings.paths;
-  var concatFiles = settings.concat;
+
+  var isInline = !!settings.inline;
+  var isCompressed = !!settings.compress;
+  var showPaths = !!settings.paths;
+  var concatFiles = !!settings.concat;
 
   var isUndefined = function(x) {
     return typeof x == 'undefined';
@@ -100,15 +101,6 @@ var build = function(indexFile, settings, callback) {
       return 'css';
     }
     if (endsWith(filename, ['.js', '.coffee'])) {
-      return 'js';
-    }
-    return 'other';
-  };
-  var filetypeExact = function(filename) {
-    if (endsWith(filename, ['.css'])) {
-      return 'css';
-    }
-    if (endsWith(filename, ['.js'])) {
       return 'js';
     }
     return 'other';
@@ -287,7 +279,7 @@ var build = function(indexFile, settings, callback) {
     });
   };
   var concatToFiles = function(fileParams, files, callback) {
-    var ft = filetypeExact(fileParams.filename);
+    var ft = filetype(fileParams.filename);
 
     filesToInlineBasic(fileParams, files, function(err, data) {
       if (err) {
