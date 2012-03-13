@@ -1,6 +1,7 @@
 * Detect evil strings like </script> and </style> inside the inline code
 * Implement support for "global" params (for setting nocompress for a bunch of files for example)
 * When concatenating, take params into account so not a single file is produced at all times
+  - Or rather, give an error message in that case
 * Include images inline in css
 * Parameter to output tags valid accoring to different doctypes (html5, xhtml, html-transitional etc)
 * Test assetRoot
@@ -11,3 +12,4 @@
   - paths (global and local)
   - concat (only global)
 * Should be possible to add a timestamp in the names of the generated files
+* Write tests for files that are written to the filesystem rather than printed on stdout
