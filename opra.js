@@ -24,6 +24,7 @@ var build = function(indexFile, settings, callback) {
   var isCompressed = !!settings.compress;
   var showPaths = !!settings.paths;
   var concatFiles = !!settings.concat;
+  var showIds = !!settings.ids;
 
   var isUndefined = function(x) {
     return typeof x == 'undefined';
@@ -100,6 +101,14 @@ var build = function(indexFile, settings, callback) {
     a.splice(index, 1);
     return a;
   };
+  var removeElement = function(array, element) {
+    var i = array.indexOf(element);
+    if (i !== -1) {
+      return removeIndex(array, i);
+    }
+    return array;
+  };
+
 
   var filetype = function(filename) {
     if (endsWith(filename, ['.css', '.less'])) {
@@ -207,8 +216,16 @@ var build = function(indexFile, settings, callback) {
         }
       }
 
-      var csstag = createTag('style', { type: 'text/css', media: paramsToMediaType(d.file.params), 'data-path': d.file.params.indexOf('paths') !== -1 ? d.file.name : undefined }, d.content);
-      var jstag = createTag('script', { type: filetype(d.file.name) == 'js' ? 'text/javascript' : 'text/x-opra', 'data-path': d.file.params.indexOf('paths') !== -1 ? d.file.name : undefined }, d.content);
+      var csstag = createTag('style', {
+        type: 'text/css',
+        media: paramsToMediaType(d.file.params),
+        'data-path': d.file.params.indexOf('paths') !== -1 ? d.file.name : undefined
+      }, d.content);
+      var jstag = createTag('script', {
+        type: filetype(d.file.name) == 'js' ? 'text/javascript' : 'text/x-opra',
+        id: filetype(d.file.name) != 'js' && d.file.params.indexOf('ids') !== -1 ? path.basename(d.file.name) : undefined,
+        'data-path': d.file.params.indexOf('paths') !== -1 ? d.file.name : undefined
+      }, d.content);
       return spaces + wrappIE(d.file.params, filetype(d.file.name) == 'css' ? csstag : jstag);
     }).join('\n');
   };
@@ -337,18 +354,20 @@ var build = function(indexFile, settings, callback) {
 
       matches.forEach(function(m) {
         m.files.forEach(function(f) {
-          if (f.params.indexOf('always-compress') !== -1 || (f.params.indexOf('never-compress') === -1 && isCompressed)) {
-            f.params.push('compress');
-          }
-          if (f.params.indexOf('always-paths') !== -1 || (f.params.indexOf('never-paths') === -1 && showPaths)) {
-            f.params.push('paths');
-          }
 
-          ['always-paths', 'never-paths', 'always-compress', 'never-compress'].forEach(function(n) {
-            var i = f.params.indexOf(n);
-            if (i !== -1) {
-              f.params = removeIndex(f.params, i);
+          var flags = {
+            compress: isCompressed,
+            paths: showPaths,
+            ids: showIds
+          };
+
+          ['compress', 'paths', 'ids'].forEach(function(n) {
+            if (f.params.indexOf('always-' + n) !== -1 || (f.params.indexOf('never-' + n) === -1 && flags[n])) {
+              f.params.push(n);
             }
+
+            f.params = removeElement(f.params, n + '-always');
+            f.params = removeElement(f.params, n + '-never');
           });
         });
       });
