@@ -95,6 +95,11 @@ var build = function(indexFile, settings, callback) {
 
     return matches;
   };
+  var removeIndex = function(array, index) {
+    var a = array.slice(0);
+    a.splice(index, 1);
+    return a;
+  };
 
   var filetype = function(filename) {
     if (endsWith(filename, ['.css', '.less'])) {
@@ -194,7 +199,7 @@ var build = function(indexFile, settings, callback) {
       }).join('\n');
       d.content = "\n" + d.content + "\n" + spaces;
 
-      if (isCompressed && d.file.params.indexOf('never-compress') === -1) {
+      if (d.file.params.indexOf('compress') !== -1) {
         if (filetype(d.file.name) == 'css') {
           d.content = cleanCSS.process(d.content);
         } else if (filetype(d.file.name) == 'js') {
@@ -202,8 +207,8 @@ var build = function(indexFile, settings, callback) {
         }
       }
 
-      var csstag = createTag('style', { type: 'text/css', media: paramsToMediaType(d.file.params), 'data-path': showPaths && d.file.params.indexOf('never-paths') === -1 ? d.file.name : undefined }, d.content);
-      var jstag = createTag('script', { type: filetype(d.file.name) == 'js' ? 'text/javascript' : 'text/x-opra', 'data-path': showPaths && d.file.params.indexOf('never-paths') === -1 ? d.file.name : undefined }, d.content);
+      var csstag = createTag('style', { type: 'text/css', media: paramsToMediaType(d.file.params), 'data-path': d.file.params.indexOf('paths') !== -1 ? d.file.name : undefined }, d.content);
+      var jstag = createTag('script', { type: filetype(d.file.name) == 'js' ? 'text/javascript' : 'text/x-opra', 'data-path': d.file.params.indexOf('paths') !== -1 ? d.file.name : undefined }, d.content);
       return spaces + wrappIE(d.file.params, filetype(d.file.name) == 'css' ? csstag : jstag);
     }).join('\n');
   };
@@ -256,7 +261,7 @@ var build = function(indexFile, settings, callback) {
             var last = groups.slice(-1)[0][0];
             if (filetype(d.file.name) == filetype(last.file.name) &&
               iewrap(d.file.params) == iewrap(last.file.params) &&
-              (d.file.params.indexOf('never-compress') === -1) == (last.file.params.indexOf('never-compress') === -1) &&
+              (d.file.params.indexOf('compress') === -1) == (last.file.params.indexOf('compress') === -1) &&
               paramsToMediaType(d.file.params) == paramsToMediaType(last.file.params)) {
               groups.slice(-1)[0].push(d);
             } else {
@@ -294,7 +299,7 @@ var build = function(indexFile, settings, callback) {
       var outFile = path.join(assetRoot, fileParams.filename);
       var content = data[0].content;
 
-      if (isCompressed && data[0].file.params.indexOf('never-compress') === -1) {
+      if (data[0].file.params.indexOf('compress') !== -1) {
         if (filetype(outFile) == 'css') {
           content = cleanCSS.process(content);
         } else if (filetype(outFile) == 'js') {
@@ -328,6 +333,26 @@ var build = function(indexFile, settings, callback) {
     }
 
     globMatches(getMatches(content, "<!--OPRA", "-->"), function(err, matches) {
+
+
+      matches.forEach(function(m) {
+        m.files.forEach(function(f) {
+          if (f.params.indexOf('always-compress') !== -1 || (f.params.indexOf('never-compress') === -1 && isCompressed)) {
+            f.params.push('compress');
+          }
+          if (f.params.indexOf('always-paths') !== -1 || (f.params.indexOf('never-paths') === -1 && showPaths)) {
+            f.params.push('paths');
+          }
+
+          ['always-paths', 'never-paths', 'always-compress', 'never-compress'].forEach(function(n) {
+            var i = f.params.indexOf(n);
+            if (i !== -1) {
+              f.params = removeIndex(f.params, i);
+            }
+          });
+        });
+      });
+
       async.reduce(matches, content, function(next_content, d, callback) {
         var f = isInline ? filesToInline : (concatFiles && d.params.filename ? concatToFiles : filesToMultipleInclude);
 
