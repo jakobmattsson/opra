@@ -164,9 +164,17 @@ var build = function(indexFile, settings, callback) {
         })
       };
     }).map(function(matchData) {
+      var filename = undefined;
+
+      if (matchData.params.length >= 1 && endsWith(matchData.params[0], ['.js', '.css'])) {
+        filename = matchData.params[0];
+      }
+
       return {
         match: matchData.str,
-        params: matchData.params.length == 1 ? { filename: matchData.params[0], spaces: matchData.str.match(/^\s*/)[0] } : { spaces: matchData.str.match(/^\s*/)[0] },
+        filename: filename,
+        spaces: matchData.str.match(/^\s*/)[0],
+        params: matchData.params,
         files: matchData.str.replace(prefix, "").replace(postfix, "").split('\n').slice(1).map(function(s) {
           return s.split('#')[0];
         }).filter(function(s) {
@@ -192,6 +200,8 @@ var build = function(indexFile, settings, callback) {
       }, function(err, result) {
         callback(err, {
           match: match.match,
+          spaces: match.spaces,
+          filename: match.filename,
           params: match.params,
           files: (result || []).reduce(function(mem, item) {
             return mem.concat(item);
@@ -232,7 +242,7 @@ var build = function(indexFile, settings, callback) {
     }).join('\n');
   };
 
-  var filesToMultipleInclude = function(fileParams, files, callback) {
+  var filesToMultipleInclude = function(filename, spaces, fileParams, files, callback) {
     var result = files.filter(function(file) {
       return filetype(file.name) != 'other';
     }).map(function(file) {
@@ -243,8 +253,8 @@ var build = function(indexFile, settings, callback) {
     }).join('\n');
     callback(null, result);
   };
-  var filesToInline = function(fileParams, files, callback) {
-    filesToInlineBasic(fileParams, files, function(err, data) {
+  var filesToInline = function(filename, spaces, fileParams, files, callback) {
+    filesToInlineBasic(filename, spaces, fileParams, files, function(err, data) {
       if (err) {
         callback(err);
         return;
@@ -252,7 +262,7 @@ var build = function(indexFile, settings, callback) {
       callback(null, tagify(data));
     });
   };
-  var filesToInlineBasic = function(fileParams, files, callback) {
+  var filesToInlineBasic = function(filename, spaces, fileParams, files, callback) {
     async.mapSeries(files, function(file, callback) {
       var filePath = path.join(assetRoot, file.name);
       var actualCallback = function(err, data) {
@@ -302,10 +312,9 @@ var build = function(indexFile, settings, callback) {
       }
     });
   };
-  var concatToFiles = function(fileParams, files, callback) {
-    var ft = filetype(fileParams.filename);
-
-    filesToInlineBasic(fileParams, files, function(err, data) {
+  var concatToFiles = function(filename, spaces, fileParams, files, callback) {
+    var ft = filetype(filename);
+    filesToInlineBasic(filename, spaces, fileParams, files, function(err, data) {
       if (err) {
         callback(err);
         return;
@@ -315,7 +324,7 @@ var build = function(indexFile, settings, callback) {
         return;
       }
 
-      var outFile = path.join(assetRoot, fileParams.filename);
+      var outFile = path.join(assetRoot, filename);
       var content = data[0].content;
 
       if (data[0].file.params.indexOf('compress') !== -1) {
@@ -326,17 +335,17 @@ var build = function(indexFile, settings, callback) {
         }
       }
 
-      fs.writeFile(outFile, content, encoding, function(err) {
+      fs.writeFile(filename, content, encoding, function(err) {
         if (err) {
           callback(err);
           return;
         }
 
         if (ft == 'js') {
-          var js = fileParams.spaces + createTag('script', { type: 'text/javascript', src: fileParams.filename }, '');
+          var js = spaces + createTag('script', { type: 'text/javascript', src: filename }, '');
           callback(null, js);
         } else if (ft == 'css') {
-          var css = fileParams.spaces + createTag('link', { rel: 'stylesheet', type: 'text/css', href: fileParams.filename });
+          var css = spaces + createTag('link', { rel: 'stylesheet', type: 'text/css', href: filename });
           callback(null, css);
         } else {
           callback("Invalid filetype '" + fileType + "'! Use 'js' or 'css'.");
@@ -368,9 +377,9 @@ var build = function(indexFile, settings, callback) {
       });
 
       async.reduce(matches, content, function(next_content, d, callback) {
-        var f = isInline ? filesToInline : (concatFiles && d.params.filename ? concatToFiles : filesToMultipleInclude);
+        var f = isInline ? filesToInline : (concatFiles && d.filename ? concatToFiles : filesToMultipleInclude);
 
-        f(d.params, d.files, function(err, data, outfiles) {
+        f(d.filename, d.spaces, d.params, d.files, function(err, data, outfiles) {
           if (err) {
             callback(err);
             return;
