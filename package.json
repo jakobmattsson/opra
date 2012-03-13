@@ -2,7 +2,7 @@
   "name": "opra",
   "description": "Single page app builder",
   "main": "opra.js",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "author": "Jakob Mattsson <jakob.mattsson@gmail.com> (jakobmattsson.se)",
   "repository": {
     "type": "git",
