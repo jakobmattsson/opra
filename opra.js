@@ -21,10 +21,13 @@ var build = function(indexFile, settings, callback) {
   var assetRoot = settings.assetRoot || path.dirname(indexFile);
 
   var isInline = !!settings.inline;
-  var isCompressed = !!settings.compress;
-  var showPaths = !!settings.paths;
   var concatFiles = !!settings.concat;
-  var showIds = !!settings.ids;
+
+  var globalFlags = {
+    compress: !!settings.compress,
+    paths: !!settings.paths,
+    ids: !!settings.ids
+  };
 
   var isUndefined = function(x) {
     return typeof x == 'undefined';
@@ -355,14 +358,8 @@ var build = function(indexFile, settings, callback) {
       matches.forEach(function(m) {
         m.files.forEach(function(f) {
 
-          var flags = {
-            compress: isCompressed,
-            paths: showPaths,
-            ids: showIds
-          };
-
           ['compress', 'paths', 'ids'].forEach(function(n) {
-            if (f.params.indexOf('always-' + n) !== -1 || (f.params.indexOf('never-' + n) === -1 && flags[n])) {
+            if (f.params.indexOf('always-' + n) !== -1 || (f.params.indexOf('never-' + n) === -1 && globalFlags[n])) {
               f.params.push(n);
             }
 
