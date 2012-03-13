@@ -91,6 +91,9 @@ var removeElement = function(array, element) {
   }
   return array;
 };
+var arrayContains = function(array, element) {
+  return array.indexOf(element) !== -1;
+};
 
 var build = function(indexFile, settings, callback) {
 
@@ -103,13 +106,12 @@ var build = function(indexFile, settings, callback) {
   var encoding = settings.encoding || 'utf8';
   var assetRoot = settings.assetRoot || path.dirname(indexFile);
 
-  var isInline = !!settings.inline;
-  var concatFiles = !!settings.concat;
-
   var globalFlags = {
-    compress: !!settings.compress,
-    paths: !!settings.paths,
-    ids: !!settings.ids
+    concat: settings.concat,
+    inline: settings.inline,
+    compress: settings.compress,
+    paths: settings.paths,
+    ids: settings.ids
   };
 
   var filetype = function(filename) {
@@ -122,7 +124,7 @@ var build = function(indexFile, settings, callback) {
     return 'other';
   };
   var iewrap = function(params) {
-    if (params.indexOf("ie7") !== -1) {
+    if (arrayContains(params, "ie7")) {
       return "ie7";
     }
     return undefined;
@@ -134,10 +136,10 @@ var build = function(indexFile, settings, callback) {
     return str;
   };
   var paramsToMediaType = function(params) {
-    if (params.indexOf("screen") !== -1) {
+    if (arrayContains(params, "screen")) {
       return 'screen';
     }
-    if (params.indexOf("print") !== -1) {
+    if (arrayContains(params, "print")) {
       return 'print';
     }
     return undefined;
@@ -220,7 +222,7 @@ var build = function(indexFile, settings, callback) {
       }).join('\n');
       d.content = "\n" + d.content + "\n" + spaces;
 
-      if (d.file.params.indexOf('compress') !== -1) {
+      if (arrayContains(d.file.params, 'compress')) {
         if (filetype(d.file.name) == 'css') {
           d.content = cleanCSS.process(d.content);
         } else if (filetype(d.file.name) == 'js') {
@@ -231,18 +233,18 @@ var build = function(indexFile, settings, callback) {
       var csstag = createTag('style', {
         type: 'text/css',
         media: paramsToMediaType(d.file.params),
-        'data-path': d.file.params.indexOf('paths') !== -1 ? d.file.name : undefined
+        'data-path': arrayContains(d.file.params, 'paths') ? d.file.name : undefined
       }, d.content);
       var jstag = createTag('script', {
         type: filetype(d.file.name) == 'js' ? 'text/javascript' : 'text/x-opra',
-        id: filetype(d.file.name) != 'js' && d.file.params.indexOf('ids') !== -1 ? path.basename(d.file.name) : undefined,
-        'data-path': d.file.params.indexOf('paths') !== -1 ? d.file.name : undefined
+        id: filetype(d.file.name) != 'js' && arrayContains(d.file.params, 'ids') ? path.basename(d.file.name) : undefined,
+        'data-path': arrayContains(d.file.params, 'paths') ? d.file.name : undefined
       }, d.content);
       return spaces + wrappIE(d.file.params, filetype(d.file.name) == 'css' ? csstag : jstag);
     }).join('\n');
   };
 
-  var filesToMultipleInclude = function(filename, spaces, fileParams, files, callback) {
+  var filesToMultipleInclude = function(filename, spaces, shouldConcat, fileParams, files, callback) {
     var result = files.filter(function(file) {
       return filetype(file.name) != 'other';
     }).map(function(file) {
@@ -253,8 +255,8 @@ var build = function(indexFile, settings, callback) {
     }).join('\n');
     callback(null, result);
   };
-  var filesToInline = function(filename, spaces, fileParams, files, callback) {
-    filesToInlineBasic(filename, spaces, fileParams, files, function(err, data) {
+  var filesToInline = function(filename, spaces, shouldConcat, fileParams, files, callback) {
+    filesToInlineBasic(filename, spaces, shouldConcat, fileParams, files, function(err, data) {
       if (err) {
         callback(err);
         return;
@@ -262,7 +264,7 @@ var build = function(indexFile, settings, callback) {
       callback(null, tagify(data));
     });
   };
-  var filesToInlineBasic = function(filename, spaces, fileParams, files, callback) {
+  var filesToInlineBasic = function(filename, spaces, shouldConcat, fileParams, files, callback) {
     async.mapSeries(files, function(file, callback) {
       var filePath = path.join(assetRoot, file.name);
       var actualCallback = function(err, data) {
@@ -282,7 +284,7 @@ var build = function(indexFile, settings, callback) {
         return;
       }
 
-      if (concatFiles) {
+      if (shouldConcat) {
         var re = data.reduce(function(groups, d) {
           if (groups.length === 0) {
             groups.push([d]);
@@ -312,9 +314,9 @@ var build = function(indexFile, settings, callback) {
       }
     });
   };
-  var concatToFiles = function(filename, spaces, fileParams, files, callback) {
+  var concatToFiles = function(filename, spaces, shouldConcat, fileParams, files, callback) {
     var ft = filetype(filename);
-    filesToInlineBasic(filename, spaces, fileParams, files, function(err, data) {
+    filesToInlineBasic(filename, spaces, shouldConcat, fileParams, files, function(err, data) {
       if (err) {
         callback(err);
         return;
@@ -327,7 +329,7 @@ var build = function(indexFile, settings, callback) {
       var outFile = path.join(assetRoot, filename);
       var content = data[0].content;
 
-      if (data[0].file.params.indexOf('compress') !== -1) {
+      if (arrayContains(data[0].file.params, 'compress')) {
         if (filetype(outFile) == 'css') {
           content = cleanCSS.process(content);
         } else if (filetype(outFile) == 'js') {
@@ -362,11 +364,31 @@ var build = function(indexFile, settings, callback) {
 
     globMatches(getMatches(content, "<!--OPRA", "-->"), function(err, matches) {
 
+      matches.forEach(function(f) {
+        ['concat', 'inline'].forEach(function(n) {
+
+          if (arrayContains(f.params, 'always-' + n)) {
+            f.params.push(n);
+          } else if (arrayContains(f.params, 'never-' + n)) {
+            f.params = removeElement(f.params, n);
+          } else if (!isUndefined(globalFlags[n])) {
+            if (globalFlags[n]) {
+              f.params.push(n);
+            } else {
+              f.params = removeElement(f.params, n);
+            }
+          }
+
+          f.params = removeElement(f.params, n + '-always');
+          f.params = removeElement(f.params, n + '-never');
+        });
+      });
+
 
       matches.forEach(function(m) {
         m.files.forEach(function(f) {
           ['compress', 'paths', 'ids'].forEach(function(n) {
-            if (f.params.indexOf('always-' + n) !== -1 || (f.params.indexOf('never-' + n) === -1 && globalFlags[n])) {
+            if (arrayContains(f.params, 'always-' + n) || (!arrayContains(f.params, 'never-' + n) && globalFlags[n])) {
               f.params.push(n);
             }
 
@@ -376,10 +398,13 @@ var build = function(indexFile, settings, callback) {
         });
       });
 
-      async.reduce(matches, content, function(next_content, d, callback) {
-        var f = isInline ? filesToInline : (concatFiles && d.filename ? concatToFiles : filesToMultipleInclude);
+      // console.log(require('util').inspect(matches, null, 10));
 
-        f(d.filename, d.spaces, d.params, d.files, function(err, data, outfiles) {
+      async.reduce(matches, content, function(next_content, d, callback) {
+        var shouldConcat = arrayContains(d.params, 'concat');
+        var f = arrayContains(d.params, 'inline') ? filesToInline : (shouldConcat && d.filename ? concatToFiles : filesToMultipleInclude);
+
+        f(d.filename, d.spaces, shouldConcat, d.params, d.files, function(err, data, outfiles) {
           if (err) {
             callback(err);
             return;
