@@ -237,7 +237,7 @@ var build = function(indexFile, settings, callback) {
       }, d.content);
       var jstag = createTag('script', {
         type: filetype(d.file.name) == 'js' ? 'text/javascript' : 'text/x-opra',
-        id: filetype(d.file.name) != 'js' && arrayContains(d.file.params, 'ids') ? path.basename(d.file.name) : undefined,
+        id: filetype(d.file.name) != 'js' && arrayContains(d.file.params, 'ids') ? path.basename(d.file.name).split('.')[0] : undefined,
         'data-path': arrayContains(d.file.params, 'paths') ? d.file.name : undefined
       }, d.content);
       return spaces + wrappIE(d.file.params, filetype(d.file.name) == 'css' ? csstag : jstag);

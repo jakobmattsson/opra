@@ -40,7 +40,7 @@ test 'inline-ids', {
     <style type="text/css">
       a { color: red }
     </style>
-    <script type="text/x-opra" id="four.tpl">
+    <script type="text/x-opra" id="four">
       template code...
     </script>
     <script type="text/x-opra" id="five">

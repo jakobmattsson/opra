@@ -43,7 +43,7 @@ test 'local-always-params', {
       alert(1)
       1 + 1
     </script>
-    <script type="text/x-opra" id="two.tpl">
+    <script type="text/x-opra" id="two">
       alert(2)
     </script>
     <style type="text/css">a{color:red}</style>
