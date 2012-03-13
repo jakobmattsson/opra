@@ -29,7 +29,7 @@ test 'local-never-params', {
   """
 }, { paths: true, compress: true, ids: true, inline: true }, """
   <html>
-    <script type="text/x-opra" id="one" data-path="one.tpl">
+    <script type="text/x-opra" id="opra-one" data-path="one.tpl">
       alert(1)
       1 + 1
     </script>

@@ -40,10 +40,10 @@ test 'inline-ids', {
     <style type="text/css">
       a { color: red }
     </style>
-    <script type="text/x-opra" id="four">
+    <script type="text/x-opra" id="opra-four">
       template code...
     </script>
-    <script type="text/x-opra" id="five">
+    <script type="text/x-opra" id="opra-five">
       more template code...
     </script>
   </html>
