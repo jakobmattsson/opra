@@ -202,8 +202,8 @@ var build = function(indexFile, settings, callback) {
         }
       }
 
-      var csstag = createTag('style', { type: 'text/css', media: paramsToMediaType(d.file.params), 'data-path': showPaths ? d.file.name : undefined }, d.content);
-      var jstag = createTag('script', { type: filetype(d.file.name) == 'js' ? 'text/javascript' : 'text/x-opra', 'data-path': showPaths ? d.file.name : undefined }, d.content);
+      var csstag = createTag('style', { type: 'text/css', media: paramsToMediaType(d.file.params), 'data-path': showPaths && d.file.params.indexOf('never-paths') === -1 ? d.file.name : undefined }, d.content);
+      var jstag = createTag('script', { type: filetype(d.file.name) == 'js' ? 'text/javascript' : 'text/x-opra', 'data-path': showPaths && d.file.params.indexOf('never-paths') === -1 ? d.file.name : undefined }, d.content);
       return spaces + wrappIE(d.file.params, filetype(d.file.name) == 'css' ? csstag : jstag);
     }).join('\n');
   };
@@ -292,8 +292,17 @@ var build = function(indexFile, settings, callback) {
       }
 
       var outFile = path.join(assetRoot, fileParams.filename);
+      var content = data[0].content;
 
-      fs.writeFile(outFile, data[0].content, encoding, function(err) {
+      if (isCompressed && data[0].file.params.indexOf('never-compress') === -1) {
+        if (filetype(outFile) == 'css') {
+          content = cleanCSS.process(content);
+        } else if (filetype(outFile) == 'js') {
+          content = uglifier(content);
+        }
+      }
+
+      fs.writeFile(outFile, content, encoding, function(err) {
         if (err) {
           callback(err);
           return;

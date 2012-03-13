@@ -19,7 +19,7 @@ test 'concat', {
     alert(1)
   """
   'f2.js': """
-    alert(2)
+    alert(1 + 1)
   """
   'c1.css': """
     color: black;
