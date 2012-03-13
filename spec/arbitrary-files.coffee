@@ -1,4 +1,4 @@
-test 'default-to-inclusion', {
+test 'arbitrary-files', {
   'index.html': """
     <html>
       <!--OPRA

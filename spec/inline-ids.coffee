@@ -1,4 +1,4 @@
-test 'inline', {
+test 'inline-ids', {
   'index.html': """
     <html>
       <!--OPRA
