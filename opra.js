@@ -338,7 +338,7 @@ var build = function(indexFile, settings, callback) {
         }
       }
 
-      fs.writeFile(filename, content, encoding, function(err) {
+      fs.writeFile(outFile, content, encoding, function(err) {
         if (err) {
           callback(err);
           return;
