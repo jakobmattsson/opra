@@ -30,12 +30,12 @@ test 'concat-inline', {
   <html>
     <script type="text/javascript">
       alert(1)
-      1 + 1
+      1 + 1;
       alert(2)
     </script>
     <script type="text/javascript">
       alert(1)
-      1 + 1
+      1 + 1;
       alert(2)
     </script>
     <style type="text/css">

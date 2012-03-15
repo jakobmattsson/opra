@@ -37,7 +37,7 @@ test 'global-params', {
     </script>
     <script type="text/javascript">
       alert(1)
-      1 + 1
+      1 + 1;
       alert(2)
     </script>
     <script type="text/javascript" src="script.js"></script>

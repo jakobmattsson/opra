@@ -306,7 +306,7 @@ var build = function(indexFile, settings, callback) {
         var d2 = re.map(function(g) {
           return { file: g[0].file, content: g.map(function(x) {
             return x.content.trim();
-          }).join('\n') };
+          }).join(';\n') };
         });
 
         callback(null, d2);
