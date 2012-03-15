@@ -94,6 +94,13 @@ var removeElement = function(array, element) {
 var arrayContains = function(array, element) {
   return array.indexOf(element) !== -1;
 };
+var createTag = function(name, attributes, content) {
+  return "<" + name + Object.keys(attributes).filter(function(key) {
+    return !isUndefined(attributes[key]);
+  }).map(function(key) {
+    return " " + key + '="' + attributes[key] + '"';
+  }).join('') + (typeof content == 'string' ? ">" + content + "</" + name + ">" : " />");
+};
 
 var build = function(indexFile, settings, callback) {
 
@@ -145,13 +152,7 @@ var build = function(indexFile, settings, callback) {
     return undefined;
   };
 
-  var createTag = function(name, attributes, content) {
-    return "<" + name + Object.keys(attributes).filter(function(key) {
-      return !isUndefined(attributes[key]);
-    }).map(function(key) {
-      return " " + key + '="' + attributes[key] + '"';
-    }).join('') + (typeof content == 'string' ? ">" + content + "</" + name + ">" : " />");
-  };
+
 
   var getMatches = function(content, prefix, postfix) {
     var reg = new RegExp(" *" + prefix + "( +[^\n]*)?\n([^>]*)" + postfix, "g");
