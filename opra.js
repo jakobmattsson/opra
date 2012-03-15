@@ -1,7 +1,6 @@
 var fs = require('fs');
 var url = require('url');
 var path = require('path');
-var express = require('express');
 var coffee = require('coffee-script');
 var less = require('less');
 var async = require('async');
@@ -435,7 +434,9 @@ var serve = function(path, settings) {
           next();
           return;
         }
-        res.send(result, { 'Content-Type': 'text/html' });
+        res.setHeader('Content-Type', 'text/html');
+        res.setHeader('Content-Length', Buffer.byteLength(result));
+        res.end(result);
       });
     } else {
       next();
