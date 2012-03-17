@@ -18,4 +18,4 @@ var dir = path.resolve(process.cwd(), dirs[0]);
 var app = connect().use(opra.serve(dir)).use(jit(dir)).use(connect.static(dir));
 
 http.createServer(app).listen(port);
-console.log("Serving " + dir + " at http://localhost:" + port);
+console.log("Serving " + dir + " at port " + port);
