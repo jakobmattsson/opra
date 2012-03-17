@@ -109,8 +109,9 @@ var build = function(indexFile, settings, callback) {
   }
   settings = settings || {};
 
+  var indexFileDir = path.resolve(process.cwd(), path.dirname(indexFile));
   var encoding = settings.encoding || 'utf8';
-  var assetRoot = settings.assetRoot || path.dirname(indexFile);
+  var assetRoot = settings.assetRoot || indexFileDir;
 
   var globalFlags = {
     concat: settings.concat,
@@ -193,12 +194,22 @@ var build = function(indexFile, settings, callback) {
     });
   };
   var globMatches = function(matches, callback) {
+    callback(null, matches);
+    return;
+
     async.map(matches, function(match, callback) {
-      async.map(match.files, function(file, callback) {
-        var globbedFiles = glob.sync(file.name, { nonull: true, cwd: assetRoot, root: assetRoot });
-        callback(null, globbedFiles.map(function(globbedFile) {
-          return { name: path.relative(assetRoot, globbedFile), params: file.params, spaces: file.spaces };
-        }));
+      async.mapSeries(match.files, function(file, callback) {
+        var globbedFiles = glob.sync(file.name, { nonull: false, cwd: indexFileDir, root: assetRoot });
+
+        var files = globbedFiles.map(function(globbedFile) {
+          return {
+            name: globbedFile, //.length > 0 && globbedFile[0] == '/' ? globbedFile : path.relative(indexFileDir, globbedFile),
+            params: file.params,
+            spaces: file.spaces
+          };
+        });
+
+        callback(null, files);
       }, function(err, result) {
         callback(err, {
           match: match.match,
@@ -266,7 +277,10 @@ var build = function(indexFile, settings, callback) {
   };
   var filesToInlineBasic = function(filename, spaces, shouldConcat, fileParams, files, callback) {
     async.mapSeries(files, function(file, callback) {
-      var filePath = path.join(assetRoot, file.name);
+
+      var basePath = file.name && file.name[0] == '/' ? assetRoot : indexFileDir;
+      var filePath = path.join(basePath, file.name);
+
       var actualCallback = function(err, data) {
         callback(err, { file: file, content: data });
       };
@@ -363,6 +377,11 @@ var build = function(indexFile, settings, callback) {
     }
 
     globMatches(getMatches(content, "<!--OPRA", "-->"), function(err, matches) {
+      if (err) {
+        callback(err);
+        return;
+      }
+
 
       matches.forEach(function(f) {
         ['concat', 'inline'].forEach(function(n) {
@@ -398,7 +417,7 @@ var build = function(indexFile, settings, callback) {
         });
       });
 
-      // console.log(require('util').inspect(matches, null, 10));
+
 
       async.reduce(matches, content, function(next_content, d, callback) {
         var shouldConcat = arrayContains(d.params, 'concat');
@@ -424,10 +443,14 @@ var serve = function(path, settings) {
   settings = settings || {};
   settings.url = settings.url || '/index.html';
 
+  if (isUndefined(settings.assetRoot)) {
+    settings.assetRoot = path;
+  }
+
   return function(req, res, next) {
     var pathname = url.parse(req.url).pathname;
 
-    if (settings.url == pathname) {
+    if (endsWith(pathname, ['.html'])) {
       build(path + pathname, settings, function(err, result) {
         if (err) {
           console.log("OPRA ERROR: While compiling " + pathname + " the following was caught:", err);

@@ -12,6 +12,7 @@
     "node": ">=0.6.0"
   },
   "devDependencies": {
+    "should": "0.6.0",
     "sugar": "1.2.2"
   },
   "dependencies": {
@@ -20,6 +21,9 @@
     "async": "0.1.15",
     "uglify-js": "1.2.5",
     "clean-css": "0.3.2",
+    "connect": "2.0.2",
+    "express-jit-coffee": "0.1.9",
+    "connect-rewrite": "0.0.1",
     "coffee-script": "1.2.0"
   }
 }

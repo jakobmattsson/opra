@@ -1,0 +1,16 @@
+#!/usr/bin/env node
+
+var http = require('http');
+var connect = require('connect');
+var fs = require('fs');
+var path = require('path');
+var jit = require('express-jit-coffee');
+
+var opra = require('../opra.js');
+
+var cwd = process.cwd();
+var app = connect().use(opra.serve(cwd + '/public')).use(jit(cwd + '/public')).use(connect.static('public'));
+var port = 7000;
+
+http.createServer(app).listen(port);
+console.log("Listening on " + port);

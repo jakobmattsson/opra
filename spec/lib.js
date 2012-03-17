@@ -1,5 +1,6 @@
+var path = require('path');
 var fs = require('fs');
-glob = require('glob');
+var glob = require('glob');
 var should = require('should');
 var sugar = require('sugar');
 var opra = require('../opra.js');
@@ -34,7 +35,7 @@ var mockReadFile = block(function() {
 });
 
 var opraOK = function(done, settings, output, debug) {
-  opra.build('index.html', settings, function(err, res) {
+  opra.build(path.join(__dirname, 'index.html'), settings, function(err, res) {
 
     if (debug) {
       console.log(res, output);
@@ -47,8 +48,14 @@ var opraOK = function(done, settings, output, debug) {
 };
 
 global.test = function(desc, mocks, args, output) {
+
+  var m2 = {};
+  Object.keys(mocks).forEach(function(key) {
+    m2[path.join(__dirname, key)] = mocks[key];
+  })
+
   it(desc, function(done) {
-    mockReadFile(mocks);
+    mockReadFile(m2);
     opraOK(done, args, output);
   });
 };
