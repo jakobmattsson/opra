@@ -186,7 +186,7 @@ var build = function(indexFile, settings, callback) {
           var data = s.split('@');
           return {
             name: data[0].trim(),
-            params: data.length > 1 ? data[1].split(',').map(function(p) { return p.trim(); }) : [],
+            params: data.length > 1 ? data[1].split(' ').map(function(p) { return p.trim(); }).filter(function(x) { return x; }) : [],
             spaces: s.match(/^\s*/)[0] || ''
           };
         })
@@ -398,8 +398,8 @@ var build = function(indexFile, settings, callback) {
             }
           }
 
-          f.params = removeElement(f.params, n + '-always');
-          f.params = removeElement(f.params, n + '-never');
+          f.params = removeElement(f.params, 'always-' + n);
+          f.params = removeElement(f.params, 'never-' + n);
         });
       });
 
@@ -411,8 +411,8 @@ var build = function(indexFile, settings, callback) {
               f.params.push(n);
             }
 
-            f.params = removeElement(f.params, n + '-always');
-            f.params = removeElement(f.params, n + '-never');
+            f.params = removeElement(f.params, 'always-' + n);
+            f.params = removeElement(f.params, 'never-' + n);
           });
         });
       });
