@@ -13,3 +13,4 @@
   - concat (only global)
 * Should be possible to add a timestamp in the names of the generated files
 * Write tests for files that are written to the filesystem rather than printed on stdout
+* Add the possibility to write HTML-comments that will be removed from the final output
