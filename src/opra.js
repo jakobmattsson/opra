@@ -30,13 +30,13 @@ var compileCoffee = function(filePath, encoding, callback) {
     callback(null, code);
   });
 };
-var compileLess = function(filePath, encoding, callback) {
+var compileLess = function(filePath, paths, encoding, callback) {
   fs.readFile(filePath, encoding, function(err, content) {
     if (err) {
       callback(err);
       return;
     }
-    less.render(content, { paths: [path.dirname(filePath)] }, callback);
+    less.render(content, { paths: paths.concat([path.dirname(filePath)]) }, callback);
   });
 };
 var uglifier = function(code) {
@@ -292,7 +292,7 @@ var build = function(indexFile, settings, callback) {
       };
 
       if (endsWith(file.name, ['.less'])) {
-        compileLess(filePath, encoding, actualCallback);
+        compileLess(filePath, [assetRoot], encoding, actualCallback);
       } else if (endsWith(file.name, ['.coffee'])) {
         compileCoffee(filePath, encoding, actualCallback);
       } else {
