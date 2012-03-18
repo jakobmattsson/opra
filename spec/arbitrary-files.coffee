@@ -8,6 +8,9 @@ test 'arbitrary-files', {
       -->
     </html>
   """
+  "one.js": ""
+  "two.other": ""
+  "three.tpl": ""
 }, {}, """
   <html>
     <script type="text/javascript" src="one.js"></script>

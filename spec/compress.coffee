@@ -15,6 +15,9 @@ test 'compress', {
       -->
     </html>
   """
+  "one.js": ""
+  "two.js": ""
+  "three.css": ""
 }, { compress: true }, """
   <html>
     <script type="text/javascript" src="one.js"></script>

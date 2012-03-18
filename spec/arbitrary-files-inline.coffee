@@ -31,4 +31,4 @@ test 'arbitrary-files-inline', {
       <div>test</div>
     </script>
   </html>
-"""
+""", ['some']

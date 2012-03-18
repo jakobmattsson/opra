@@ -12,6 +12,11 @@ test 'default-to-inclusion', {
       -->
     </html>
   """
+  "one.js": ""
+  "two.js": ""
+  "three.css": ""
+  "four.css": ""
+  "five.css": ""
 }, {}, """
   <html>
     <script type="text/javascript" src="one.js"></script>

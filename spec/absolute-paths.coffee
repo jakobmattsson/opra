@@ -10,10 +10,13 @@ test 'absolute-paths', {
       -->
     </html>
   """
+  "one.js": ""
+  "/spechelpers/two.js": ""
+  "../spechelpers/three.js": ""
 }, { }, """
   <html>
     <script type="text/javascript" src="one.js"></script>
     <script type="text/javascript" src="/spechelpers/two.js"></script>
     <script type="text/javascript" src="../spechelpers/three.js"></script>
   </html>
-"""
+""", ['/spechelpers']

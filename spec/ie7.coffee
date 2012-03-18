@@ -11,6 +11,10 @@ test 'ie7', {
       -->
     </html>
   """
+  "one.js": ""
+  "two.js": ""
+  "three.css": ""
+  "four.css": ""
 }, {}, """
   <html>
     <script type="text/javascript" src="one.js"></script>

@@ -9,6 +9,10 @@ test 'type-detection-include', {
       -->
     </html>
   """
+  "one.css": ""
+  "one.js": ""
+  "one.coffee": ""
+  "one.less": ""
 }, { }, """
   <html>
     <link rel="stylesheet" type="text/css" href="one.css" />

@@ -11,6 +11,9 @@ test 'absolute-paths-assetRoot', {
       -->
     </html>
   """
+  "one.js": ''
+  "spechelpers/aop1.js": ''
+  "/spechelpers/aop1.js": ''
 }, { assetRoot: path.join(__dirname, '..') }, """
   <html>
     <script type="text/javascript" src="one.js"></script>
@@ -18,4 +21,4 @@ test 'absolute-paths-assetRoot', {
     <script type="text/javascript" src="/spechelpers/aop1.js"></script>
     <script type="text/javascript" src="../spechelpers/aop1.js"></script>
   </html>
-"""
+""", ['/spechelpers']

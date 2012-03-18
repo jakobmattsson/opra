@@ -39,4 +39,4 @@ test 'funcational-params-as-strongest', {
     <script type="text/javascript" src="two.js"></script>
     <script type="text/javascript" src="script.js"></script>
   </html>
-"""
+""", ['script.js']

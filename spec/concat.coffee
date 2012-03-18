@@ -33,4 +33,4 @@ test 'concat', {
     <script type="text/javascript" src="bar.js"></script>
     <link rel="stylesheet" type="text/css" href="c.css" />
   </html>
-"""
+""", ['bar.js', 'c.css', 'foo.js']

@@ -6,7 +6,7 @@ var fs = require('fs');
 var path = require('path');
 var jit = require('express-jit-coffee');
 
-var opra = require('../opra.js');
+var opra = require('../src/opra.js');
 
 var args = process.argv.slice(2);
 var ports = args.map(function(x) { return parseInt(x, 10); }).filter(function(x) { return x; }).concat([7000]);

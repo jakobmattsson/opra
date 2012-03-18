@@ -42,4 +42,4 @@ test 'global-params', {
     </script>
     <script type="text/javascript" src="script.js"></script>
   </html>
-"""
+""", ['script.js']

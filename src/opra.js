@@ -6,7 +6,8 @@ var less = require('less');
 var async = require('async');
 var uglify = require('uglify-js');
 var cleanCSS = require('clean-css');
-var glob = require('glob');
+var glob = require('../../node-glob/glob.js');
+//var glob = require('glob');
 
 var isUndefined = function(x) {
   return typeof x == 'undefined';
@@ -111,7 +112,7 @@ var build = function(indexFile, settings, callback) {
 
   var indexFileDir = path.resolve(process.cwd(), path.dirname(indexFile));
   var encoding = settings.encoding || 'utf8';
-  var assetRoot = settings.assetRoot || indexFileDir;
+  var assetRoot = path.resolve(settings.assetRoot || indexFileDir);
 
   var globalFlags = {
     concat: settings.concat,
@@ -194,22 +195,28 @@ var build = function(indexFile, settings, callback) {
     });
   };
   var globMatches = function(matches, callback) {
-    callback(null, matches);
-    return;
-
     async.map(matches, function(match, callback) {
       async.mapSeries(match.files, function(file, callback) {
-        var globbedFiles = glob.sync(file.name, { nonull: false, cwd: indexFileDir, root: assetRoot });
+        var basePath = file.name && file.name[0] == '/' ? assetRoot : indexFileDir;
+        glob(file.name, { nonull: false, root: assetRoot, cwd: indexFileDir  }, function(err, globbedFiles) {
+          if (err) {
+            callback(err);
+            return;
+          }
+          if (!globbedFiles) {
+            console.error("Found no matches for pattern: " + file.name);
+          }
 
-        var files = globbedFiles.map(function(globbedFile) {
-          return {
-            name: globbedFile, //.length > 0 && globbedFile[0] == '/' ? globbedFile : path.relative(indexFileDir, globbedFile),
-            params: file.params,
-            spaces: file.spaces
-          };
+          var files = globbedFiles.map(function(globbedFile) {
+            return {
+              name: globbedFile && globbedFile[0] == '/' ? '/' + path.relative(basePath, globbedFile) : globbedFile,
+              params: file.params,
+              spaces: file.spaces
+            };
+          });
+
+          callback(null, files);
         });
-
-        callback(null, files);
       }, function(err, result) {
         callback(err, {
           match: match.match,

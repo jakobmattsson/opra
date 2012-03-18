@@ -11,16 +11,16 @@ files = {
       -->
     </html>
   """
+  "one.js": """
+    1
+  """
+  "spechelpers/aop1.js": """
+    2
+  """
+  "/spechelpers/aop1.js": """
+    top1.js
+  """
 }
-
-files["one.js"] = """
-  1
-"""
-files["spechelpers/aop1.js"] = """
-  2
-"""
-
-
 
 test 'absolute-paths-inline', files, { inline: true, assetRoot: path.resolve(__dirname, '..') }, """
   <html>
@@ -37,4 +37,4 @@ test 'absolute-paths-inline', files, { inline: true, assetRoot: path.resolve(__d
       top1.js
     </script>
   </html>
-"""
+""", ['/spechelpers']
