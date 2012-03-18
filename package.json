@@ -1,9 +1,9 @@
 {
   "name": "opra",
   "description": "Single page app builder",
-  "main": "src/opra.js",
+  "main": "./src/opra.js",
   "bin": { "opra" : "./bin/opra.js" },
-  "version": "0.8.1",
+  "version": "0.8.2",
   "author": "Jakob Mattsson <jakob.mattsson@gmail.com> (jakobmattsson.se)",
   "repository": {
     "type": "git",
