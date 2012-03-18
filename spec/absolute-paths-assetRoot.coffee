@@ -21,4 +21,6 @@ test 'absolute-paths-assetRoot', {
     <script type="text/javascript" src="/spechelpers/aop1.js"></script>
     <script type="text/javascript" src="../spechelpers/aop1.js"></script>
   </html>
-""", ['/spechelpers']
+""", {
+  '/spechelpers': null
+}

@@ -42,4 +42,10 @@ test 'global-params', {
     </script>
     <script type="text/javascript" src="script.js"></script>
   </html>
-""", ['script.js']
+""", {
+  'script.js': """
+    alert(1)
+    1 + 1;
+    alert(2)
+  """
+}

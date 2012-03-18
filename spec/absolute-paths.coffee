@@ -19,4 +19,6 @@ test 'absolute-paths', {
     <script type="text/javascript" src="/spechelpers/two.js"></script>
     <script type="text/javascript" src="../spechelpers/three.js"></script>
   </html>
-""", ['/spechelpers']
+""", {
+  '/spechelpers': null
+}

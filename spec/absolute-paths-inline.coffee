@@ -37,4 +37,6 @@ test 'absolute-paths-inline', files, { inline: true, assetRoot: path.resolve(__d
       top1.js
     </script>
   </html>
-""", ['/spechelpers']
+""", {
+ '/spechelpers': null
+}

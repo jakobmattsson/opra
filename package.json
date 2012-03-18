@@ -2,7 +2,9 @@
   "name": "opra",
   "description": "Single page app builder",
   "main": "./src/opra.js",
-  "bin": { "opra" : "./bin/opra" },
+  "bin": {
+    "opra": "./bin/opra"
+  },
   "version": "0.8.4",
   "author": "Jakob Mattsson <jakob.mattsson@gmail.com> (jakobmattsson.se)",
   "repository": {
@@ -16,7 +18,11 @@
     "should": "0.6.0",
     "mkdirp": "0.3.0",
     "wrench": "1.3.7",
+    "evil": "0.1.4",
     "sugar": "1.2.2"
+  },
+  "scripts": {
+    "test": "mocha --require spec/lib.js spec/*.coffee"
   },
   "dependencies": {
     "less": "1.3.0",

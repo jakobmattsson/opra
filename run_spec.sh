@@ -1,1 +1,0 @@
-mocha --require spec/lib.js spec/*.coffee

@@ -26,4 +26,6 @@ test 'glob', {
     <script type="text/javascript" src="/spechelpers/dir2/subdir/subdir.js"></script>
     <script type="text/javascript" src="/spechelpers/top2.coffee"></script>
   </html>
-""", ['/spechelpers']
+""", {
+  '/spechelpers': null
+}

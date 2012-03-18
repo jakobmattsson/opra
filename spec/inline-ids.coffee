@@ -47,4 +47,6 @@ test 'inline-ids', {
       more template code...
     </script>
   </html>
-""", ['path']
+""", {
+  'path': null
+}
