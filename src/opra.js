@@ -6,8 +6,7 @@ var less = require('less');
 var async = require('async');
 var uglify = require('uglify-js');
 var cleanCSS = require('clean-css');
-var glob = require('../../node-glob/glob.js');
-//var glob = require('glob');
+var glob = require('glob');
 
 var isUndefined = function(x) {
   return typeof x == 'undefined';
