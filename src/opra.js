@@ -390,6 +390,8 @@ var build = function(indexFile, settings, callback) {
         callback(err);
         return;
       }
+      
+      console.log(require('util').inspect(matches, null, 10));
 
 
       matches.forEach(function(f) {
