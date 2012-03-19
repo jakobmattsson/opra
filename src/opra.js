@@ -460,10 +460,15 @@ var serve = function(rootpath, settings) {
     var pathname = url.parse(req.url).pathname;
     var filepath = path.join(rootpath, pathname);
 
+    if (!endsWith(pathname, ['.html'])) {
+      next();
+      return;
+    }
+
     fs.stat(filepath, function(err, stat) {
       if (err) {
         console.log("OPRA ERROR: While searching for " + filepath + " the following was caught:", err);
-          return;
+        return;
       }
 
       if (stat.isDirectory()) {
@@ -471,20 +476,16 @@ var serve = function(rootpath, settings) {
         filepath = path.join(filepath, 'index.html');
       }
 
-      if (endsWith(pathname, ['.html'])) {
-        build(filepath, settings, function(err, result) {
-          if (err) {
-            console.log("OPRA ERROR: While compiling " + pathname + " the following was caught:", err);
-            next();
-            return;
-          }
-          res.setHeader('Content-Type', 'text/html');
-          res.setHeader('Content-Length', Buffer.byteLength(result));
-          res.end(result);
-        });
-      } else {
-        next();
-      }
+      build(filepath, settings, function(err, result) {
+        if (err) {
+          console.log("OPRA ERROR: While compiling " + pathname + " the following was caught:", err);
+          next();
+          return;
+        }
+        res.setHeader('Content-Type', 'text/html');
+        res.setHeader('Content-Length', Buffer.byteLength(result));
+        res.end(result);
+      });
     });
   };
 };
