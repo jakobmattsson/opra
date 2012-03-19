@@ -10,6 +10,10 @@ var evil = require('evil').pollute(global);
 
 var opra = require('../src/opra.js');
 
+var isPathAbsolute = function(filename) {
+  return path.resolve(filename) === filename;
+};
+
 global.test = function(desc, mocks, args, output, del) {
   del = del || {};
   var assetRoot = args.assetRoot || __dirname;
@@ -25,10 +29,10 @@ global.test = function(desc, mocks, args, output, del) {
 
       var complete = function(callback) {
         async.forEach(Object.keys(mocks), function(f, callback) {
-          fs.unlink(path.join(f && f[0] == '/' ? assetRoot : __dirname, f), callback);
-        }, propagate(callback, function(err) {
+          fs.unlink(path.join(isPathAbsolute(f) ? assetRoot : __dirname, f), callback);
+        }, propagate(callback, function() {
           async.forEach(Object.keys(del), function(d, callback) {
-            var toDelete = path.join(d && d[0] == '/' ? assetRoot : __dirname, d);
+            var toDelete = path.join(isPathAbsolute(d) ? assetRoot : __dirname, d);
             fs.stat(toDelete, propagate(callback, function(stat) {
               if (stat.isFile()) {
                 fs.readFile(toDelete, 'utf8', propagate(callback, function(content) {
