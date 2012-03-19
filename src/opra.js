@@ -462,6 +462,10 @@ var serve = function(rootpath, settings) {
 
     fs.stat(filepath, function(err, stat) {
       if (err) {
+        console.log("pathname 1", pathname);
+        console.log("pathname 2", unescape(pathname));
+        console.log("rootpath", rootpath);
+        console.log("filepath", filepath);
         console.log("error", err);
         return;
       }
