@@ -100,6 +100,9 @@ var createTag = function(name, attributes, content) {
     return " " + key + '="' + attributes[key] + '"';
   }).join('') + (typeof content == 'string' ? ">" + content + "</" + name + ">" : " />");
 };
+var isPathAbsolute = function(filename) {
+  return path.resolve(filename) === filename;
+};
 
 var build = function(indexFile, settings, callback) {
 
@@ -196,7 +199,7 @@ var build = function(indexFile, settings, callback) {
   var globMatches = function(matches, callback) {
     async.map(matches, function(match, callback) {
       async.mapSeries(match.files, function(file, callback) {
-        var basePath = file.name && file.name[0] == '/' ? assetRoot : indexFileDir;
+        var basePath = isPathAbsolute(file.name) ? assetRoot : indexFileDir;
         glob(file.name, { nonull: false, root: assetRoot, cwd: indexFileDir  }, function(err, globbedFiles) {
           if (err) {
             callback(err);
@@ -208,7 +211,7 @@ var build = function(indexFile, settings, callback) {
 
           var files = globbedFiles.map(function(globbedFile) {
             return {
-              name: globbedFile && globbedFile[0] == '/' ? '/' + path.relative(basePath, globbedFile) : globbedFile,
+              name: isPathAbsolute(globbedFile) ? '/' + path.relative(basePath, globbedFile) : globbedFile,
               params: file.params,
               spaces: file.spaces
             };
@@ -284,7 +287,7 @@ var build = function(indexFile, settings, callback) {
   var filesToInlineBasic = function(filename, spaces, shouldConcat, fileParams, files, callback) {
     async.mapSeries(files, function(file, callback) {
 
-      var basePath = file.name && file.name[0] == '/' ? assetRoot : indexFileDir;
+      var basePath = isPathAbsolute(file.name) ? assetRoot : indexFileDir;
       var filePath = path.join(basePath, file.name);
 
       var actualCallback = function(err, data) {
