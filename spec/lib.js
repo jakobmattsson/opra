@@ -40,12 +40,13 @@ global.test = function(desc, mocks, args, output, del) {
                     if (content !== del[d]) {
                       content.should.equal(del[d]);
                     }
-                    callback(err);
+                    callback();
                   }));
                 }));
               } else {
                 if (del[toDelete]) {
-                  throw "expecting content, but was directory";
+                  callback("expecting content, but was directory");
+                  return;
                 }
                 wrench.rmdirSyncRecursive(toDelete);
                 callback();
