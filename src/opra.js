@@ -445,31 +445,40 @@ var build = function(indexFile, settings, callback) {
     });
   });
 };
-var serve = function(path, settings) {
+var serve = function(rootpath, settings) {
   settings = settings || {};
   settings.url = settings.url || '/index.html';
 
   if (isUndefined(settings.assetRoot)) {
-    settings.assetRoot = path;
+    settings.assetRoot = rootpath;
   }
 
   return function(req, res, next) {
     var pathname = url.parse(req.url).pathname;
+    var filepath = path.join(rootpath, pathname);
 
-    if (endsWith(pathname, ['.html'])) {
-      build(path + pathname, settings, function(err, result) {
-        if (err) {
-          console.log("OPRA ERROR: While compiling " + pathname + " the following was caught:", err);
-          next();
-          return;
-        }
-        res.setHeader('Content-Type', 'text/html');
-        res.setHeader('Content-Length', Buffer.byteLength(result));
-        res.end(result);
-      });
-    } else {
-      next();
-    }
+    fs.stat(filepath, function(err, stat) {
+
+      if (stat.isDirectory()) {
+        pathname = path.join(pathname, 'index.html');
+        filepath = path.join(filepath, 'index.html');
+      }
+
+      if (endsWith(pathname, ['.html'])) {
+        build(filepath, settings, function(err, result) {
+          if (err) {
+            console.log("OPRA ERROR: While compiling " + pathname + " the following was caught:", err);
+            next();
+            return;
+          }
+          res.setHeader('Content-Type', 'text/html');
+          res.setHeader('Content-Length', Buffer.byteLength(result));
+          res.end(result);
+        });
+      } else {
+        next();
+      }
+    });
   };
 };
 
