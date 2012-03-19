@@ -16,7 +16,7 @@ test 'glob', {
   "/spechelpers/dir1/dir1.js": ""
   "/spechelpers/dir2/dir2.js": ""
   "/spechelpers/dir2/subdir/subdir.js": ""
-}, { assetRoot: path.join(__dirname, '..')  }, """
+}, { assetRoot: path.join(__dirname, '../..')  }, """
   <html>
     <script type="text/javascript" src="../spechelpers/aop1.js"></script>
     <script type="text/javascript" src="/spechelpers/aop1.js"></script>

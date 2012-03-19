@@ -22,7 +22,7 @@ files = {
   """
 }
 
-test 'absolute-paths-inline', files, { inline: true, assetRoot: path.resolve(__dirname, '..') }, """
+test 'absolute-paths-inline', files, { inline: true, assetRoot: path.resolve(__dirname, '../..') }, """
   <html>
     <script type="text/javascript">
       1

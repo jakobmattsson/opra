@@ -22,7 +22,7 @@
     "sugar": "1.2.2"
   },
   "scripts": {
-    "test": "mocha --require spec/lib.js spec/*.coffee"
+    "test": "mocha --require spec/lib.js spec/tests/*.coffee"
   },
   "dependencies": {
     "less": "1.3.0",
