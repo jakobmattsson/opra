@@ -211,7 +211,7 @@ var build = function(indexFile, settings, callback) {
 
           var files = globbedFiles.map(function(globbedFile) {
             return {
-              name: isPathAbsolute(globbedFile) ? '/' + path.relative(basePath, globbedFile) : globbedFile,
+              name: (isPathAbsolute(globbedFile) ? '/' + path.relative(basePath, globbedFile) : globbedFile).replace("\\", "/"),
               params: file.params,
               spaces: file.spaces
             };
