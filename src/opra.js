@@ -461,6 +461,10 @@ var serve = function(rootpath, settings) {
     var filepath = path.join(rootpath, pathname);
 
     fs.stat(filepath, function(err, stat) {
+      if (err) {
+        console.log("error", err);
+        return;
+      }
 
       if (stat.isDirectory()) {
         pathname = path.join(pathname, 'index.html');
