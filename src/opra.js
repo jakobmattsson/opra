@@ -103,6 +103,11 @@ var createTag = function(name, attributes, content) {
 var isPathAbsolute = function(filename) {
   return path.resolve(filename) === filename;
 };
+var escapeInlineScript = function(script) {
+  return script.replace(/<\/( )*script>/g, function(str) {
+    return str.replace("</", "\\x3C/");
+  });
+};
 
 var build = function(indexFile, settings, callback) {
 
@@ -121,6 +126,7 @@ var build = function(indexFile, settings, callback) {
     inline: settings.inline,
     compress: settings.compress,
     paths: settings.paths,
+    escape: settings.escape,
     ids: settings.ids
   };
 
@@ -259,7 +265,7 @@ var build = function(indexFile, settings, callback) {
         type: filetype(d.file.name) == 'js' ? 'text/javascript' : 'text/x-opra',
         id: filetype(d.file.name) != 'js' && arrayContains(d.file.params, 'ids') ? "opra-" + path.basename(d.file.name).split('.')[0] : undefined,
         'data-path': arrayContains(d.file.params, 'paths') ? d.file.name : undefined
-      }, d.content);
+      }, filetype(d.file.name) == 'js' && arrayContains(d.file.params, 'escape') ? escapeInlineScript(d.content) : d.content);
       return spaces + wrappIE(d.file.params, filetype(d.file.name) == 'css' ? csstag : jstag);
     }).join('\n');
   };
@@ -415,7 +421,7 @@ var build = function(indexFile, settings, callback) {
 
       matches.forEach(function(m) {
         m.files.forEach(function(f) {
-          ['compress', 'paths', 'ids'].forEach(function(n) {
+          ['compress', 'paths', 'ids', 'escape'].forEach(function(n) {
             if (arrayContains(f.params, 'always-' + n) || (!arrayContains(f.params, 'never-' + n) && globalFlags[n])) {
               f.params.push(n);
             }
