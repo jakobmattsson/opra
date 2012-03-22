@@ -1,4 +1,3 @@
-* Detect evil strings like </script> and </style> inside the inline code
 * Implement support for "global" params (for setting nocompress for a bunch of files for example)
 * When concatenating, take params into account so not a single file is produced at all times
   - Or rather, give an error message in that case
@@ -12,6 +11,4 @@
   - paths (global and local)
   - concat (only global)
 * Should be possible to add a timestamp in the names of the generated files
-* Write tests for files that are written to the filesystem rather than printed on stdout
-* For the opra-bin: when navigating to a directory, it should lead to the index.html contained in that directory
 * Add the possibility to write HTML-comments that will be removed from the final output
