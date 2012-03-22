@@ -3,6 +3,7 @@ var path = require('path');
 var async = require('async');
 var cleanCSS = require('clean-css');
 var glob = require('glob');
+var _ = require('underscore');
 
 var helpers = require('./helpers.js');
 var serve = require('./serve.js');
@@ -303,7 +304,7 @@ var build = function(indexFile, settings, callback) {
             f.params.push(n);
           } else if (helpers.arrayContains(f.params, 'never-' + n)) {
             f.params = helpers.removeElement(f.params, n);
-          } else if (!helpers.isUndefined(globalFlags[n])) {
+          } else if (!_.isUndefined(globalFlags[n])) {
             if (globalFlags[n]) {
               f.params.push(n);
             } else {

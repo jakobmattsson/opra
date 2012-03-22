@@ -1,6 +1,8 @@
 var fs = require('fs');
 var url = require('url');
 var path = require('path');
+var _ = require('underscore');
+
 var helpers = require('./helpers.js');
 
 exports.serveConstructor = function(dependencies) {
@@ -8,7 +10,7 @@ exports.serveConstructor = function(dependencies) {
     settings = settings || {};
     settings.url = settings.url || '/index.html';
 
-    if (helpers.isUndefined(settings.assetRoot)) {
+    if (_.isUndefined(settings.assetRoot)) {
       settings.assetRoot = rootpath;
     }
 

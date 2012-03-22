@@ -3,15 +3,13 @@ var path = require('path');
 var coffee = require('coffee-script');
 var less = require('less');
 var uglify = require('uglify-js');
+var _ = require('underscore');
 
 var def = function(name, func) {
   this[name] = func;
   exports[name] = func;
 };
 
-def('isUndefined', function(x) {
-  return typeof x == 'undefined';
-});
 def('compileCoffee', function(filePath, encoding, callback) {
   fs.readFile(filePath, encoding, function(err, content) {
     var code = null;
@@ -96,7 +94,7 @@ def('arrayContains', function(array, element) {
 });
 def('createTag', function(name, attributes, content) {
   return "<" + name + Object.keys(attributes).filter(function(key) {
-    return !isUndefined(attributes[key]);
+    return !_.isUndefined(attributes[key]);
   }).map(function(key) {
     return " " + key + '="' + attributes[key] + '"';
   }).join('') + (typeof content == 'string' ? ">" + content + "</" + name + ">" : " />");
