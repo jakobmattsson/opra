@@ -169,7 +169,13 @@ var build = function(indexFile, settings, callback) {
     }).join('\n');
   };
 
-  var filesToMultipleInclude = function(filename, spaces, shouldConcat, fileParams, files, callback) {
+  var filesToMultipleInclude = function(ps, callback) {
+    var filename = ps.filename;
+    var spaces = ps.spaces;
+    var shouldConcat = ps.shouldConcat;
+    var fileParams = ps.fileParams;
+    var files = ps.files;
+
     var result = files.filter(function(file) {
       return filetype(file.name) != 'other';
     }).map(function(file) {
@@ -180,8 +186,8 @@ var build = function(indexFile, settings, callback) {
     }).join('\n');
     callback(null, result);
   };
-  var filesToInline = function(filename, spaces, shouldConcat, fileParams, files, callback) {
-    filesToInlineBasic(filename, spaces, shouldConcat, fileParams, files, function(err, data) {
+  var filesToInline = function(ps, callback) {
+    filesToInlineBasic(ps, function(err, data) {
       if (err) {
         callback(err);
         return;
@@ -189,7 +195,13 @@ var build = function(indexFile, settings, callback) {
       callback(null, tagify(data));
     });
   };
-  var filesToInlineBasic = function(filename, spaces, shouldConcat, fileParams, files, callback) {
+  var filesToInlineBasic = function(ps, callback) {
+    var filename = ps.filename;
+    var spaces = ps.spaces;
+    var shouldConcat = ps.shouldConcat;
+    var fileParams = ps.fileParams;
+    var files = ps.files;
+
     async.mapSeries(files, function(file, callback) {
 
       var basePath = helpers.isPathAbsolute(file.name) ? assetRoot : indexFileDir;
@@ -242,9 +254,15 @@ var build = function(indexFile, settings, callback) {
       }
     });
   };
-  var concatToFiles = function(filename, spaces, shouldConcat, fileParams, files, callback) {
+  var concatToFiles = function(ps, callback) {
+    var filename = ps.filename;
+    var spaces = ps.spaces;
+    var shouldConcat = ps.shouldConcat;
+    var fileParams = ps.fileParams;
+    var files = ps.files;
+
     var ft = filetype(filename);
-    filesToInlineBasic(filename, spaces, shouldConcat, fileParams, files, function(err, data) {
+    filesToInlineBasic(ps, function(err, data) {
       if (err) {
         callback(err);
         return;
@@ -289,7 +307,15 @@ var build = function(indexFile, settings, callback) {
       var shouldConcat = helpers.arrayContains(d.params, 'concat');
       var f = helpers.arrayContains(d.params, 'inline') ? filesToInline : (shouldConcat && d.filename ? concatToFiles : filesToMultipleInclude);
 
-      f(d.filename, d.spaces, shouldConcat, d.params, d.files, function(err, data, outfiles) {
+      var ps = {
+        filename: d.filename,
+        spaces: d.spaces,
+        shouldConcat: shouldConcat,
+        fileParams: d.params,
+        files: d.files
+      };
+
+      f(ps, function(err, data, outfiles) {
         if (err) {
           callback(err);
           return;
@@ -303,58 +329,65 @@ var build = function(indexFile, settings, callback) {
       });
     }, callback);
   };
-
-
-
-  fs.readFile(indexFile, encoding, function(err, content) {
-    if (err) {
-      callback(err);
-      return;
-    }
-
-    globMatches(getMatches(content, "<!--OPRA", "-->"), function(err, matches) {
+  var parseFile = function(indexFile, encoding, callback) {
+    fs.readFile(indexFile, encoding, function(err, content) {
       if (err) {
         callback(err);
         return;
       }
 
+      globMatches(getMatches(content, "<!--OPRA", "-->"), function(err, matches) {
+        if (err) {
+          callback(err);
+          return;
+        }
 
-      matches.forEach(function(f) {
-        ['concat', 'inline'].forEach(function(n) {
 
-          if (helpers.arrayContains(f.params, 'always-' + n)) {
-            f.params.push(n);
-          } else if (helpers.arrayContains(f.params, 'never-' + n)) {
-            f.params = _.without(f.params, n);
-          } else if (!_.isUndefined(globalFlags[n])) {
-            if (globalFlags[n]) {
+        matches.forEach(function(f) {
+          ['concat', 'inline'].forEach(function(n) {
+
+            if (helpers.arrayContains(f.params, 'always-' + n)) {
               f.params.push(n);
-            } else {
+            } else if (helpers.arrayContains(f.params, 'never-' + n)) {
               f.params = _.without(f.params, n);
-            }
-          }
-
-          f.params = _.without(f.params, 'always-' + n);
-          f.params = _.without(f.params, 'never-' + n);
-        });
-      });
-
-
-      matches.forEach(function(m) {
-        m.files.forEach(function(f) {
-          ['compress', 'paths', 'ids', 'escape'].forEach(function(n) {
-            if (helpers.arrayContains(f.params, 'always-' + n) || (!helpers.arrayContains(f.params, 'never-' + n) && globalFlags[n])) {
-              f.params.push(n);
+            } else if (!_.isUndefined(globalFlags[n])) {
+              if (globalFlags[n]) {
+                f.params.push(n);
+              } else {
+                f.params = _.without(f.params, n);
+              }
             }
 
             f.params = _.without(f.params, 'always-' + n);
             f.params = _.without(f.params, 'never-' + n);
           });
         });
-      });
 
-      transform(matches, content, callback);
+
+        matches.forEach(function(m) {
+          m.files.forEach(function(f) {
+            ['compress', 'paths', 'ids', 'escape'].forEach(function(n) {
+              if (helpers.arrayContains(f.params, 'always-' + n) || (!helpers.arrayContains(f.params, 'never-' + n) && globalFlags[n])) {
+                f.params.push(n);
+              }
+
+              f.params = _.without(f.params, 'always-' + n);
+              f.params = _.without(f.params, 'never-' + n);
+            });
+          });
+        });
+
+        callback(null, { matches: matches, content: content });
+      });
     });
+  };
+
+  parseFile(indexFile, encoding, function(err, res) {
+    if (err) {
+      callback(err);
+      return;
+    }
+    transform(res.matches, res.content, callback);
   });
 };
 
