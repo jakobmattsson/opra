@@ -20,7 +20,7 @@ global.test = function(desc, mocks, args, output, del) {
 
   it(desc, function(done) {
     async.forEach(Object.keys(mocks), function(f, callback) {
-      var p = path.join(f && f[0] == '/' ? assetRoot : __dirname, f);
+      var p = path.join(isPathAbsolute(f) ? assetRoot : __dirname, f);
       mkdirp(path.dirname(p), propagate(callback, function() {
         fs.writeFile(p, mocks[f], 'utf8', callback);
       }));
