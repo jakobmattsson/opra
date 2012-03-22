@@ -8,7 +8,6 @@ var helpers = require('./helpers.js');
 exports.serveConstructor = function(dependencies) {
   return function(rootpath, settings) {
     settings = settings || {};
-    settings.url = settings.url || '/index.html';
 
     if (_.isUndefined(settings.assetRoot)) {
       settings.assetRoot = rootpath;
