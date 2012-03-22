@@ -284,6 +284,28 @@ var build = function(indexFile, settings, callback) {
     });
   };
 
+  var transform = function(matches, content, callback) {
+    async.reduce(matches, content, function(next_content, d, callback) {
+      var shouldConcat = helpers.arrayContains(d.params, 'concat');
+      var f = helpers.arrayContains(d.params, 'inline') ? filesToInline : (shouldConcat && d.filename ? concatToFiles : filesToMultipleInclude);
+
+      f(d.filename, d.spaces, shouldConcat, d.params, d.files, function(err, data, outfiles) {
+        if (err) {
+          callback(err);
+          return;
+        }
+
+        async.forEach(outfiles || [], function(file, callback) {
+          fs.writeFile(file.name, file.content, encoding, callback);
+        }, function(err) {
+          callback(err, helpers.safeReplace(next_content, d.match, data));
+        });
+      });
+    }, callback);
+  };
+
+
+
   fs.readFile(indexFile, encoding, function(err, content) {
     if (err) {
       callback(err);
@@ -331,25 +353,7 @@ var build = function(indexFile, settings, callback) {
         });
       });
 
-
-
-      async.reduce(matches, content, function(next_content, d, callback) {
-        var shouldConcat = helpers.arrayContains(d.params, 'concat');
-        var f = helpers.arrayContains(d.params, 'inline') ? filesToInline : (shouldConcat && d.filename ? concatToFiles : filesToMultipleInclude);
-
-        f(d.filename, d.spaces, shouldConcat, d.params, d.files, function(err, data, outfiles) {
-          if (err) {
-            callback(err);
-            return;
-          }
-
-          async.forEach(outfiles || [], function(file, callback) {
-            fs.writeFile(file.name, file.content, encoding, callback);
-          }, function(err) {
-            callback(err, helpers.safeReplace(next_content, d.match, data));
-          });
-        });
-      }, callback);
+      transform(matches, content, callback);
     });
   });
 };
