@@ -325,17 +325,17 @@ var build = function(indexFile, settings, callback) {
           if (helpers.arrayContains(f.params, 'always-' + n)) {
             f.params.push(n);
           } else if (helpers.arrayContains(f.params, 'never-' + n)) {
-            f.params = helpers.removeElement(f.params, n);
+            f.params = _.without(f.params, n);
           } else if (!_.isUndefined(globalFlags[n])) {
             if (globalFlags[n]) {
               f.params.push(n);
             } else {
-              f.params = helpers.removeElement(f.params, n);
+              f.params = _.without(f.params, n);
             }
           }
 
-          f.params = helpers.removeElement(f.params, 'always-' + n);
-          f.params = helpers.removeElement(f.params, 'never-' + n);
+          f.params = _.without(f.params, 'always-' + n);
+          f.params = _.without(f.params, 'never-' + n);
         });
       });
 
@@ -347,8 +347,8 @@ var build = function(indexFile, settings, callback) {
               f.params.push(n);
             }
 
-            f.params = helpers.removeElement(f.params, 'always-' + n);
-            f.params = helpers.removeElement(f.params, 'never-' + n);
+            f.params = _.without(f.params, 'always-' + n);
+            f.params = _.without(f.params, 'never-' + n);
           });
         });
       });

@@ -77,18 +77,6 @@ def('execAll', function(regexp, str) {
 
   return matches;
 });
-def('removeIndex', function(array, index) {
-  var a = array.slice(0);
-  a.splice(index, 1);
-  return a;
-});
-def('removeElement', function(array, element) {
-  var i = array.indexOf(element);
-  if (i !== -1) {
-    return removeIndex(array, i);
-  }
-  return array;
-});
 def('arrayContains', function(array, element) {
   return array.indexOf(element) !== -1;
 });
