@@ -8,7 +8,7 @@ var wrench = require('wrench');
 var async = require('async');
 var evil = require('evil').pollute(global);
 
-var opra = require('../src/opra.js');
+var opra = require('../' + (process.env.SRC_DIR || 'src') + '/opra.js');
 
 var isPathAbsolute = function(filename) {
   return path.resolve(filename) === filename;

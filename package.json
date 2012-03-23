@@ -22,7 +22,8 @@
     "sugar": "1.2.2"
   },
   "scripts": {
-    "test": "mocha --require spec/lib.js spec/tests/*.coffee spec/custom/*.coffee"
+    "test": "mocha --require spec/lib.js spec/**/*.coffee",
+    "coverage": "rm -rf src-cov && node-jscoverage src/ src-cov && SRC_DIR=src-cov mocha --require spec/lib.js --reporter html-cov spec/**/*.coffee > test-coverage.html && rm -rf src-cov && open test-coverage.html"
   },
   "dependencies": {
     "less": "1.3.0",

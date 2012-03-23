@@ -1,5 +1,5 @@
 should = require 'should'
-helpers = require '../../src/helpers.js'
+helpers = require "../../#{process.env.SRC_DIR || 'src'}/helpers.js"
 
 describe 'helpers.uglify', ->
   it 'should compress code', ->
