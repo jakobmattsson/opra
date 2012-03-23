@@ -3,6 +3,24 @@ should = require 'should'
 helpers = require "../../#{process.env.SRC_DIR || 'src'}/helpers.js"
 
 
+
+it "should expose 'serveConstructor'; nothing else", ->
+  helpers.should.have.keys [
+    'compileCoffee'
+    'compileLess'
+    'uglifier'
+    'endsWith'
+    'safeReplace'
+    'safeReplaceAll'
+    'execAll'
+    'arrayContains'
+    'createTag'
+    'isPathAbsolute'
+    'escapeInlineScript'
+  ]
+
+
+
 describe 'helpers.compileCoffee', ->
 
   it 'should compile coffeescript from a file', (done) ->
