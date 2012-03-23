@@ -25,6 +25,7 @@ exports.serveConstructor = function(dependencies) {
       fs.stat(filepath, function(err, stat) {
         if (err) {
           dependencies.log("OPRA ERROR: While searching for " + filepath + " the following was caught:", err);
+          next();
           return;
         }
 
