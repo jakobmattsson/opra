@@ -12,14 +12,10 @@ var def = function(name, func) {
   exports[name] = func;
 };
 
-def('filetype', function(filename) {
-  if (helpers.endsWith(filename, ['.css', '.less'])) {
-    return 'css';
-  }
-  if (helpers.endsWith(filename, ['.js', '.coffee'])) {
-    return 'js';
-  }
-  return 'other';
+def('filetype', function(filename, compiler) {
+  return Object.keys(compiler).reduce(function(memo, type) {
+    return helpers.endsWith(filename, ['.' + type]) ? compiler[type].target : memo;
+  }, 'other');
 });
 def('iewrap', function(params) {
   if (helpers.arrayContains(params, "ie7")) {
@@ -252,7 +248,7 @@ def('filesToInlineBasic', function(compiler, files, shouldConcat, callback) {
     });
 
     if (compileType.length > 0) {
-      compiler[compileType[0]](file.absolutePath, file.encoding, actualCallback);
+      compiler[compileType[0]].compile(file.absolutePath, file.encoding, actualCallback);
     } else {
       fs.readFile(file.absolutePath, file.encoding, actualCallback);
     }
@@ -296,7 +292,7 @@ def('concatToFiles', function(compiler, assetRoot, ps, callback) {
   var filename = ps.filename;
   var spaces = ps.spaces;
 
-  var ft = filetype(filename);
+  var ft = filetype(filename, compiler);
   filesToInlineBasic(compiler, ps.files, ps.shouldConcat, function(err, data) {
     if (err) {
       callback(err);
@@ -387,11 +383,25 @@ exports.buildConstructor = function(dependencies) {
     };
 
     var compiler = {
-      less: function(file, encoding, callback) {
-        helpers.compileLess(file, [assetRoot], encoding, callback);
+      css: {
+        target: 'css',
+        compile: fs.readFile
       },
-      coffee: function(file, encoding, callback) {
-        helpers.compileCoffee(file, encoding, callback);
+      js: {
+        target: 'js',
+        compile: fs.readFile
+      },
+      less: {
+        target: 'css',
+        compile: function(file, encoding, callback) {
+          helpers.compileLess(file, [assetRoot], encoding, callback);
+        }
+      },
+      coffee: {
+        target: 'js',
+        compile: function(file, encoding, callback) {
+          helpers.compileCoffee(file, encoding, callback);
+        }
       }
     };
 
@@ -405,7 +415,7 @@ exports.buildConstructor = function(dependencies) {
         match.files.forEach(function(file) {
           file.absolutePath = filePathToAbsolute(file.name, assetRoot, indexFileDir);
           file.encoding = encoding;
-          file.type = filetype(file.name);
+          file.type = filetype(file.name, compiler);
         });
       });
 
