@@ -321,7 +321,7 @@ def('concatToFiles', function(compiler, assetRoot, ps, callback) {
       var css = spaces + helpers.createTag('link', { rel: 'stylesheet', type: 'text/css', href: filename });
       callback(null, css, [{ name: outFile, content: content }]);
     } else {
-      callback("Invalid filetype! Use 'js' or 'css'."); // BUGG HÄR
+      callback("Invalid filetype! Use 'js' or 'css'.");
     }
   });
 });
