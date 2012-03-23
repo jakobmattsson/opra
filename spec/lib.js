@@ -58,8 +58,12 @@ global.test = function(desc, mocks, args, output, del) {
 
       opra.build(path.join(__dirname, 'index.html'), args, function(err, res) {
         try {
-          should.ifError(err);
-          res.should.equal(output);
+          if (typeof output == 'string') {
+            should.ifError(err);
+            res.should.equal(output);
+          } else {
+            err.should.equal(output.error);
+          }
         } catch (ex) {
           complete(function(err) {
             if (err) {
@@ -72,4 +76,8 @@ global.test = function(desc, mocks, args, output, del) {
       });
     });
   });
+};
+
+global.error = function(msg) {
+  return { error: msg };
 };
