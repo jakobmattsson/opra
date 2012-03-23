@@ -42,7 +42,7 @@ def('uglifier', function(code) {
   var jsp = uglify.parser;
   var pro = uglify.uglify;
 
-  var ast = jsp.parse(code);
+  var ast = jsp.parse(code || '');
   ast = pro.ast_mangle(ast);
   ast = pro.ast_squeeze(ast);
   return pro.gen_code(ast);
@@ -54,6 +54,9 @@ def('endsWith', function(str, ends) {
 });
 def('safeReplace', function(str, target, newString) {
   var i = str.indexOf(target);
+  if (i === -1) {
+    return str;
+  }
   return str.slice(0, i) + newString + str.slice(i + target.length);
 });
 def('safeReplaceAll', function(str, target, newString) {
@@ -81,6 +84,13 @@ def('arrayContains', function(array, element) {
   return array.indexOf(element) !== -1;
 });
 def('createTag', function(name, attributes, content) {
+  attributes = attributes || {};
+
+  if (_.isUndefined(content) && typeof attributes === 'string') {
+    content = attributes;
+    attributes = {};
+  }
+
   return "<" + name + Object.keys(attributes).filter(function(key) {
     return !_.isUndefined(attributes[key]);
   }).map(function(key) {
