@@ -399,9 +399,7 @@ exports.buildConstructor = function(dependencies) {
       },
       coffee: {
         target: 'js',
-        compile: function(file, encoding, callback) {
-          helpers.compileCoffee(file, encoding, callback);
-        }
+        compile: helpers.compileCoffee
       }
     };
 
