@@ -74,7 +74,7 @@ def('execAll', function(regexp, str) {
   var match;
   var matches = [];
 
-  while ((match = regexp.exec(str)) != null) {
+  while ((match = regexp.exec(str)) !== null) {
     matches.push(match);
   }
 

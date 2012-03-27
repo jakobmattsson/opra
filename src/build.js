@@ -97,7 +97,7 @@ def('getMatches', function(content, prefix, postfix) {
       })
     };
   }).map(function(matchData) {
-    var filename = undefined;
+    var filename;
 
     var filenames = matchData.params.filter(function(p) {
       return p.indexOf('.') !== -1;
@@ -186,7 +186,7 @@ def('flagMatches', function(matches, globalFlags) {
           return n;
         }
       })
-    })
+    });
   });
 
   return m1.map(function(m) {
