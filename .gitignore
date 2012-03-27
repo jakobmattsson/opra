@@ -6,4 +6,4 @@ npm-debug.log
 script.js
 .DS_Store
 src-cov
-test-coverage.html
+test-coverage

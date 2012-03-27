@@ -22,7 +22,7 @@
   },
   "scripts": {
     "test": "mocha --require spec/lib.js spec/**/*.coffee",
-    "coverage": "rm -rf test-cov && node-jscoverage src/ test-cov && SRC_DIR=test-cov mocha --require spec/lib.js --reporter html-cov spec/**/*.coffee > test-coverage.html && rm -rf test-cov && open test-coverage.html"
+    "coverage": "scripts/coverage.sh 'spec/**/*.coffee' all.html && scripts/coverage.sh 'spec/custom/*.coffee' unit.html"
   },
   "dependencies": {
     "less": "1.3.0",
