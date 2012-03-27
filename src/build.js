@@ -17,14 +17,14 @@ def('filetype', function(filename, compiler) {
     return helpers.endsWith(filename, ['.' + type]) ? compiler[type].target : memo;
   }, 'other');
 });
-def('iewrap', function(params) {
+def('whichIE', function(params) {
   if (helpers.arrayContains(params, "ie7")) {
     return "ie7";
   }
   return undefined;
 });
 def('wrappIE', function(params, str) {
-  if (iewrap(params) == 'ie7') {
+  if (whichIE(params) == 'ie7') {
     return "<!--[if IE 7]>" + str + "<![endif]-->";
   }
   return str;
@@ -165,6 +165,45 @@ def('globMatches', function(assetRoot, indexFileDir, matches, callback) {
     });
   }, callback);
 });
+def('flagMatches', function(matches, globalFlags) {
+
+  var m1 = matches.map(function(f) {
+    return _.extend({}, f, {
+      params: ['concat', 'inline'].map(function(n) {
+
+        if (helpers.arrayContains(f.params, 'always-' + n)) {
+          return n;
+        } else if (helpers.arrayContains(f.params, 'never-' + n)) {
+          return undefined;
+        } else if (!_.isUndefined(globalFlags[n])) {
+          if (globalFlags[n]) {
+            return n;
+          } else {
+            return undefined;
+          }
+        }
+        if (helpers.arrayContains(f.params, n)) {
+          return n;
+        }
+      })
+    })
+  });
+
+  return m1.map(function(m) {
+    return _.extend({}, m, {
+      files: m.files.map(function(f) {
+        return _.extend({}, f, {
+          params: ['compress', 'paths', 'ids', 'escape', 'screen', 'ie7', 'print'].map(function(n) {
+            if (helpers.arrayContains(f.params, 'always-' + n) || (!helpers.arrayContains(f.params, 'never-' + n) && (globalFlags[n] || helpers.arrayContains(f.params, n)))) {
+              return n;
+            }
+            return undefined;
+          }).filter(function(x) { return x; })
+        });
+      })
+    });
+  });
+});
 def('parseFile', function(assetRoot, globalFlags, indexFile, encoding, callback) {
   fs.readFile(indexFile, encoding, function(err, content) {
     if (err) {
@@ -178,40 +217,7 @@ def('parseFile', function(assetRoot, globalFlags, indexFile, encoding, callback)
         return;
       }
 
-      matches.forEach(function(f) {
-        ['concat', 'inline'].forEach(function(n) {
-
-          if (helpers.arrayContains(f.params, 'always-' + n)) {
-            f.params.push(n);
-          } else if (helpers.arrayContains(f.params, 'never-' + n)) {
-            f.params = _.without(f.params, n);
-          } else if (!_.isUndefined(globalFlags[n])) {
-            if (globalFlags[n]) {
-              f.params.push(n);
-            } else {
-              f.params = _.without(f.params, n);
-            }
-          }
-
-          f.params = _.without(f.params, 'always-' + n);
-          f.params = _.without(f.params, 'never-' + n);
-        });
-      });
-
-      matches.forEach(function(m) {
-        m.files.forEach(function(f) {
-          ['compress', 'paths', 'ids', 'escape'].forEach(function(n) {
-            if (helpers.arrayContains(f.params, 'always-' + n) || (!helpers.arrayContains(f.params, 'never-' + n) && globalFlags[n])) {
-              f.params.push(n);
-            }
-
-            f.params = _.without(f.params, 'always-' + n);
-            f.params = _.without(f.params, 'never-' + n);
-          });
-        });
-      });
-
-      callback(null, { matches: matches, content: content });
+      callback(null, { matches: flagMatches(matches, globalFlags), content: content });
     });
   });
 });
@@ -265,7 +271,7 @@ def('filesToInlineBasic', function(compiler, files, shouldConcat, callback) {
         } else {
           var last = groups.slice(-1)[0][0];
           if (d.file.type == last.file.type &&
-            iewrap(d.file.params) == iewrap(last.file.params) &&
+            whichIE(d.file.params) == whichIE(last.file.params) &&
             (d.file.params.indexOf('compress') === -1) == (last.file.params.indexOf('compress') === -1) &&
             paramsToMediaType(d.file.params) == paramsToMediaType(last.file.params)) {
             groups.slice(-1)[0].push(d);
