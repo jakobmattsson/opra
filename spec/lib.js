@@ -3,16 +3,11 @@ var fs = require('fs');
 var glob = require('glob');
 var should = require('should');
 var sugar = require('sugar');
-var mkdirp = require('mkdirp');
-var wrench = require('wrench');
+var powerfs = require('powerfs');
 var async = require('async');
 var evil = require('evil').pollute(global);
+var opra = require('./setup.js').requireSource('opra.js');
 
-var opra = require('../' + (process.env.SRC_DIR || 'src') + '/opra.js');
-
-var isPathAbsolute = function(filename) {
-  return path.resolve(filename) === filename;
-};
 
 global.test = function(desc, mocks, args, output, del) {
   del = del || {};
@@ -20,21 +15,19 @@ global.test = function(desc, mocks, args, output, del) {
 
   it(desc, function(done) {
     async.forEach(Object.keys(mocks), function(f, callback) {
-      var p = path.join(isPathAbsolute(f) ? assetRoot : __dirname, f);
-      mkdirp(path.dirname(p), propagate(callback, function() {
-        fs.writeFile(p, mocks[f], 'utf8', callback);
-      }));
+      var p = path.join(powerfs.isPathAbsolute(f) ? assetRoot : __dirname, f);
+      powerfs.writeFile(p, mocks[f], 'utf8', callback);
     }, function(err) {
       should.ifError(err);
 
       var complete = function(callback) {
         async.forEach(Object.keys(mocks), function(f, callback) {
-          fs.unlink(path.join(isPathAbsolute(f) ? assetRoot : __dirname, f), callback);
+          fs.unlink(path.join(powerfs.isPathAbsolute(f) ? assetRoot : __dirname, f), callback);
         }, propagate(callback, function() {
           async.forEach(Object.keys(del), function(d, callback) {
-            var toDelete = path.join(isPathAbsolute(d) ? assetRoot : __dirname, d);
-            fs.stat(toDelete, propagate(callback, function(stat) {
-              if (stat.isFile()) {
+            var toDelete = path.join(powerfs.isPathAbsolute(d) ? assetRoot : __dirname, d);
+            powerfs.isFile(toDelete, propagate(callback, function(isFile) {
+              if (isFile) {
                 fs.readFile(toDelete, 'utf8', propagate(callback, function(content) {
                   fs.unlink(toDelete, propagate(callback, function() {
                     if (content !== del[d]) {
@@ -48,8 +41,7 @@ global.test = function(desc, mocks, args, output, del) {
                   callback("expecting content, but was directory");
                   return;
                 }
-                wrench.rmdirSyncRecursive(toDelete);
-                callback();
+                powerfs.rmdir(toDelete, callback);
               }
             }));
           }, callback);

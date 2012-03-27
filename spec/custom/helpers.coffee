@@ -1,6 +1,6 @@
 fs = require 'fs'
 should = require 'should'
-helpers = require "../../#{process.env.SRC_DIR || 'src'}/helpers.js"
+helpers = require('../setup.js').requireSource('helpers.js')
 
 
 

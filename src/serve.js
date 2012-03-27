@@ -17,11 +17,6 @@ exports.serveConstructor = function(dependencies) {
       var pathname = url.parse(req.url).pathname;
       var filepath = path.join(rootpath, pathname);
 
-      if (!helpers.endsWith(pathname, ['.html'])) {
-        next();
-        return;
-      }
-
       fs.stat(filepath, function(err, stat) {
         if (err) {
           dependencies.log("OPRA ERROR (while searching for " + filepath + ")", err);
@@ -34,9 +29,14 @@ exports.serveConstructor = function(dependencies) {
           filepath = path.join(filepath, 'index.html');
         }
 
+        if (!helpers.endsWith(pathname, ['.html'])) {
+          next();
+          return;
+        }
+
         dependencies.build(filepath, settings, function(err, result) {
           if (err) {
-            dependencies.log("OPRA ERROR: While compiling " + pathname + " the following was caught:", err);
+            dependencies.log("OPRA ERROR while compiling " + pathname, err);
             next();
             return;
           }
