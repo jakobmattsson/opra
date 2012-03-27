@@ -142,26 +142,18 @@ def('globMatches', function(assetRoot, indexFileDir, matches, callback) {
           console.error("Found no matches for pattern: " + file.name);
         }
 
-        var files = globbedFiles.map(function(globbedFile) {
-          return {
-            name: filePathToAbsolute2(globbedFile, assetRoot, indexFileDir).replace(/\\/g, "/"),
-            params: file.params,
-            spaces: file.spaces
-          };
-        });
-
-        callback(null, files);
+        callback(null, globbedFiles.map(function(globbedFile) {
+          return _.extend({}, file, {
+            name: filePathToAbsolute2(globbedFile, assetRoot, indexFileDir).replace(/\\/g, "/")
+          });
+        }));
       });
     }, function(err, result) {
-      callback(err, {
-        match: match.match,
-        spaces: match.spaces,
-        filename: match.filename,
-        params: match.params,
+      callback(err, _.extend({}, match, {
         files: (result || []).reduce(function(mem, item) {
           return mem.concat(item);
         }, [])
-      });
+      }));
     });
   }, callback);
 });
@@ -210,7 +202,10 @@ def('parseFile', function(assetRoot, globalFlags, indexFile, encoding, callback)
         return;
       }
 
-      callback(null, { matches: flagMatches(matches, globalFlags), content: content });
+      callback(null, {
+        matches: flagMatches(matches, globalFlags),
+        content: content
+      });
     });
   });
 });
