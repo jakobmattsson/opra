@@ -4,7 +4,7 @@ helpers = require('../setup.js').requireSource('helpers.js')
 
 
 
-it "should expose 'serveConstructor'; nothing else", ->
+it "should expose the expected helpers", ->
   helpers.should.have.keys [
     'compileCoffee'
     'compileLess'
