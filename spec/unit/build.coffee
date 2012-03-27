@@ -58,4 +58,47 @@ describe 'build.paramsToMediaType', ->
 
 
 
+describe 'build.getMatches', ->
+
+  it 'should parse input data for filenames, spaces, params and files', () ->
+    res = build.getMatches """
+      <html>
+        <!--apa a b   c
+
+          x.js @ d e   f
+          /y.css @ file.ext i j k
+          /z.foobar @ l m data.something n
+        -->
+        test
+        <!--apa banan
+        -->
+
+      </html>
+    """, '<!--apa', '-->'
+
+    res.should.eql([{
+      match: '  <!--apa a b   c\n\n    x.js @ d e   f\n    /y.css @ file.ext i j k\n    /z.foobar @ l m data.something n\n  -->'
+      filename: undefined
+      spaces: '  '
+      params: ['a', 'b', 'c']
+      files: [{
+        name: 'x.js'
+        params: ['d', 'e', 'f']
+        spaces: '    '
+      }, {
+        name: '/y.css'
+        params: ['file.ext', 'i', 'j', 'k']
+        spaces: '    '
+      }, {
+        name: '/z.foobar'
+        params: ['l', 'm', 'data.something', 'n']
+        spaces: '    '
+      }]
+    }, {
+      match: '  <!--apa banan\n  -->'
+      filename: undefined
+      spaces: '  '
+      params: ['banan']
+      files: []
+    }])
 
