@@ -80,7 +80,7 @@ def('execAll', function(regexp, str) {
 
   return matches;
 });
-def('arrayContains', function(array, element) {
+def('contains', function(array, element) {
   return array.indexOf(element) !== -1;
 });
 def('createTag', function(name, attributes, content) {

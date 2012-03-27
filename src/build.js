@@ -18,7 +18,7 @@ def('filetype', function(filename, compiler) {
   }, 'other');
 });
 def('whichIE', function(params) {
-  if (helpers.arrayContains(params, "ie7")) {
+  if (helpers.contains(params, "ie7")) {
     return "ie7";
   }
   return undefined;
@@ -30,10 +30,10 @@ def('wrappIE', function(params, str) {
   return str;
 });
 def('paramsToMediaType', function(params) {
-  if (helpers.arrayContains(params, "screen")) {
+  if (helpers.contains(params, "screen")) {
     return 'screen';
   }
-  if (helpers.arrayContains(params, "print")) {
+  if (helpers.contains(params, "print")) {
     return 'print';
   }
   return undefined;
@@ -46,7 +46,7 @@ def('tagifyOne', function(tag) {
   }).join('\n');
   tag.content = "\n" + tag.content + "\n" + spaces;
 
-  if (helpers.arrayContains(tag.file.params, 'compress')) {
+  if (helpers.contains(tag.file.params, 'compress')) {
     if (tag.file.type == 'css') {
       tag.content = cleanCSS.process(tag.content);
     } else if (tag.file.type == 'js') {
@@ -57,13 +57,13 @@ def('tagifyOne', function(tag) {
   var csstag = helpers.createTag('style', {
     type: 'text/css',
     media: paramsToMediaType(tag.file.params),
-    'data-path': helpers.arrayContains(tag.file.params, 'paths') ? tag.file.name : undefined
+    'data-path': helpers.contains(tag.file.params, 'paths') ? tag.file.name : undefined
   }, tag.content);
   var jstag = helpers.createTag('script', {
     type: tag.file.type == 'js' ? 'text/javascript' : 'text/x-opra',
-    id: tag.file.type != 'js' && helpers.arrayContains(tag.file.params, 'ids') ? "opra-" + path.basename(tag.file.name).split('.')[0] : undefined,
-    'data-path': helpers.arrayContains(tag.file.params, 'paths') ? tag.file.name : undefined
-  }, tag.file.type == 'js' && helpers.arrayContains(tag.file.params, 'escape') ? helpers.escapeInlineScript(tag.content) : tag.content);
+    id: tag.file.type != 'js' && helpers.contains(tag.file.params, 'ids') ? "opra-" + path.basename(tag.file.name).split('.')[0] : undefined,
+    'data-path': helpers.contains(tag.file.params, 'paths') ? tag.file.name : undefined
+  }, tag.file.type == 'js' && helpers.contains(tag.file.params, 'escape') ? helpers.escapeInlineScript(tag.content) : tag.content);
   return spaces + wrappIE(tag.file.params, tag.file.type == 'css' ? csstag : jstag);
 });
 def('tagify', function(tags) {
@@ -100,10 +100,10 @@ def('getMatches', function(content, prefix, postfix) {
     var filename;
 
     var filenames = matchData.params.filter(function(p) {
-      return helpers.arrayContains(p, '.');
+      return helpers.contains(p, '.');
     });
     matchData.params = matchData.params.filter(function(p) {
-      return !helpers.arrayContains(p, '.');
+      return !helpers.contains(p, '.');
     });
 
     if (filenames.length >= 1) {
@@ -160,15 +160,15 @@ def('globMatches', function(assetRoot, indexFileDir, matches, callback) {
 def('flagMatches', function(matches, globalFlags) {
 
   var prec = function(params, n) {
-    if (helpers.arrayContains(params, 'always-' + n)) {
+    if (helpers.contains(params, 'always-' + n)) {
       return n;
-    } else if (helpers.arrayContains(params, 'never-' + n)) {
+    } else if (helpers.contains(params, 'never-' + n)) {
       return undefined;
     } else if (!_.isUndefined(globalFlags[n])) {
       if (globalFlags[n]) {
         return n;
       }
-    } else if (helpers.arrayContains(params, n)) {
+    } else if (helpers.contains(params, n)) {
       return n;
     }
     return undefined;
@@ -260,7 +260,7 @@ def('filesToInlineBasic', function(compiler, files, shouldConcat, callback) {
           var last = groups.slice(-1)[0][0];
           if (d.file.type == last.file.type &&
             whichIE(d.file.params) == whichIE(last.file.params) &&
-            helpers.arrayContains(d.file.params, 'compress') == helpers.arrayContains(last.file.params, 'compress') &&
+            helpers.contains(d.file.params, 'compress') == helpers.contains(last.file.params, 'compress') &&
             paramsToMediaType(d.file.params) == paramsToMediaType(last.file.params)) {
             groups.slice(-1)[0].push(d);
           } else {
@@ -300,7 +300,7 @@ def('concatToFiles', function(compiler, assetRoot, ps, callback) {
     var outFile = path.join(assetRoot, filename);
     var content = data[0].content;
 
-    if (helpers.arrayContains(data[0].file.params, 'compress')) {
+    if (helpers.contains(data[0].file.params, 'compress')) {
       if (ft == 'css') {
         content = cleanCSS.process(content);
       } else if (ft == 'js') {
@@ -325,7 +325,7 @@ def('transform', function(assetRoot, compiler, encoding, matches, content, callb
     var next_content = cc.cont;
     var old_outfiles = cc.files;
 
-    var shouldConcat = helpers.arrayContains(d.params, 'concat');
+    var shouldConcat = helpers.contains(d.params, 'concat');
 
     var ps = {
       filename: d.filename,
@@ -344,7 +344,7 @@ def('transform', function(assetRoot, compiler, encoding, matches, content, callb
       callback(err, { cont: helpers.safeReplace(next_content, d.match, data), files: old_outfiles.concat(outfiles || []) });
     };
 
-    if (helpers.arrayContains(d.params, 'inline')) {
+    if (helpers.contains(d.params, 'inline')) {
       filesToInline(compiler, d.files, shouldConcat, fc);
     } else if (shouldConcat && d.filename) {
       concatToFiles(compiler, assetRoot, ps, fc);
