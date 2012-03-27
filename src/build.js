@@ -30,10 +30,10 @@ def('wrappIE', function(params, str) {
   return str;
 });
 def('paramsToMediaType', function(params) {
-  if (helpers.contains(params, "screen")) {
+  if (helpers.contains(params, 'screen')) {
     return 'screen';
   }
-  if (helpers.contains(params, "print")) {
+  if (helpers.contains(params, 'print')) {
     return 'print';
   }
   return undefined;
