@@ -100,10 +100,10 @@ def('getMatches', function(content, prefix, postfix) {
     var filename;
 
     var filenames = matchData.params.filter(function(p) {
-      return p.indexOf('.') !== -1;
+      return helpers.arrayContains(p, '.');
     });
     matchData.params = matchData.params.filter(function(p) {
-      return p.indexOf('.') === -1;
+      return !helpers.arrayContains(p, '.');
     });
 
     if (filenames.length >= 1) {
@@ -260,7 +260,7 @@ def('filesToInlineBasic', function(compiler, files, shouldConcat, callback) {
           var last = groups.slice(-1)[0][0];
           if (d.file.type == last.file.type &&
             whichIE(d.file.params) == whichIE(last.file.params) &&
-            (d.file.params.indexOf('compress') === -1) == (last.file.params.indexOf('compress') === -1) &&
+            helpers.arrayContains(d.file.params, 'compress') == helpers.arrayContains(last.file.params, 'compress') &&
             paramsToMediaType(d.file.params) == paramsToMediaType(last.file.params)) {
             groups.slice(-1)[0].push(d);
           } else {
