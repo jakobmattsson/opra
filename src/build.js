@@ -167,37 +167,30 @@ def('globMatches', function(assetRoot, indexFileDir, matches, callback) {
 });
 def('flagMatches', function(matches, globalFlags) {
 
-  var m1 = matches.map(function(f) {
-    return _.extend({}, f, {
-      params: ['concat', 'inline'].map(function(n) {
+  var prec = function(params, n) {
+    if (helpers.arrayContains(params, 'always-' + n)) {
+      return n;
+    } else if (helpers.arrayContains(params, 'never-' + n)) {
+      return undefined;
+    } else if (!_.isUndefined(globalFlags[n])) {
+      if (globalFlags[n]) {
+        return n;
+      }
+    } else if (helpers.arrayContains(params, n)) {
+      return n;
+    }
+    return undefined;
+  };
 
-        if (helpers.arrayContains(f.params, 'always-' + n)) {
-          return n;
-        } else if (helpers.arrayContains(f.params, 'never-' + n)) {
-          return undefined;
-        } else if (!_.isUndefined(globalFlags[n])) {
-          if (globalFlags[n]) {
-            return n;
-          } else {
-            return undefined;
-          }
-        }
-        if (helpers.arrayContains(f.params, n)) {
-          return n;
-        }
-      })
-    });
-  });
-
-  return m1.map(function(m) {
+  return matches.map(function(m) {
     return _.extend({}, m, {
+      params: ['concat', 'inline'].map(function(n) {
+        return prec(m.params, n);
+      }).filter(function(x) { return x; }),
       files: m.files.map(function(f) {
         return _.extend({}, f, {
           params: ['compress', 'paths', 'ids', 'escape', 'screen', 'ie7', 'print'].map(function(n) {
-            if (helpers.arrayContains(f.params, 'always-' + n) || (!helpers.arrayContains(f.params, 'never-' + n) && (globalFlags[n] || helpers.arrayContains(f.params, n)))) {
-              return n;
-            }
-            return undefined;
+            return prec(f.params, n);
           }).filter(function(x) { return x; })
         });
       })
