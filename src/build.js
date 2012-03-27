@@ -39,20 +39,24 @@ def('paramsToMediaType', function(params) {
   return undefined;
 });
 
+def('compressor', function(filetype, params, content) {
+  if (helpers.contains(params, 'compress')) {
+    if (filetype == 'css') {
+      return cleanCSS.process(content);
+    } else if (filetype == 'js') {
+      return helpers.uglifier(content);
+    }
+  }
+  return content;
+});
+
 def('tagifyOne', function(tag) {
   var spaces = tag.file.spaces.slice(2);
   tag.content = tag.content.trim().split('\n').map(function(s) {
     return tag.file.spaces + s;
   }).join('\n');
   tag.content = "\n" + tag.content + "\n" + spaces;
-
-  if (helpers.contains(tag.file.params, 'compress')) {
-    if (tag.file.type == 'css') {
-      tag.content = cleanCSS.process(tag.content);
-    } else if (tag.file.type == 'js') {
-      tag.content = helpers.uglifier(tag.content);
-    }
-  }
+  tag.content = compressor(tag.file.type, tag.file.params, tag.content);
 
   var csstag = helpers.createTag('style', {
     type: 'text/css',
@@ -90,11 +94,7 @@ def('getMatches', function(content, prefix, postfix) {
   return helpers.execAll(reg, content).map(function(x) {
     return {
       str: x[0],
-      params: (x[1] || '').split(' ').map(function(x) {
-        return x.trim();
-      }).filter(function(x) {
-        return x;
-      })
+      params: _.compact((x[1] || '').split(' '))
     };
   }).map(function(matchData) {
     var filename;
@@ -179,10 +179,10 @@ def('flagMatches', function(matches, globalFlags) {
       params: ['concat', 'inline'].map(function(n) {
         return prec(m.params, n);
       }).filter(function(x) { return x; }),
-      files: m.files.map(function(f) {
-        return _.extend({}, f, {
+      files: m.files.map(function(file) {
+        return _.extend({}, file, {
           params: ['compress', 'paths', 'ids', 'escape', 'screen', 'ie7', 'print'].map(function(n) {
-            return prec(f.params, n);
+            return prec(file.params, n);
           }).filter(function(x) { return x; })
         });
       })
@@ -210,11 +210,11 @@ def('parseFile', function(assetRoot, globalFlags, indexFile, encoding, callback)
   });
 });
 
-def('filesToMultipleInclude', function(files, callback) {
+def('filesToMultipleInclude', function(files, compiler, callback) {
   var result = files.filter(function(file) {
     return file.type != 'other';
   }).map(function(file) {
-    var isCss = helpers.endsWith(file.name, ['.css', '.less']);
+    var isCss = filetype(file.name, compiler) === 'css';
     var css = helpers.createTag('link', { rel: 'stylesheet', type: 'text/css', media: paramsToMediaType(file.params), href: file.name });
     var js = helpers.createTag('script', { type: 'text/javascript', src: file.name }, '');
     return file.spaces.slice(2) + wrappIE(file.params, isCss ? css : js);
@@ -298,15 +298,7 @@ def('concatToFiles', function(compiler, assetRoot, ps, callback) {
     }
 
     var outFile = path.join(assetRoot, filename);
-    var content = data[0].content;
-
-    if (helpers.contains(data[0].file.params, 'compress')) {
-      if (ft == 'css') {
-        content = cleanCSS.process(content);
-      } else if (ft == 'js') {
-        content = helpers.uglifier(content);
-      }
-    }
+    var content = compressor(ft, data[0].file.params, data[0].content);
 
     if (ft == 'js') {
       var js = spaces + helpers.createTag('script', { type: 'text/javascript', src: filename }, '');
@@ -349,12 +341,12 @@ def('transform', function(assetRoot, compiler, encoding, matches, content, callb
     } else if (shouldConcat && d.filename) {
       concatToFiles(compiler, assetRoot, ps, fc);
     } else {
-      filesToMultipleInclude(d.files, fc);
+      filesToMultipleInclude(d.files, compiler, fc);
     }
   }, callback);
 });
 
-exports.buildConstructor = function(dependencies) {
+def('buildConstructor', function(dependencies) {
   return function(indexFile, settings, callback) {
 
     if (!callback && typeof settings == 'function') {
@@ -411,7 +403,6 @@ exports.buildConstructor = function(dependencies) {
         });
       });
 
-      // console.log(require('util').inspect(res.matches, null, 10));
       transform(assetRoot, compiler, encoding, res.matches, res.content, function(err, resa) {
         if (err) {
           callback(err);
@@ -429,4 +420,4 @@ exports.buildConstructor = function(dependencies) {
       });
     });
   };
-};
+});
