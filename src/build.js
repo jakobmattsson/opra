@@ -3,6 +3,9 @@ var path = require('path');
 var async = require('async');
 var cleanCSS = require('clean-css');
 var glob = require('glob');
+var npm = require('npm');
+var powerfs = require('powerfs');
+var browserify = require('browserify');
 var _ = require('underscore');
 
 var helpers = require('./helpers.js');
@@ -10,6 +13,15 @@ var helpers = require('./helpers.js');
 var def = function(name, func) {
   this[name] = func;
   exports[name] = func;
+};
+var propagate = function(callback, f) {
+  return function(err) {
+    if (err) {
+      callback(err);
+      return;
+    }
+    return f.apply(this, Array.prototype.slice.call(arguments, 1));
+  };
 };
 
 def('filetype', function(filename, compiler) {
@@ -150,6 +162,7 @@ def('globMatches', function(assetRoot, indexFileDir, matches, callback) {
       });
     }, function(err, result) {
       callback(err, _.extend({}, match, {
+        requests: match.files,
         files: (result || []).reduce(function(mem, item) {
           return mem.concat(item);
         }, [])
@@ -176,7 +189,7 @@ def('flagMatches', function(matches, globalFlags) {
 
   return matches.map(function(m) {
     return _.extend({}, m, {
-      params: ['concat', 'inline'].map(function(n) {
+      params: ['concat', 'inline', 'npm'].map(function(n) {
         return prec(m.params, n);
       }).filter(function(x) { return x; }),
       files: m.files.map(function(file) {
@@ -207,6 +220,45 @@ def('parseFile', function(assetRoot, globalFlags, indexFile, encoding, callback)
         content: content
       });
     });
+  });
+});
+
+def('buildNPM', function(folder, packages, outfile, callback) {
+  powerfs.mkdirp(folder, propagate(callback, function() {
+    npm.load({ loglevel: 'silent' }, propagate(callback, function() {
+      npm.commands.install(folder, packages, propagate(callback, function(data) {
+
+        var cwd = process.cwd();
+        process.chdir(folder);
+
+        var b = browserify();
+        b.require(packages.map(function(x) {
+          return x.split('@')[0];
+        }));
+        var output = b.bundle();
+        process.chdir(cwd);
+
+        callback(null, output);
+      }));
+    }));
+  }));
+});
+def('filesFromNPM', function(assetRoot, d, ps, callback) {
+  var input = d.requests.map(function(file) {
+    return file.name + '@' + (file.params[0] || '');
+  });
+
+  var outFile = path.join(assetRoot, ps.filename);
+  var folder = path.join(path.dirname(outFile), '.' + path.basename(outFile));
+
+  buildNPM(folder, input, ps.filename, function(err, data) {
+    if (err) {
+      callback(err);
+      return;
+    }
+
+    var js = ps.spaces + helpers.createTag('script', { type: 'text/javascript', src: ps.filename }, '');
+    callback(null, js, [{ name: outFile, content: data }]);
   });
 });
 
@@ -336,12 +388,14 @@ def('transform', function(assetRoot, compiler, encoding, matches, content, callb
       callback(err, { cont: helpers.safeReplace(next_content, d.match, data), files: old_outfiles.concat(outfiles || []) });
     };
 
-    if (helpers.contains(d.params, 'inline')) {
-      filesToInline(compiler, d.files, shouldConcat, fc);
+    if (helpers.contains(d.params, 'npm') && d.filename) {
+      filesFromNPM(assetRoot, d, ps, fc);
+    } else if (helpers.contains(d.params, 'inline')) {
+      filesToInline(compiler, ps.files, shouldConcat, fc);
     } else if (shouldConcat && d.filename) {
       concatToFiles(compiler, assetRoot, ps, fc);
     } else {
-      filesToMultipleInclude(d.files, compiler, fc);
+      filesToMultipleInclude(ps.files, compiler, fc);
     }
   }, callback);
 });
