@@ -5,7 +5,7 @@ test 'type-detection-include', {
         one.css
         one.js
         one.coffee
-        one.less @ screen
+        one.less screen
       -->
     </html>
   """

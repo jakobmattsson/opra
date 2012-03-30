@@ -65,9 +65,9 @@ describe 'build.getMatches', ->
       <html>
         <!--apa a b   c
 
-          x.js @ d e   f
-          /y.css @ file.ext i j k
-          /z.foobar @ l m data.something n
+          x.js d e   f
+          /y.css file.ext i j k
+          /z.foobar l m data.something n
         -->
         test
         <!--apa banan
@@ -77,7 +77,7 @@ describe 'build.getMatches', ->
     """, '<!--apa', '-->'
 
     res.should.eql([{
-      match: '  <!--apa a b   c\n\n    x.js @ d e   f\n    /y.css @ file.ext i j k\n    /z.foobar @ l m data.something n\n  -->'
+      match: '  <!--apa a b   c\n\n    x.js d e   f\n    /y.css file.ext i j k\n    /z.foobar l m data.something n\n  -->'
       filename: undefined
       spaces: '  '
       params: ['a', 'b', 'c']

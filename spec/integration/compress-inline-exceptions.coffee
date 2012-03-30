@@ -3,11 +3,11 @@ test 'compress-inline-exceptions', {
     <html>
       <!--OPRA
         one.js
-        two.js @ never-compress
+        two.js never-compress
       -->
       <!--OPRA
         three.css
-        four.css @ never-compress
+        four.css never-compress
       -->
     </html>
   """

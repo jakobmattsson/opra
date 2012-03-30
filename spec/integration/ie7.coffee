@@ -3,11 +3,11 @@ test 'ie7', {
     <html>
       <!--OPRA
         one.js
-        two.js @ ie7
+        two.js ie7
       -->
       <!--OPRA
         three.css
-        four.css @ ie7
+        four.css ie7
       -->
     </html>
   """

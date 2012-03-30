@@ -132,10 +132,10 @@ def('getMatches', function(content, prefix, postfix) {
       }).filter(function(s) {
         return s.trim();
       }).map(function(s) {
-        var data = s.split('@');
+        var data = _.compact(s.split(' ').map(function(p) { return p.trim(); }));
         return {
-          name: data[0].trim(),
-          params: data.length > 1 ? data[1].split(' ').map(function(p) { return p.trim(); }).filter(function(x) { return x; }) : [],
+          name: data[0],
+          params: data.slice(1),
           spaces: s.match(/^\s*/)[0] || ''
         };
       })

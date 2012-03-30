@@ -9,11 +9,11 @@ test 'local-never-params', {
         three.css
       -->
       <!--OPRA
-        one.tpl @ never-ids
-        two.js @ never-paths
+        one.tpl never-ids
+        two.js never-paths
       -->
       <!--OPRA
-        three.css @ never-compress
+        three.css never-compress
       -->
     </html>
   """

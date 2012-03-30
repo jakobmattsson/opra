@@ -7,8 +7,8 @@ test 'default-to-inclusion', {
       -->
       <!--OPRA
         three.css
-        four.css @ screen
-        five.css @ print
+        four.css screen
+        five.css print
       -->
     </html>
   """

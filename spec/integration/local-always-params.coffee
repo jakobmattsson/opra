@@ -9,11 +9,11 @@ test 'local-always-params', {
         three.css
       -->
       <!--OPRA
-        one.js @ always-paths
-        two.tpl @ always-ids
+        one.js always-paths
+        two.tpl always-ids
       -->
       <!--OPRA
-        three.css @ always-compress
+        three.css always-compress
       -->
     </html>
   """
