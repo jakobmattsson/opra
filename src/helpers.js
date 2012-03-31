@@ -49,7 +49,7 @@ def('uglifier', function(code) {
 });
 def('endsWith', function(str, ends) {
   return ends.some(function(end) {
-    return end == str.slice(-end.length);
+    return end.length > 0 && end == (str || '').slice(-end.length);
   });
 });
 def('safeReplace', function(str, target, newString) {

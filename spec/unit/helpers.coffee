@@ -90,6 +90,16 @@ describe 'helpers.endsWith', ->
   it 'should never match the empty set', ->
     helpers.endsWith('index.xhtml', []).should.be.false
 
+  it 'should never match the empty string', ->
+    helpers.endsWith('', ['a']).should.be.false
+    helpers.endsWith('', ['']).should.be.false
+    helpers.endsWith('', []).should.be.false
+
+  it 'should never match undefined', ->
+    helpers.endsWith(undefined, ['a']).should.be.false
+    helpers.endsWith(undefined, ['']).should.be.false
+    helpers.endsWith(undefined, []).should.be.false
+
 
 
 describe 'helpers.safeReplace', ->

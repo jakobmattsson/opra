@@ -26,27 +26,4 @@ test 'concat-inline', {
   'three.css': """
     a { color: red }
   """
-}, { inline: true, concat: true }, """
-  <html>
-    <script type="text/javascript">
-      alert(1)
-      1 + 1;
-      alert(2)
-    </script>
-    <script type="text/javascript">
-      alert(1)
-      1 + 1;
-      alert(2)
-    </script>
-    <style type="text/css">
-      a { color: red }
-    </style>
-    <script type="text/javascript">
-      alert(2)
-    </script>
-    <script type="text/javascript">
-      alert(1)
-      1 + 1
-    </script>
-  </html>
-"""
+}, { inline: true, concat: true }, error("Concatenation failed; make sure file types, media types and ie-constraints are equivalent within all blocks")

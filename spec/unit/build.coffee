@@ -3,6 +3,7 @@ should = require 'should'
 powerfs = require 'powerfs'
 assert = require 'assert'
 build = require('../setup.js').requireSource('build.js')
+parse = require('../setup.js').requireSource('parse.js')
 
 
 
@@ -58,10 +59,10 @@ describe 'build.paramsToMediaType', ->
 
 
 
-describe 'build.getMatches', ->
+describe 'parse.getMatches', ->
 
   it 'should parse input data for filenames, spaces, params and files', () ->
-    res = build.getMatches """
+    res = parse.getMatches """
       <html>
         <!--apa a b   c
 
@@ -104,10 +105,10 @@ describe 'build.getMatches', ->
 
 
 
-describe 'build.flagMatches', ->
+describe 'parse.flagMatches', ->
 
   it 'should default to no global object and no files and no params', ->
-    build.flagMatches([{
+    parse.flagMatches([{
       foo: 'bar'
       params: ['inline', 'concat']
     }, {
@@ -129,7 +130,7 @@ describe 'build.flagMatches', ->
     }]
 
   it 'should filter params', ->
-    build.flagMatches([{
+    parse.flagMatches([{
       unknown: 'x',
       params: ['a', 'b', 'c', 'inline', 'concat']
       files: [{
@@ -154,7 +155,7 @@ describe 'build.flagMatches', ->
     }]
 
   it 'should let global params take precedence', ->
-    build.flagMatches([{
+    parse.flagMatches([{
       params: ['inline']
       files: [{
         params: ['screen', 'escape']
@@ -170,7 +171,7 @@ describe 'build.flagMatches', ->
     }])
 
   it 'should translate always-params and never-params', ->
-    build.flagMatches([{
+    parse.flagMatches([{
       params: ['always-inline', 'concat', 'never-concat']
       files: [{
         params: ['always-escape', 'screen', 'never-screen']
@@ -183,7 +184,7 @@ describe 'build.flagMatches', ->
     }])
 
   it 'should let always- and never-params take precedence over global params', ->
-    build.flagMatches([{
+    parse.flagMatches([{
       params: ['inline', 'never-concat']
       files: [{
         params: ['always-screen', 'escape']
@@ -200,14 +201,14 @@ describe 'build.flagMatches', ->
 
   it 'should throw if a parameter is specified as both always and never for a block', ->
     wrapper = () ->
-      build.flagMatches([{
+      parse.flagMatches([{
         params: ['always-concat', 'never-concat']
       }])
     wrapper.should.throw('"always" and "never" assigned to the same block')
 
   it 'should throw if a parameter is specified as both always and never for a file', ->
     wrapper = () ->
-      build.flagMatches([{
+      parse.flagMatches([{
         files: [{
           params: ['always-compress', 'never-compress']
         }]
@@ -215,7 +216,7 @@ describe 'build.flagMatches', ->
     wrapper.should.throw('"always" and "never" assigned to the same file')
 
   it 'should allow a certain set of params for files and one for blocks', ->
-    build.flagMatches([{
+    parse.flagMatches([{
       params: ['inline', 'concat', 'npm']
       files: [{
         params: ['compress', 'paths', 'ids', 'escape', 'screen', 'ie7', 'print']
@@ -228,7 +229,7 @@ describe 'build.flagMatches', ->
     }])
 
   it 'should propagate file-level params assigned to blocks', ->
-    build.flagMatches([{
+    parse.flagMatches([{
       params: ['inline', 'compress', 'paths']
       files: [{
         params: ['print']
@@ -245,7 +246,7 @@ describe 'build.flagMatches', ->
     }])
 
   it 'should propagate file-level params assigned to blocks, except when the file has a never-param', ->
-    build.flagMatches([{
+    parse.flagMatches([{
       params: ['inline', 'compress', 'paths']
       files: [{
         params: ['print', 'never-compress']
@@ -262,7 +263,7 @@ describe 'build.flagMatches', ->
     }])
 
   it 'should propagate file-level always-params assigned to blocks', ->
-    build.flagMatches([{
+    parse.flagMatches([{
       params: ['inline', 'always-compress', 'paths']
       files: [{
         params: ['print']
@@ -281,7 +282,7 @@ describe 'build.flagMatches', ->
     }])
 
   it 'should propagate block-level never-params assigned to blocks', ->
-    build.flagMatches([{
+    parse.flagMatches([{
       params: ['inline', 'never-compress', 'paths']
       files: [{
         params: ['print']

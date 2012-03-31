@@ -1,15 +1,20 @@
-* Implement support for "global" params (for setting nocompress for a bunch of files for example)
-* When concatenating, take params into account so not a single file is produced at all times
-  - Or rather, give an error message in that case
-* Include images inline in css
-* Parameter to output tags valid accoring to different doctypes (html5, xhtml, html-transitional etc)
+Implemented but not thoroughly or not tested
+============================================
 * Test assetRoot
 * Test all kinds of errors that can occur
-* For every parameter "x" there should also be "always-x" and "never-x". Those will override anything set in build/serve.
-  - inline (global and local)
-  - compress (global and local)
-  - paths (global and local)
-  - concat (only global)
+
+
+Not implemented
+===============
+* Include images inline in css
+* Parameter to output tags valid accoring to different doctypes (html5, xhtml, html-transitional etc)
+  - Even better if this is detected automatically from the html-file
 * Should be possible to add a timestamp in the names of the generated files
-* Write helpers-tests for compileCoffee an compileLess
 * Add the possibility to write HTML-comments that will be removed from the final output
+* Include files remotely (http/https). Cache them so they dont have to be downloaded all the time.
+* Add line numbers to as many error messages as possible
+* Add some kind of caching for NPM-tags (browserify has a cache-flag. investiagte.)
+* Add caching for all compilation/compression so files that have not changed can be served faster
+* Add aliases for NPM-tags (as:$ as:jQuery as:async and so on)
+
+

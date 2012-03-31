@@ -1,4 +1,4 @@
-test 'funcational-params-as-strongest', {
+test 'funcational-params-as-stronger', {
   'index.html': """
     <html>
       <!--OPRA
