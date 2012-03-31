@@ -102,3 +102,201 @@ describe 'build.getMatches', ->
       files: []
     }])
 
+
+
+describe 'build.flagMatches', ->
+
+  it 'should default to no global object and no files and no params', ->
+    build.flagMatches([{
+      foo: 'bar'
+      params: ['inline', 'concat']
+    }, {
+      foo: 'bar'
+      files: [{
+        foo: 'bar'
+      }]
+    }]).should.eql [{
+      foo: 'bar'
+      params: ['concat', 'inline'] # these are sorted in alphabetic order
+      files: []
+    }, {
+      foo: 'bar'
+      params: []
+      files: [{
+        foo: 'bar'
+        params: []
+      }]
+    }]
+
+  it 'should filter params', ->
+    build.flagMatches([{
+      unknown: 'x',
+      params: ['a', 'b', 'c', 'inline', 'concat']
+      files: [{
+        foo: 'y',
+        params: ['escape', 'y', 'screen', 'x']
+      }]
+    }, {
+      bar: 'x',
+      params: ['a', 'inline', 'concat-wrong']
+      files: []
+    }], {}).should.eql [{
+      unknown: 'x',
+      params: ['concat', 'inline']
+      files: [{
+        foo: 'y',
+        params: ['escape', 'screen']
+      }]
+    }, {
+      bar: 'x',
+      params: ['inline']
+      files: []
+    }]
+
+  it 'should let global params take precedence', ->
+    build.flagMatches([{
+      params: ['inline']
+      files: [{
+        params: ['screen', 'escape']
+      }]
+    }], {
+      concat: true,
+      screen: false
+    }).should.eql([{
+      params: ['concat', 'inline']
+      files: [{
+        params: ['escape']
+      }]
+    }])
+
+  it 'should translate always-params and never-params', ->
+    build.flagMatches([{
+      params: ['always-inline', 'concat', 'never-concat']
+      files: [{
+        params: ['always-escape', 'screen', 'never-screen']
+      }]
+    }]).should.eql([{
+      params: ['inline']
+      files: [{
+        params: ['escape']
+      }]
+    }])
+
+  it 'should let always- and never-params take precedence over global params', ->
+    build.flagMatches([{
+      params: ['inline', 'never-concat']
+      files: [{
+        params: ['always-screen', 'escape']
+      }]
+    }], {
+      concat: true,
+      screen: false
+    }).should.eql([{
+      params: ['inline']
+      files: [{
+        params: ['escape', 'screen']
+      }]
+    }])
+
+  it 'should throw if a parameter is specified as both always and never for a block', ->
+    wrapper = () ->
+      build.flagMatches([{
+        params: ['always-concat', 'never-concat']
+      }])
+    wrapper.should.throw('"always" and "never" assigned to the same block')
+
+  it 'should throw if a parameter is specified as both always and never for a file', ->
+    wrapper = () ->
+      build.flagMatches([{
+        files: [{
+          params: ['always-compress', 'never-compress']
+        }]
+      }])
+    wrapper.should.throw('"always" and "never" assigned to the same file')
+
+  it 'should allow a certain set of params for files and one for blocks', ->
+    build.flagMatches([{
+      params: ['inline', 'concat', 'npm']
+      files: [{
+        params: ['compress', 'paths', 'ids', 'escape', 'screen', 'ie7', 'print']
+      }]
+    }]).should.eql([{
+      params: ['concat', 'inline', 'npm']
+      files: [{
+        params: ['compress', 'escape', 'ids', 'ie7', 'paths', 'print', 'screen']
+      }]
+    }])
+
+  it 'should propagate file-level params assigned to blocks', ->
+    build.flagMatches([{
+      params: ['inline', 'compress', 'paths']
+      files: [{
+        params: ['print']
+      }, {
+
+      }]
+    }]).should.eql([{
+      params: ['inline']
+      files: [{
+        params: ['compress', 'paths', 'print']
+      }, {
+        params: ['compress', 'paths']
+      }]
+    }])
+
+  it 'should propagate file-level params assigned to blocks, except when the file has a never-param', ->
+    build.flagMatches([{
+      params: ['inline', 'compress', 'paths']
+      files: [{
+        params: ['print', 'never-compress']
+      }, {
+
+      }]
+    }]).should.eql([{
+      params: ['inline']
+      files: [{
+        params: ['paths', 'print']
+      }, {
+        params: ['compress', 'paths']
+      }]
+    }])
+
+  it 'should propagate file-level always-params assigned to blocks', ->
+    build.flagMatches([{
+      params: ['inline', 'always-compress', 'paths']
+      files: [{
+        params: ['print']
+      }, {
+
+      }]
+    }], {
+      compress: false
+    }).should.eql([{
+      params: ['inline']
+      files: [{
+        params: ['compress', 'paths', 'print']
+      }, {
+        params: ['compress', 'paths']
+      }]
+    }])
+
+  it 'should propagate block-level never-params assigned to blocks', ->
+    build.flagMatches([{
+      params: ['inline', 'never-compress', 'paths']
+      files: [{
+        params: ['print']
+      }, {
+
+      }]
+    }], {
+      compress: true
+    }).should.eql([{
+      params: ['inline']
+      files: [{
+        params: ['paths', 'print']
+      }, {
+        params: ['paths']
+      }]
+    }])
+
+

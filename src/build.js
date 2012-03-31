@@ -172,31 +172,38 @@ def('globMatches', function(assetRoot, indexFileDir, matches, callback) {
 });
 def('flagMatches', function(matches, globalFlags) {
 
-  var prec = function(params, n) {
-    if (helpers.contains(params, 'always-' + n)) {
+  var prec = function(params, indirect, n, scope) {
+    if (helpers.contains(params, 'always-' + n) && helpers.contains(params, 'never-' + n)) {
+      throw new Error('"always" and "never" assigned to the same ' + scope);
+    } else if (helpers.contains(params, 'always-' + n)) {
       return n;
     } else if (helpers.contains(params, 'never-' + n)) {
       return undefined;
-    } else if (!_.isUndefined(globalFlags[n])) {
-      if (globalFlags[n]) {
-        return n;
-      }
-    } else if (helpers.contains(params, n)) {
+    } else if (helpers.contains(indirect, 'always-' + n)) {
+      return n;
+    } else if (helpers.contains(indirect, 'never-' + n)) {
+      return undefined;
+    } else if (!_.isUndefined(globalFlags) && !_.isUndefined(globalFlags[n])) {
+      return globalFlags[n] ? n : undefined;
+    } else if (helpers.contains(params, n) || helpers.contains(indirect, n)) {
       return n;
     }
     return undefined;
   };
 
+  var blockParams = ['concat', 'inline', 'npm'].sort();
+  var fileParams = ['compress', 'paths', 'ids', 'escape', 'screen', 'ie7', 'print'].sort();
+
   return matches.map(function(m) {
     return _.extend({}, m, {
-      params: ['concat', 'inline', 'npm'].map(function(n) {
-        return prec(m.params, n);
-      }).filter(function(x) { return x; }),
-      files: m.files.map(function(file) {
+      params: _.compact(blockParams.map(function(n) {
+        return prec(m.params || [], [], n, 'block');
+      })),
+      files: (m.files || []).map(function(file) {
         return _.extend({}, file, {
-          params: ['compress', 'paths', 'ids', 'escape', 'screen', 'ie7', 'print'].map(function(n) {
-            return prec(file.params, n);
-          }).filter(function(x) { return x; })
+          params: _.compact(fileParams.map(function(n) {
+            return prec(file.params || [], m.params || [], n, 'file');
+          }))
         });
       })
     });
@@ -244,10 +251,8 @@ def('buildNPM', function(folder, packages, outfile, callback) {
   }));
 });
 def('filesFromNPM', function(assetRoot, d, ps, callback) {
-  var input = d.requests.map(function(file) {
-    return file.name + '@' + (file.params[0] || '');
-  });
 
+  var input = _.pluck(d.requests, 'name');
   var outFile = path.join(assetRoot, ps.filename);
   var folder = path.join(path.dirname(outFile), '.' + path.basename(outFile));
 
