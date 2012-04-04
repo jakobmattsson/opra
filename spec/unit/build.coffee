@@ -217,9 +217,9 @@ describe 'parse.flagMatches', ->
 
   it 'should allow a certain set of params for files and one for blocks', ->
     parse.flagMatches([{
-      params: ['inline', 'concat']
+      params: ['inline', 'concat', 'a']
       files: [{
-        params: ['compress', 'paths', 'ids', 'escape', 'screen', 'ie7', 'print', 'npm']
+        params: ['compress', 'paths', 'ids', 'escape', 'screen', 'ie7', 'print', 'npm', 'a']
       }]
     }]).should.eql([{
       params: ['concat', 'inline']
