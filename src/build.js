@@ -133,25 +133,54 @@ def('buildNPM', function(folder, packages, prelude, callback) {
 def('filesFromNPM', function(first, assetRoot, d, filename, aliases, callback) {
   var packages = [d];
   var packageName = d.split('@')[0];
+  var packageVersion = d.split('@').slice(1) || 'any';
   var delayedCallback = _.after(2, callback);
 
-  build.buildNPM(filename, [d], first, function(err, data) {
-    if (err) {
-      callback(err);
+  var requireFile = path.join(filename, packageName + "-require.js");
+  var packageFile = path.join(filename, packageName + ".js");
+  var versionFile = path.join(filename, packageName + ".version");
+
+  var requireContent = aliases.map(function(alias) {
+    return "window['" + alias + "'] = require('" + packageName + "');";
+  }).join('\n');
+
+  if (requireContent) {
+    powerfs.writeFile(requireFile, requireContent, 'utf8', delayedCallback);
+  } else {
+    delayedCallback();
+  }
+
+  var updateFile = function() {
+    build.buildNPM(filename, [d], first, function(err, data) {
+      if (err) {
+        delayedCallback(err);
+        return;
+      }
+
+      powerfs.writeFile(versionFile, packageVersion, 'utf8', function(err) {
+        if (err) {
+          delayedCallback(err);
+          return;
+        }
+
+        powerfs.writeFile(packageFile, data, 'utf8', delayedCallback);
+      });
+    });
+  };
+
+  powerfs.fileExists(versionFile, function(exists) {
+    if (!exists) {
+      updateFile();
       return;
     }
 
-    var aliasFile = aliases.map(function(alias) {
-      return "window['" + alias + "'] = require('" + packageName + "');";
-    }).join('\n');
-
-    if (aliasFile) {
-      fs.writeFile(path.join(filename, packageName + "-require.js"), aliasFile, 'utf8', delayedCallback);
-    } else {
-      delayedCallback();
-    }
-
-    fs.writeFile(path.join(filename, packageName + ".js"), data, 'utf8', delayedCallback);
+    fs.readFile(versionFile, 'utf8', function(err, data) {
+      if (err || data != packageVersion) {
+        updateFile();
+      } else {
+        delayedCallback();
+      }
+    });
   });
 });
 
