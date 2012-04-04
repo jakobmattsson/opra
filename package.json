@@ -25,6 +25,7 @@
     "coverage": "scripts/coverage.sh 'spec/**/*.coffee' all.html && scripts/coverage.sh 'spec/unit/*.coffee' unit.html"
   },
   "dependencies": {
+    "underscore.string": "2.0.0",
     "less": "1.3.0",
     "underscore": "1.3.1",
     "glob": "3.1.6",

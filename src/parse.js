@@ -4,6 +4,8 @@ var async = require('async');
 var glob = require('glob');
 var _ = require('underscore');
 
+_.mixin(require('underscore.string').exports());
+
 var helpers = require('./helpers.js');
 var build = exports;
 
@@ -120,11 +122,15 @@ def('flagMatches', function(matches, globalFlags) {
     }
     return undefined;
   };
-  var subprec = function(files, indirect) {
+  var subprec = function(files, indirect, prefixes) {
     return (files || []).map(function(file) {
       return _.extend({}, file, {
         params: _.compact(fileParams.map(function(n) {
           return prec(file.params || [], indirect || [], n, 'file');
+        })).concat((file.params || []).filter(function(x) {
+          return filePrefixes.some(function(fp) {
+            return _.startsWith(x, fp + ':');
+          });
         }))
       });
     });
@@ -132,13 +138,14 @@ def('flagMatches', function(matches, globalFlags) {
 
   var blockParams = ['concat', 'inline'].sort();
   var fileParams = ['compress', 'paths', 'ids', 'escape', 'screen', 'ie7', 'print', 'npm'].sort();
+  var filePrefixes = ['as'];
 
   return matches.map(function(m) {
     return _.extend({}, m, {
       params: _.compact(blockParams.map(function(n) {
         return prec(m.params || [], [], n, 'block');
       })),
-      files: subprec(m.files, m.params)
+      files: subprec(m.files, m.params, filePrefixes)
     });
   });
 });

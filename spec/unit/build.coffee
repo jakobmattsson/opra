@@ -300,4 +300,16 @@ describe 'parse.flagMatches', ->
       }]
     }])
 
+  it 'should allow any string prefixed with "as:" on file level', ->
+    parse.flagMatches([{
+      params: []
+      files: [{
+        params: ['as:jQuery', 'as:_']
+      }]
+    }]).should.eql([{
+      params: []
+      files: [{
+        params: ['as:jQuery', 'as:_']
+      }]
+    }])
 
