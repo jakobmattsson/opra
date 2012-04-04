@@ -84,18 +84,15 @@ def('globMatches', function(assetRoot, indexFileDir, matches, callback) {
           console.error("Found no matches for pattern: " + file.name);
         }
 
-        callback(null, globbedFiles.map(function(globbedFile) {
-          return _.extend({}, file, {
-            name: build.filePathToAbsolute2(globbedFile, assetRoot, indexFileDir).replace(/\\/g, "/")
-          });
+        callback(null, _.extend({}, file, {
+          globs: globbedFiles.map(function(globbedFile) {
+            return build.filePathToAbsolute2(globbedFile, assetRoot, indexFileDir).replace(/\\/g, "/");
+          })
         }));
       });
     }, function(err, result) {
       callback(err, _.extend({}, match, {
-        requests: match.files,
-        files: (result || []).reduce(function(mem, item) {
-          return mem.concat(item);
-        }, [])
+        files: result
       }));
     });
   }, callback);
@@ -141,8 +138,7 @@ def('flagMatches', function(matches, globalFlags) {
       params: _.compact(blockParams.map(function(n) {
         return prec(m.params || [], [], n, 'block');
       })),
-      files: subprec(m.files, m.params),
-      requests: subprec(m.requests, m.params)
+      files: subprec(m.files, m.params)
     });
   });
 });

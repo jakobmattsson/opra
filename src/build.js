@@ -277,7 +277,7 @@ def('transform', function(assetRoot, compiler, encoding, indexFile, matches, con
       fileType: d.type
     };
 
-    var npmreqs = d.requests.filter(function(file) {
+    var npmreqs = d.files.filter(function(file) {
       return helpers.contains(file.params, 'npm');
     });
 
@@ -300,15 +300,13 @@ def('transform', function(assetRoot, compiler, encoding, indexFile, matches, con
         });
       };
 
-      ps.files = ps.files.concat(npmreqs.map(function(n) {
+      npmreqs.forEach(function(n) {
         var name = n.name;
         n.absolutePath = path.join(indexFile + "-npm", name.split('@')[0] + ".js");
         n.name = "/" + path.relative(assetRoot, n.absolutePath);
         n.type = 'js';
         n.encoding = 'utf8';
-        return n;
-      }));
-
+      });
 
       if (helpers.contains(d.params, 'inline')) {
         build.filesToInline(compiler, ps.files, shouldConcat, fc);
@@ -376,6 +374,21 @@ def('buildConstructor', function(dependencies) {
         callback(err);
         return;
       }
+
+      // some ugly preprocessing in order to merge globbed files with non-globbed
+      res.matches.forEach(function(m) {
+        m.files = _.flatten(m.files.map(function(file) {
+          if (!helpers.contains(file.params, 'npm')) {
+            return file.globs.map(function(g) {
+              return _.extend({}, file, {
+                name: g
+              });
+            })
+          } else {
+            return [file];
+          }
+        }));
+      });
 
       res.matches.forEach(function(match) {
         match.type = build.filetype(match.filename, compiler);

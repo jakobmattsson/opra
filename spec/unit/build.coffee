@@ -119,12 +119,10 @@ describe 'parse.flagMatches', ->
     }]).should.eql [{
       foo: 'bar'
       params: ['concat', 'inline'] # these are sorted in alphabetic order
-      requests: []
       files: []
     }, {
       foo: 'bar'
       params: []
-      requests: []
       files: [{
         foo: 'bar'
         params: []
@@ -146,7 +144,6 @@ describe 'parse.flagMatches', ->
     }], {}).should.eql [{
       unknown: 'x',
       params: ['concat', 'inline']
-      requests: []
       files: [{
         foo: 'y',
         params: ['escape', 'screen']
@@ -154,14 +151,12 @@ describe 'parse.flagMatches', ->
     }, {
       bar: 'x',
       params: ['inline']
-      requests: []
       files: []
     }]
 
   it 'should let global params take precedence', ->
     parse.flagMatches([{
       params: ['inline']
-      requests: []
       files: [{
         params: ['screen', 'escape']
       }]
@@ -170,7 +165,6 @@ describe 'parse.flagMatches', ->
       screen: false
     }).should.eql([{
       params: ['concat', 'inline']
-      requests: []
       files: [{
         params: ['escape']
       }]
@@ -179,13 +173,11 @@ describe 'parse.flagMatches', ->
   it 'should translate always-params and never-params', ->
     parse.flagMatches([{
       params: ['always-inline', 'concat', 'never-concat']
-      requests: []
       files: [{
         params: ['always-escape', 'screen', 'never-screen']
       }]
     }]).should.eql([{
       params: ['inline']
-      requests: []
       files: [{
         params: ['escape']
       }]
@@ -202,7 +194,6 @@ describe 'parse.flagMatches', ->
       screen: false
     }).should.eql([{
       params: ['inline']
-      requests: []
       files: [{
         params: ['escape', 'screen']
       }]
@@ -232,7 +223,6 @@ describe 'parse.flagMatches', ->
       }]
     }]).should.eql([{
       params: ['concat', 'inline']
-      requests: []
       files: [{
         params: ['compress', 'escape', 'ids', 'ie7', 'npm', 'paths', 'print', 'screen']
       }]
@@ -248,7 +238,6 @@ describe 'parse.flagMatches', ->
       }]
     }]).should.eql([{
       params: ['inline']
-      requests: []
       files: [{
         params: ['compress', 'paths', 'print']
       }, {
@@ -266,7 +255,6 @@ describe 'parse.flagMatches', ->
       }]
     }]).should.eql([{
       params: ['inline']
-      requests: []
       files: [{
         params: ['paths', 'print']
       }, {
@@ -286,7 +274,6 @@ describe 'parse.flagMatches', ->
       compress: false
     }).should.eql([{
       params: ['inline']
-      requests: []
       files: [{
         params: ['compress', 'paths', 'print']
       }, {
@@ -306,7 +293,6 @@ describe 'parse.flagMatches', ->
       compress: true
     }).should.eql([{
       params: ['inline']
-      requests: []
       files: [{
         params: ['paths', 'print']
       }, {
