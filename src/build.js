@@ -130,14 +130,28 @@ def('buildNPM', function(folder, packages, prelude, callback) {
     }));
   }));
 });
-def('filesFromNPM', function(first, assetRoot, d, filename, callback) {
+def('filesFromNPM', function(first, assetRoot, d, filename, aliases, callback) {
   var packages = [d];
+  var packageName = d.split('@')[0];
+  var delayedCallback = _.after(2, callback);
+
   build.buildNPM(filename, [d], first, function(err, data) {
     if (err) {
       callback(err);
       return;
     }
-    fs.writeFile(path.join(filename, d.split('@')[0] + ".js"), data, 'utf8', callback);
+
+    var aliasFile = aliases.map(function(alias) {
+      return "window['" + alias + "'] = require('" + packageName + "');";
+    }).join('\n');
+
+    if (aliasFile) {
+      fs.writeFile(path.join(filename, packageName + "-require.js"), aliasFile, 'utf8', delayedCallback);
+    } else {
+      delayedCallback();
+    }
+
+    fs.writeFile(path.join(filename, packageName + ".js"), data, 'utf8', delayedCallback);
   });
 });
 
@@ -268,21 +282,43 @@ def('transform', function(assetRoot, compiler, encoding, indexFile, matches, con
 
     var shouldConcat = helpers.contains(d.params, 'concat');
 
+    var npmreqs = d.files.filter(function(file) {
+      return helpers.contains(file.params, 'npm');
+    });
+
+    var expandedFiles = d.files.map(function(file) {
+      if (helpers.contains(file.params, 'npm') && file.params.some(function(p) { return _.startsWith(p, 'as:'); })) {
+        var abs = path.join(indexFile + "-npm", file.name.split('@')[0] + "-require.js");
+        var reqFile = {
+          absolutePath: abs,
+          name: "/" + path.relative(assetRoot, abs),
+          type: 'js',
+          encoding: 'utf8',
+          spaces: file.spaces,
+          params: _.without(file.params, 'npm')
+        };
+        return [file, reqFile];
+      } else {
+        return [file];
+      }
+    });
+
     var ps = {
       filename: d.filename,
       spaces: d.spaces,
       shouldConcat: shouldConcat,
       fileParams: d.params,
-      files: d.files,
+      files: _.flatten(expandedFiles),
       fileType: d.type
     };
 
-    var npmreqs = d.files.filter(function(file) {
-      return helpers.contains(file.params, 'npm');
-    });
-
     async.forEachSeries(npmreqs, function(item, callback) {
-      build.filesFromNPM(!hasPreludedCommonJS, assetRoot, item.name, indexFile + "-npm", function(err) {
+      var aliases = item.params.filter(function(xx) {
+        return _.startsWith(xx, 'as:');
+      }).map(function(xx) {
+        return xx.slice(3);
+      });
+      build.filesFromNPM(!hasPreludedCommonJS, assetRoot, item.name, indexFile + "-npm", aliases, function(err) {
         hasPreludedCommonJS = true;
         callback(err);
       });
