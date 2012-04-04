@@ -21,7 +21,7 @@
     "sugar": "1.2.2"
   },
   "scripts": {
-    "test": "mocha --require spec/lib.js spec/**/*.coffee",
+    "test": "mocha --timeout 10000 --require spec/lib.js spec/**/*.coffee",
     "coverage": "scripts/coverage.sh 'spec/**/*.coffee' all.html && scripts/coverage.sh 'spec/unit/*.coffee' unit.html"
   },
   "dependencies": {

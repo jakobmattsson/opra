@@ -30,9 +30,18 @@ global.test = function(desc, mocks, args, output, del) {
               if (isFile) {
                 fs.readFile(toDelete, 'utf8', propagate(callback, function(content) {
                   fs.unlink(toDelete, propagate(callback, function() {
-                    if (content !== del[d]) {
-                      content.should.equal(del[d]);
+                    var match = del[d];
+
+                    if (match.contains) {
+                      match.contains.forEach(function(text) {
+                        content.should.include(text);
+                      });
+                    } else {
+                      if (content !== del[d]) {
+                        content.should.equal(del[d]);
+                      }
                     }
+
                     callback();
                   }));
                 }));
@@ -72,4 +81,8 @@ global.test = function(desc, mocks, args, output, del) {
 
 global.error = function(msg) {
   return { error: msg };
+};
+
+global.containsText = function() {
+  return { contains: Array.prototype.slice.call(arguments) };
 };
