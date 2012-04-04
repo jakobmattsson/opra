@@ -3,7 +3,7 @@ var url = require('url');
 var path = require('path');
 var _ = require('underscore');
 
-var helpers = require('./helpers.js');
+_.mixin(require('underscore.string').exports());
 
 exports.serveConstructor = function(dependencies) {
   return function(rootpath, settings) {
@@ -29,7 +29,7 @@ exports.serveConstructor = function(dependencies) {
           filepath = path.join(filepath, 'index.html');
         }
 
-        if (!helpers.endsWith(pathname, ['.html'])) {
+        if (!_.endsWith(pathname, '.html')) {
           next();
           return;
         }

@@ -32,7 +32,7 @@ var propagate = function(callback, f) {
 
 def('filetype', function(filename, compiler) {
   return Object.keys(compiler).reduce(function(memo, type) {
-    return helpers.endsWith(filename, ['.' + type]) ? compiler[type].target : memo;
+    return _.endsWith(filename, '.' + type) ? compiler[type].target : memo;
   }, 'other');
 });
 def('whichIE', function(params) {
@@ -169,7 +169,7 @@ def('filesToInlineBasic', function(compiler, files, shouldConcat, callback) {
     };
 
     var compileType = Object.keys(compiler).filter(function(type) {
-      return helpers.endsWith(file.name, ['.' + type]);
+      return _.endsWith(file.name, '.' + type);
     });
 
     if (compileType.length > 0) {
@@ -221,7 +221,7 @@ def('filesToInlineBasic', function(compiler, files, shouldConcat, callback) {
         callback(null, [{
           file: data[0].file,
           spaces: data.map(function(x) { return x.file.spaces; }),
-          content: _.pluck(data, 'content').join(helpers.endsWith(data[0].file.name, ['.js']) ? ';\n' : '\n')
+          content: _.pluck(data, 'content').join(_.endsWith(data[0].file.name, '.js') ? ';\n' : '\n')
         }]);
       }
     } else {

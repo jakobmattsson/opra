@@ -9,7 +9,6 @@ it "should expose the expected helpers", ->
     'compileCoffee'
     'compileLess'
     'uglifier'
-    'endsWith'
     'safeReplace'
     'safeReplaceAll'
     'execAll'
@@ -74,31 +73,6 @@ describe 'helpers.uglify', ->
 
   it 'should default to an empty string', ->
     helpers.uglifier().should.equal('')
-
-
-
-describe 'helpers.endsWith', ->
-
-  it 'should accept an array of arguments', ->
-    helpers.endsWith('jakob', ['ab', 'cd']).should.be.false
-    helpers.endsWith('jakob', ['ab', 'ob']).should.be.true
-
-  it 'should not use regexps', ->
-    helpers.endsWith('index.xhtml', ['.html']).should.be.false
-    helpers.endsWith('index.xhtml', ['.xhtml']).should.be.true
-
-  it 'should never match the empty set', ->
-    helpers.endsWith('index.xhtml', []).should.be.false
-
-  it 'should never match the empty string', ->
-    helpers.endsWith('', ['a']).should.be.false
-    helpers.endsWith('', ['']).should.be.false
-    helpers.endsWith('', []).should.be.false
-
-  it 'should never match undefined', ->
-    helpers.endsWith(undefined, ['a']).should.be.false
-    helpers.endsWith(undefined, ['']).should.be.false
-    helpers.endsWith(undefined, []).should.be.false
 
 
 

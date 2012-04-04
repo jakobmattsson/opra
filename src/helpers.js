@@ -47,11 +47,6 @@ def('uglifier', function(code) {
   ast = pro.ast_squeeze(ast);
   return pro.gen_code(ast);
 });
-def('endsWith', function(str, ends) {
-  return ends.some(function(end) {
-    return end.length > 0 && end == (str || '').slice(-end.length);
-  });
-});
 def('safeReplace', function(str, target, newString) {
   var i = str.indexOf(target);
   if (i === -1) {
