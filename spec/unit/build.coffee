@@ -58,6 +58,24 @@ describe 'build.paramsToMediaType', ->
 
 
 
+describe 'build.compressor', ->
+
+  it 'should compress javascript', () ->
+    build.compressor('js', ['compress', 'bar'], '1 + 1').should.equal('2')
+
+  it 'should compress css', () ->
+    build.compressor('css', ['foo', 'compress'], 'a { color: red }').should.equal('a{color:red}')
+
+  it 'should not compress formats other than javascript or css', () ->
+    build.compressor('tpl', ['compress'], '1 + 1').should.equal('1 + 1')
+
+  it 'should not compress javascript if the compress param is missing', () ->
+    build.compressor('js', ['foo', 'bar'], '1 + 1').should.equal('1 + 1')
+
+  it 'should not compress css if the compress param is missing', () ->
+    build.compressor('css', ['foo', 'bar'], 'a { color: red }').should.equal('a { color: red }')
+
+
 
 describe 'parse.getMatches', ->
 

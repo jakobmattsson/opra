@@ -2,7 +2,6 @@ var fs = require('fs');
 var path = require('path');
 var coffee = require('coffee-script');
 var less = require('less');
-var uglify = require('uglify-js');
 var _ = require('underscore');
 
 var def = function(name, func) {
@@ -37,15 +36,6 @@ def('compileLess', function(filePath, paths, encoding, callback) {
     }
     less.render(content, { paths: paths.concat([path.dirname(filePath)]) }, callback);
   });
-});
-def('uglifier', function(code) {
-  var jsp = uglify.parser;
-  var pro = uglify.uglify;
-
-  var ast = jsp.parse(code || '');
-  ast = pro.ast_mangle(ast);
-  ast = pro.ast_squeeze(ast);
-  return pro.gen_code(ast);
 });
 def('safeReplace', function(str, target, newString) {
   var i = str.indexOf(target);

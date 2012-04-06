@@ -8,7 +8,6 @@ it "should expose the expected helpers", ->
   helpers.should.have.keys [
     'compileCoffee'
     'compileLess'
-    'uglifier'
     'safeReplace'
     'safeReplaceAll'
     'execAll'
@@ -61,18 +60,6 @@ describe 'helpers.compileLess', ->
     helpers.compileLess 'nonexisting.less', [], 'utf8', (err, code) ->
       err.toString().should.include('no such file')
       done()
-
-
-
-describe 'helpers.uglify', ->
-
-  it 'should compress code', ->
-    helpers.uglifier('1 + x').should.equal('1+x')
-    helpers.uglifier('1 + 1').should.equal('2')
-    helpers.uglifier('').should.equal('')
-
-  it 'should default to an empty string', ->
-    helpers.uglifier().should.equal('')
 
 
 

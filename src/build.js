@@ -7,6 +7,7 @@ var npm = require('npm');
 var powerfs = require('powerfs');
 var browserify = require('browserify');
 var _ = require('underscore');
+var uglify = require('uglify-js');
 
 var helpers = require('./helpers.js');
 var parse = require('./parse.js');
@@ -61,7 +62,7 @@ def('compressor', function(filetype, params, content) {
     if (filetype == 'css') {
       return cleanCSS.process(content);
     } else if (filetype == 'js') {
-      return helpers.uglifier(content);
+      return uglify(content || '');
     }
   }
   return content;
