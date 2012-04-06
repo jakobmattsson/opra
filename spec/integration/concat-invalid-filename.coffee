@@ -1,4 +1,4 @@
-test 'concat', {
+test 'concat-invalid-filename', {
   'index.html': """
     <html>
       <!--OPRA foo.apa
