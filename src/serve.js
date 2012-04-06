@@ -1,6 +1,6 @@
-var fs = require('fs');
 var url = require('url');
 var path = require('path');
+var powerfs = require('powerfs');
 var _ = require('underscore');
 
 _.mixin(require('underscore.string').exports());
@@ -17,14 +17,14 @@ exports.serveConstructor = function(dependencies) {
       var pathname = url.parse(req.url).pathname;
       var filepath = path.join(rootpath, pathname);
 
-      fs.stat(filepath, function(err, stat) {
+      powerfs.isDirectory(filepath, function(err, isDirectory) {
         if (err) {
           dependencies.log("OPRA ERROR (while searching for " + filepath + ")", err);
           next();
           return;
         }
 
-        if (stat.isDirectory()) {
+        if (isDirectory) {
           pathname = path.join(pathname, 'index.html');
           filepath = path.join(filepath, 'index.html');
         }
