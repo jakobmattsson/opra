@@ -29,15 +29,21 @@ test 'concat-inline-compressed', {
   """
 }, { concat: true, inline: true }, """
   <html>
-    <script type="text/javascript">
-      alert(1 + 1);
-      alert(4)
-    </script>
-    <script type="text/javascript">
-      alert(1 + 1)
-    </script>
-    <style type="text/css">a{color:#000}
-a { color: red; }
-a{color:#000}</style>
+    <script type="text/javascript" src="foo.js"></script>
+    <script type="text/javascript" src="bar.js"></script>
+    <link rel="stylesheet" type="text/css" href="c.css" />
   </html>
-"""
+""", {
+  'foo.js': """
+    alert(1 + 1);
+    alert(4)
+  """
+  'bar.js': """
+    alert(1 + 1)
+  """
+  'c.css': """
+    a{color:#000}
+    a { color: red; }
+    a{color:#000}
+  """
+}

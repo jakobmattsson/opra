@@ -185,6 +185,22 @@ def('filesFromNPM', function(first, assetRoot, d, filename, aliases, callback) {
   });
 });
 
+
+def('toTag', function(tag) {
+  if (_.isUndefined(tag.content)) {
+    var file = tag.file;
+    if (file.type == 'other') {
+      return '';
+    }
+    var isCss = file.type === 'css';
+    var css = helpers.createTag('link', { rel: 'stylesheet', type: 'text/css', media: build.paramsToMediaType(file.params), href: file.name });
+    var js = helpers.createTag('script', { type: 'text/javascript', src: file.name }, '');
+    return file.spaces.slice(2) + build.wrappIE(file.params, isCss ? css : js);
+  } else {
+    return build.tagifyOne(tag);
+  }
+});
+
 def('filesToMultipleInclude', function(files, compiler, callback) {
   var result = files.filter(function(file) {
     return file.type != 'other';
@@ -196,16 +212,18 @@ def('filesToMultipleInclude', function(files, compiler, callback) {
   }).join('\n');
   callback(null, result);
 });
-def('filesToInline', function(compiler, files, shouldConcat, callback) {
-  build.filesToInlineBasic(compiler, files, shouldConcat, function(err, data) {
+def('filesToInline', function(compiler, files, outfilename, shouldConcat, callback) {
+  build.filesToInlineBasic(compiler, files, outfilename, shouldConcat, function(err, data) {
     if (err) {
       callback(err);
       return;
     }
-    callback(null, build.tagify(data));
+
+    var dd = data.map(build.toTag).filter(function(x) { return x; }).join('\n');
+    callback(null, dd);
   });
 });
-def('filesToInlineBasic', function(compiler, files, shouldConcat, callback) {
+def('filesToInlineBasic', function(compiler, files, outfilename, shouldConcat, callback) {
   async.mapSeries(files, function(file, callback) {
 
     var actualCallback = function(err, data) {
@@ -215,6 +233,14 @@ def('filesToInlineBasic', function(compiler, files, shouldConcat, callback) {
     var compileType = Object.keys(compiler).filter(function(type) {
       return _.endsWith(file.name, '.' + type);
     });
+
+    var inlineAndConcat = helpers.contains(file.params, 'inline')// && shouldConcat;
+    var concatAndFilename = shouldConcat && outfilename;
+
+    if (!inlineAndConcat && !concatAndFilename) {
+      actualCallback(null, undefined);
+      return;
+    }
 
     if (compileType.length > 0) {
       compiler[compileType[0]].compile(file.absolutePath, file.encoding, actualCallback);
@@ -228,22 +254,32 @@ def('filesToInlineBasic', function(compiler, files, shouldConcat, callback) {
     }
 
     data = data.map(function(d) {
+      if (_.isUndefined(d.content)) {
+        return d;
+      }
+
       return {
         file: d.file,
         content: d.file.type == 'js' && helpers.contains(d.file.params, 'escape') ? helpers.escapeInlineScript(d.content) : d.content
       };
     }).map(function(d) {
+      if (_.isUndefined(d.content)) {
+        return d;
+      }
+
       return {
         file: d.file,
         content: build.compressor(d.file.type, d.file.params, d.content)
       };
     });
 
-    if (shouldConcat) {
+    var allIsInline = data.every(function(x) { return helpers.contains(x.file.params, 'inline'); });
 
+    if (shouldConcat && (outfilename || allIsInline)) {
       var hasError = false;
       data.map(function(d) {
         return JSON.stringify({
+          inline: helpers.contains(d.file.params, 'inline'),
           ie: build.whichIE(d.file.params),
           type: d.file.type,
           media: build.paramsToMediaType(d.file.params)
@@ -278,7 +314,7 @@ def('concatToFiles', function(compiler, assetRoot, ps, callback) {
   var spaces = ps.spaces;
   var ft = ps.fileType;
 
-  build.filesToInlineBasic(compiler, ps.files, true, function(err, data) {
+  build.filesToInlineBasic(compiler, ps.files, ps.filename, true, function(err, data) {
     if (err) {
       callback(err);
       return;
@@ -383,11 +419,11 @@ def('transform', function(assetRoot, compiler, encoding, indexFile, matches, con
       });
 
       if (helpers.contains(d.params, 'inline')) {
-        build.filesToInline(compiler, ps.files, shouldConcat, fc);
+        build.filesToInline(compiler, ps.files, ps.filename, shouldConcat, fc);
       } else if (shouldConcat && d.filename) {
         build.concatToFiles(compiler, assetRoot, ps, fc);
       } else {
-        build.filesToMultipleInclude(ps.files, compiler, fc);
+        build.filesToInline(compiler, ps.files, ps.filename, shouldConcat, fc);
       }
 
     });

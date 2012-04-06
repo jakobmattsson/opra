@@ -136,8 +136,8 @@ def('flagMatches', function(matches, globalFlags) {
     });
   };
 
-  var blockParams = ['concat', 'inline'].sort();
-  var fileParams = ['compress', 'paths', 'ids', 'escape', 'screen', 'ie7', 'print', 'npm'].sort();
+  var blockParams = ['concat'].sort();
+  var fileParams = ['compress', 'paths', 'ids', 'escape', 'screen', 'ie7', 'print', 'npm', 'inline'].sort();
   var filePrefixes = ['as'];
 
   return matches.map(function(m) {

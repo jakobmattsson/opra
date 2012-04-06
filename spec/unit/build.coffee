@@ -128,7 +128,7 @@ describe 'parse.flagMatches', ->
   it 'should default to no global object and no files and no params', ->
     parse.flagMatches([{
       foo: 'bar'
-      params: ['inline', 'concat']
+      params: ['concat']
     }, {
       foo: 'bar'
       files: [{
@@ -136,7 +136,7 @@ describe 'parse.flagMatches', ->
       }]
     }]).should.eql [{
       foo: 'bar'
-      params: ['concat', 'inline'] # these are sorted in alphabetic order
+      params: ['concat']
       files: []
     }, {
       foo: 'bar'
@@ -150,31 +150,31 @@ describe 'parse.flagMatches', ->
   it 'should filter params', ->
     parse.flagMatches([{
       unknown: 'x',
-      params: ['a', 'b', 'c', 'inline', 'concat']
+      params: ['a', 'b', 'c', 'concat']
       files: [{
         foo: 'y',
         params: ['escape', 'y', 'screen', 'x']
       }]
     }, {
       bar: 'x',
-      params: ['a', 'inline', 'concat-wrong']
+      params: ['a', 'concat-wrong']
       files: []
     }], {}).should.eql [{
       unknown: 'x',
-      params: ['concat', 'inline']
+      params: ['concat']
       files: [{
         foo: 'y',
         params: ['escape', 'screen']
       }]
     }, {
       bar: 'x',
-      params: ['inline']
+      params: []
       files: []
     }]
 
   it 'should let global params take precedence', ->
     parse.flagMatches([{
-      params: ['inline']
+      params: []
       files: [{
         params: ['screen', 'escape']
       }]
@@ -182,7 +182,7 @@ describe 'parse.flagMatches', ->
       concat: true,
       screen: false
     }).should.eql([{
-      params: ['concat', 'inline']
+      params: ['concat']
       files: [{
         params: ['escape']
       }]
@@ -190,12 +190,12 @@ describe 'parse.flagMatches', ->
 
   it 'should translate always-params and never-params', ->
     parse.flagMatches([{
-      params: ['always-inline', 'concat', 'never-concat']
+      params: ['concat', 'never-concat']
       files: [{
         params: ['always-escape', 'screen', 'never-screen']
       }]
     }]).should.eql([{
-      params: ['inline']
+      params: []
       files: [{
         params: ['escape']
       }]
@@ -203,7 +203,7 @@ describe 'parse.flagMatches', ->
 
   it 'should let always- and never-params take precedence over global params', ->
     parse.flagMatches([{
-      params: ['inline', 'never-concat']
+      params: ['never-concat']
       files: [{
         params: ['always-screen', 'escape']
       }]
@@ -211,7 +211,7 @@ describe 'parse.flagMatches', ->
       concat: true,
       screen: false
     }).should.eql([{
-      params: ['inline']
+      params: []
       files: [{
         params: ['escape', 'screen']
       }]
@@ -235,27 +235,27 @@ describe 'parse.flagMatches', ->
 
   it 'should allow a certain set of params for files and one for blocks', ->
     parse.flagMatches([{
-      params: ['inline', 'concat', 'a']
+      params: ['concat', 'a']
       files: [{
-        params: ['compress', 'paths', 'ids', 'escape', 'screen', 'ie7', 'print', 'npm', 'a']
+        params: ['compress', 'paths', 'ids', 'escape', 'screen', 'ie7', 'print', 'npm', 'a', 'inline']
       }]
     }]).should.eql([{
-      params: ['concat', 'inline']
+      params: ['concat']
       files: [{
-        params: ['compress', 'escape', 'ids', 'ie7', 'npm', 'paths', 'print', 'screen']
+        params: ['compress', 'escape', 'ids', 'ie7', 'inline', 'npm', 'paths', 'print', 'screen']
       }]
     }])
 
   it 'should propagate file-level params assigned to blocks', ->
     parse.flagMatches([{
-      params: ['inline', 'compress', 'paths']
+      params: ['compress', 'paths']
       files: [{
         params: ['print']
       }, {
 
       }]
     }]).should.eql([{
-      params: ['inline']
+      params: []
       files: [{
         params: ['compress', 'paths', 'print']
       }, {
@@ -265,14 +265,14 @@ describe 'parse.flagMatches', ->
 
   it 'should propagate file-level params assigned to blocks, except when the file has a never-param', ->
     parse.flagMatches([{
-      params: ['inline', 'compress', 'paths']
+      params: ['compress', 'paths']
       files: [{
         params: ['print', 'never-compress']
       }, {
 
       }]
     }]).should.eql([{
-      params: ['inline']
+      params: []
       files: [{
         params: ['paths', 'print']
       }, {
@@ -282,7 +282,7 @@ describe 'parse.flagMatches', ->
 
   it 'should propagate file-level always-params assigned to blocks', ->
     parse.flagMatches([{
-      params: ['inline', 'always-compress', 'paths']
+      params: ['always-compress', 'paths']
       files: [{
         params: ['print']
       }, {
@@ -291,7 +291,7 @@ describe 'parse.flagMatches', ->
     }], {
       compress: false
     }).should.eql([{
-      params: ['inline']
+      params: []
       files: [{
         params: ['compress', 'paths', 'print']
       }, {
@@ -301,7 +301,7 @@ describe 'parse.flagMatches', ->
 
   it 'should propagate block-level never-params assigned to blocks', ->
     parse.flagMatches([{
-      params: ['inline', 'never-compress', 'paths']
+      params: ['never-compress', 'paths']
       files: [{
         params: ['print']
       }, {
@@ -310,7 +310,7 @@ describe 'parse.flagMatches', ->
     }], {
       compress: true
     }).should.eql([{
-      params: ['inline']
+      params: []
       files: [{
         params: ['paths', 'print']
       }, {
