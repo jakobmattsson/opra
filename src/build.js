@@ -36,7 +36,7 @@ def('filetype', function(filename, compiler) {
   }, 'other');
 });
 def('whichIE', function(params) {
-  if (helpers.contains(params, "ie7")) {
+  if (_.contains(params, "ie7")) {
     return "ie7";
   }
   return undefined;
@@ -48,10 +48,10 @@ def('wrappIE', function(params, str) {
   return str;
 });
 def('paramsToMediaType', function(params) {
-  if (helpers.contains(params, 'screen')) {
+  if (_.contains(params, 'screen')) {
     return 'screen';
   }
-  if (helpers.contains(params, 'print')) {
+  if (_.contains(params, 'print')) {
     return 'print';
   }
   return undefined;
@@ -60,7 +60,7 @@ def('paramsToMediaType', function(params) {
 def('tagifyWithContent', function(file, content) {
   var spaces = file.spaces.slice(2);
 
-  if (!helpers.contains(file.params, 'compress') || file.type == 'other') {
+  if (!_.contains(file.params, 'compress') || file.type == 'other') {
     content = content.trim().split('\n').map(function(s) {
       return file.spaces + s;
     }).join('\n');
@@ -70,12 +70,12 @@ def('tagifyWithContent', function(file, content) {
   var csstag = helpers.createTag('style', {
     type: 'text/css',
     media: build.paramsToMediaType(file.params),
-    'data-path': helpers.contains(file.params, 'paths') ? file.name : undefined
+    'data-path': _.contains(file.params, 'paths') ? file.name : undefined
   }, content);
   var jstag = helpers.createTag('script', {
     type: file.type == 'js' ? 'text/javascript' : 'text/x-opra',
-    id: file.type != 'js' && helpers.contains(file.params, 'ids') ? "opra-" + path.basename(file.name).split('.')[0] : undefined,
-    'data-path': helpers.contains(file.params, 'paths') ? file.name : undefined
+    id: file.type != 'js' && _.contains(file.params, 'ids') ? "opra-" + path.basename(file.name).split('.')[0] : undefined,
+    'data-path': _.contains(file.params, 'paths') ? file.name : undefined
   }, content);
 
   return spaces + build.wrappIE(file.params, file.type == 'css' ? csstag : jstag);
@@ -240,7 +240,7 @@ var fetchFileData = function(file, shouldConcat, outfilename, compiler, callback
     callback(err, { file: file, content: data });
   };
 
-  if (!helpers.contains(file.params, 'inline') && !(shouldConcat && outfilename)) {
+  if (!_.contains(file.params, 'inline') && !(shouldConcat && outfilename)) {
     actualCallback(null, undefined);
   } else {
     var matchingCompiler = getValueForFirstKeyMatching(compiler, function(key) {
@@ -261,7 +261,7 @@ var applyEscaping = function(tag) {
   }
   return {
     file: tag.file,
-    content: tag.file.type == 'js' && helpers.contains(tag.file.params, 'escape') ? helpers.escapeInlineScript(tag.content) : tag.content
+    content: tag.file.type == 'js' && _.contains(tag.file.params, 'escape') ? helpers.escapeInlineScript(tag.content) : tag.content
   };
 };
 var applyCompression = function(tag, compressor) {
@@ -270,7 +270,7 @@ var applyCompression = function(tag, compressor) {
   }
 
   var c = function() {
-    if (helpers.contains(tag.file.params, 'compress')) {
+    if (_.contains(tag.file.params, 'compress')) {
       if (tag.file.type == 'css') {
         return compressor.css(tag.content);
       } else if (tag.file.type == 'js') {
@@ -300,13 +300,13 @@ def('filesToInlineBasic', function(pars, files, outfilename, shouldConcat, callb
       return applyCompression(x, pars.compressor);
     });
 
-    var allIsInline = data.every(function(x) { return helpers.contains(x.file.params, 'inline'); });
+    var allIsInline = data.every(function(x) { return _.contains(x.file.params, 'inline'); });
 
     if (shouldConcat && (outfilename || allIsInline)) {
 
       var areAllEqual = allEqual(data.map(function(d) {
         return {
-          inline: helpers.contains(d.file.params, 'inline'),
+          inline: _.contains(d.file.params, 'inline'),
           ie: build.whichIE(d.file.params),
           type: d.file.type,
           media: build.paramsToMediaType(d.file.params)
@@ -352,14 +352,14 @@ def('transform', function(assetRoot, pars, encoding, indexFile, matches, content
     var next_content = cc.cont;
     var old_outfiles = cc.files;
 
-    var shouldConcat = helpers.contains(d.params, 'concat');
+    var shouldConcat = _.contains(d.params, 'concat');
 
     var npmreqs = d.files.filter(function(file) {
-      return helpers.contains(file.params, 'npm');
+      return _.contains(file.params, 'npm');
     });
 
     var expandedFiles = d.files.map(function(file) {
-      if (helpers.contains(file.params, 'npm') && file.params.some(function(p) { return _.startsWith(p, 'as:'); })) {
+      if (_.contains(file.params, 'npm') && file.params.some(function(p) { return _.startsWith(p, 'as:'); })) {
 
         var abs = path.join(getNpmFolder(), file.name.split('@')[0] + "-require.js");
         var reqFile = {
@@ -489,7 +489,7 @@ def('buildConstructor', function(dependencies) {
       // some ugly preprocessing in order to merge globbed files with non-globbed
       res.matches.forEach(function(m) {
         m.files = _.flatten(m.files.map(function(file) {
-          if (!helpers.contains(file.params, 'npm')) {
+          if (!_.contains(file.params, 'npm')) {
             return file.globs.map(function(g) {
               return _.extend({}, file, {
                 name: g

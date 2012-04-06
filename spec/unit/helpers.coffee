@@ -11,7 +11,6 @@ it "should expose the expected helpers", ->
     'safeReplace'
     'safeReplaceAll'
     'execAll'
-    'contains'
     'createTag'
     'isPathAbsolute'
     'escapeInlineScript'
@@ -95,19 +94,6 @@ describe 'helpers.execAll', ->
 
   it 'should return an empty list if there are no matches', ->
     helpers.execAll(/([a-z])[a-z]+/g, '1337').should.eql([])
-
-
-
-describe 'helpers.contains', ->
-
-  it 'should return true if and only if the array contains the given element', ->
-    helpers.contains([1, 2, 3], 3).should.be.true
-    helpers.contains([1, 2, 3], 0).should.be.false
-
-  it 'should return true if and only if the string contains the given element', ->
-    helpers.contains("hello world", "w").should.be.true
-    helpers.contains("hello world", "a").should.be.false
-
 
 
 

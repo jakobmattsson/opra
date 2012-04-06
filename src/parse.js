@@ -4,6 +4,8 @@ var async = require('async');
 var glob = require('glob');
 var _ = require('underscore');
 
+var _s = require('underscore.string');
+
 _.mixin(require('underscore.string').exports());
 
 var helpers = require('./helpers.js');
@@ -44,10 +46,10 @@ def('getMatches', function(content, prefix, postfix) {
     var filename;
 
     var filenames = matchData.params.filter(function(p) {
-      return helpers.contains(p, '.');
+      return _s.contains(p, '.');
     });
     matchData.params = matchData.params.filter(function(p) {
-      return !helpers.contains(p, '.');
+      return !_s.contains(p, '.');
     });
 
     if (filenames.length >= 1) {
@@ -105,19 +107,19 @@ def('globber', function(pattern, root, cwd, callback) {
 def('flagMatches', function(matches, globalFlags) {
 
   var prec = function(params, indirect, n, scope) {
-    if (helpers.contains(params, 'always-' + n) && helpers.contains(params, 'never-' + n)) {
+    if (_.contains(params, 'always-' + n) && _.contains(params, 'never-' + n)) {
       throw new Error('"always" and "never" assigned to the same ' + scope);
-    } else if (helpers.contains(params, 'always-' + n)) {
+    } else if (_.contains(params, 'always-' + n)) {
       return n;
-    } else if (helpers.contains(params, 'never-' + n)) {
+    } else if (_.contains(params, 'never-' + n)) {
       return undefined;
-    } else if (helpers.contains(indirect, 'always-' + n)) {
+    } else if (_.contains(indirect, 'always-' + n)) {
       return n;
-    } else if (helpers.contains(indirect, 'never-' + n)) {
+    } else if (_.contains(indirect, 'never-' + n)) {
       return undefined;
     } else if (!_.isUndefined(globalFlags) && !_.isUndefined(globalFlags[n])) {
       return globalFlags[n] ? n : undefined;
-    } else if (helpers.contains(params, n) || helpers.contains(indirect, n)) {
+    } else if (_.contains(params, n) || _.contains(indirect, n)) {
       return n;
     }
     return undefined;
