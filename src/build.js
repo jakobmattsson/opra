@@ -306,6 +306,13 @@ def('concatToFiles', function(compiler, assetRoot, ps, callback) {
 def('transform', function(assetRoot, compiler, encoding, indexFile, matches, content, callback) {
   var hasPreludedCommonJS = false;
 
+  var getNpmFolder = function() {
+    var r1 = path.relative(assetRoot, indexFile);
+    var r2 = path.join(assetRoot, 'opra-cache', r1);
+    var r3 = r2 + '-npm';
+    return r3;
+  };
+
   async.reduce(matches, { cont: content, files: [] }, function(cc, d, callback) {
     var next_content = cc.cont;
     var old_outfiles = cc.files;
@@ -318,7 +325,8 @@ def('transform', function(assetRoot, compiler, encoding, indexFile, matches, con
 
     var expandedFiles = d.files.map(function(file) {
       if (helpers.contains(file.params, 'npm') && file.params.some(function(p) { return _.startsWith(p, 'as:'); })) {
-        var abs = path.join(indexFile + "-npm", file.name.split('@')[0] + "-require.js");
+
+        var abs = path.join(getNpmFolder(), file.name.split('@')[0] + "-require.js");
         var reqFile = {
           absolutePath: abs,
           name: "/" + path.relative(assetRoot, abs),
@@ -348,7 +356,7 @@ def('transform', function(assetRoot, compiler, encoding, indexFile, matches, con
       }).map(function(xx) {
         return xx.slice(3);
       });
-      build.filesFromNPM(!hasPreludedCommonJS, assetRoot, item.name, indexFile + "-npm", aliases, function(err) {
+      build.filesFromNPM(!hasPreludedCommonJS, assetRoot, item.name, getNpmFolder(), aliases, function(err) {
         hasPreludedCommonJS = true;
         callback(err);
       });
@@ -368,7 +376,7 @@ def('transform', function(assetRoot, compiler, encoding, indexFile, matches, con
 
       npmreqs.forEach(function(n) {
         var name = n.name;
-        n.absolutePath = path.join(indexFile + "-npm", name.split('@')[0] + ".js");
+        n.absolutePath = path.join(getNpmFolder(), name.split('@')[0] + ".js");
         n.name = "/" + path.relative(assetRoot, n.absolutePath);
         n.type = 'js';
         n.encoding = 'utf8';
