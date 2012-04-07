@@ -11,6 +11,7 @@ var uglify = require('uglify-js');
 
 var helpers = require('./helpers.js');
 var parse = require('./parse.js');
+var read = require('./read.js');
 var build = exports;
 
 var def = function(name, func) {
@@ -29,74 +30,10 @@ var propagate = function(callback, f) {
 
 
 
-
 def('filetype', function(filename, compiler) {
   return Object.keys(compiler).reduce(function(memo, type) {
     return _.endsWith(filename, '.' + type) ? compiler[type].target : memo;
   }, 'other');
-});
-def('whichIE', function(params) {
-  if (_.contains(params, "ie7")) {
-    return "ie7";
-  }
-  return undefined;
-});
-def('wrappIE', function(params, str) {
-  if (build.whichIE(params) == 'ie7') {
-    return "<!--[if IE 7]>" + str + "<![endif]-->";
-  }
-  return str;
-});
-def('paramsToMediaType', function(params) {
-  if (_.contains(params, 'screen')) {
-    return 'screen';
-  }
-  if (_.contains(params, 'print')) {
-    return 'print';
-  }
-  return undefined;
-});
-
-def('tagifyWithContent', function(file, content) {
-  var spaces = file.spaces.slice(2);
-
-  if (!_.contains(file.params, 'compress') || file.type == 'other') {
-    content = content.trim().split('\n').map(function(s) {
-      return file.spaces + s;
-    }).join('\n');
-    content = "\n" + content + "\n" + spaces;
-  }
-
-  var csstag = helpers.createTag('style', {
-    type: 'text/css',
-    media: build.paramsToMediaType(file.params),
-    'data-path': _.contains(file.params, 'paths') ? file.name : undefined
-  }, content);
-  var jstag = helpers.createTag('script', {
-    type: file.type == 'js' ? 'text/javascript' : 'text/x-opra',
-    id: file.type != 'js' && _.contains(file.params, 'ids') ? "opra-" + path.basename(file.name).split('.')[0] : undefined,
-    'data-path': _.contains(file.params, 'paths') ? file.name : undefined
-  }, content);
-
-  return spaces + build.wrappIE(file.params, file.type == 'css' ? csstag : jstag);
-});
-def('tagifyWithoutContent', function(file) {
-  var isCss = file.type === 'css';
-  var css = helpers.createTag('link', { rel: 'stylesheet', type: 'text/css', media: build.paramsToMediaType(file.params), href: file.name });
-  var js = helpers.createTag('script', { type: 'text/javascript', src: file.name }, '');
-  return file.spaces.slice(2) + build.wrappIE(file.params, isCss ? css : js);
-});
-def('tagify', function(tags) {
-  return tags.map(function(tag) {
-    if (_.isUndefined(tag.content)) {
-      if (tag.file.type == 'other') {
-        return '';
-      }
-      return build.tagifyWithoutContent(tag.file);
-    } else {
-      return build.tagifyWithContent(tag.file, tag.content);
-    }
-  }).filter(function(x) { return x; }).join('\n');
 });
 
 def('resolveIndexFileDir', function(filename) {
@@ -117,7 +54,7 @@ def('buildNPM', function(folder, packages, prelude, callback) {
         var b = browserify();
 
         if (!prelude) {
-          b.files = []
+          b.files = [];
           b.prepends = [];
         }
 
@@ -186,158 +123,6 @@ def('filesFromNPM', function(first, assetRoot, d, filename, aliases, callback) {
   });
 });
 
-def('filesToInline', function(pars, assetRoot, ps, shouldConcat, callback) {
-  build.filesToInlineBasic(pars, ps.files, ps.filename, shouldConcat, function(err, data) {
-    if (err) {
-      callback(err);
-      return;
-    }
-
-    if (shouldConcat && ps.filename) {
-      if (data.length !== 1) {
-        callback("Invalid number of files produced while concatenating");
-        return;
-      }
-
-      var file = data[0].file;
-      var content = data[0].content;
-
-      if (ps.fileType != file.type) {
-        callback("Invalid filetype! Use 'js' or 'css'.");
-        return;
-      }
-
-      var outFile = path.join(assetRoot, file.name);
-
-      var tag = build.tagifyWithoutContent(file);
-      callback(null, tag, [{ name: outFile, content: content }]);
-    } else {
-      var dd = build.tagify(data);
-      callback(null, dd);
-    }
-  });
-});
-
-var getValueForFirstKeyMatching = function(obj, predicate) {
-  var r = Object.keys(obj).filter(predicate);
-  return r.length > 0 ? obj[r[0]] : undefined;
-}
-var allEqual = function(array) {
-  var different = false;
-  array.map(JSON.stringify).reduce(function(x, y) {
-    if (!_.isEqual(x, y)) {
-      different = true;
-    }
-    return y;
-  });
-  return !different;
-};
-
-
-var fetchFileData = function(file, shouldConcat, outfilename, compiler, callback) {
-
-  var actualCallback = function(err, data) {
-    callback(err, { file: file, content: data });
-  };
-
-  if (!_.contains(file.params, 'inline') && !(shouldConcat && outfilename)) {
-    actualCallback(null, undefined);
-  } else {
-    var matchingCompiler = getValueForFirstKeyMatching(compiler, function(key) {
-      return _.endsWith(file.name, '.' + key);
-    });
-
-    if (matchingCompiler) {
-      matchingCompiler.compile(file.absolutePath, file.encoding, actualCallback);
-    } else {
-      fs.readFile(file.absolutePath, file.encoding, actualCallback);
-    }
-  }
-};
-
-var applyEscaping = function(tag) {
-  if (_.isUndefined(tag.content)) {
-    return tag;
-  }
-  return {
-    file: tag.file,
-    content: tag.file.type == 'js' && _.contains(tag.file.params, 'escape') ? helpers.escapeInlineScript(tag.content) : tag.content
-  };
-};
-var applyCompression = function(tag, compressor) {
-  if (_.isUndefined(tag.content)) {
-    return tag;
-  }
-
-  var c = function() {
-    if (_.contains(tag.file.params, 'compress')) {
-      if (tag.file.type == 'css') {
-        return compressor.css(tag.content);
-      } else if (tag.file.type == 'js') {
-        return compressor.js(tag.content || '');
-      }
-    }
-    return tag.content;
-  };
-
-  return {
-    file: tag.file,
-    content: c()
-  };
-}
-
-
-def('filesToInlineBasic', function(pars, files, outfilename, shouldConcat, callback) {
-  async.mapSeries(files, function(file, callback) {
-    fetchFileData(file, shouldConcat, outfilename, pars.compiler, callback);
-  }, function(err, data) {
-    if (err) {
-      callback(err);
-      return;
-    }
-
-    data = data.map(applyEscaping).map(function(x) {
-      return applyCompression(x, pars.compressor);
-    });
-
-    var allIsInline = data.every(function(x) { return _.contains(x.file.params, 'inline'); });
-
-    if (shouldConcat && (outfilename || allIsInline)) {
-
-      var areAllEqual = allEqual(data.map(function(d) {
-        return {
-          inline: _.contains(d.file.params, 'inline'),
-          ie: build.whichIE(d.file.params),
-          type: d.file.type,
-          media: build.paramsToMediaType(d.file.params)
-        };
-      }))
-
-      if (!areAllEqual) {
-        callback("Concatenation failed; make sure file types, media types and ie-constraints are equivalent within all blocks");
-        return;
-      }
-
-      if (data.length == 0) {
-        callback(null, []);
-      } else {
-        callback(null, [{
-          file: {
-            name: outfilename,
-            params: data[0].file.params,
-            spaces: data[0].file.spaces,
-            encoding: 'utf8', // it should be possible to choose this one
-            type: data[0].file.type
-          },
-          content: _.pluck(data, 'content').join(data[0].file.type == 'js' ? ';\n' : '\n')
-        }]);
-      }
-    } else {
-      callback(null, data);
-    }
-  });
-});
-
 def('transform', function(assetRoot, pars, encoding, indexFile, matches, content, callback) {
   var hasPreludedCommonJS = false;
 
@@ -377,12 +162,8 @@ def('transform', function(assetRoot, pars, encoding, indexFile, matches, content
     });
 
     var ps = {
-      filename: d.filename,
       spaces: d.spaces,
-      shouldConcat: shouldConcat,
-      fileParams: d.params,
-      files: _.flatten(expandedFiles),
-      fileType: d.type
+      files: _.flatten(expandedFiles)
     };
 
     async.forEachSeries(npmreqs, function(item, callback) {
@@ -417,16 +198,16 @@ def('transform', function(assetRoot, pars, encoding, indexFile, matches, content
         n.encoding = 'utf8';
       });
 
-      build.filesToInline(pars, assetRoot, ps, shouldConcat, fc);
+      read.filesToInlineBasic(pars, ps.files, {
+        shouldConcat: shouldConcat,
+        filename: d.filename,
+        absolutePath: d.filename ? path.join(assetRoot, d.filename) : undefined,
+        fileType: d.type
+      }, fc);
     });
 
   }, callback);
 });
-
-
-
-
-
 
 def('buildConstructor', function(dependencies) {
   return function(indexFile, settings, callback) {
@@ -468,6 +249,10 @@ def('buildConstructor', function(dependencies) {
       coffee: {
         target: 'js',
         compile: helpers.compileCoffee
+      },
+      '.': {
+        target: 'other',
+        compile: fs.readFile
       }
     };
 
@@ -494,7 +279,7 @@ def('buildConstructor', function(dependencies) {
               return _.extend({}, file, {
                 name: g
               });
-            })
+            });
           } else {
             return [file];
           }

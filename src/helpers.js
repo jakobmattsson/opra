@@ -1,15 +1,10 @@
 var fs = require('fs');
 var path = require('path');
-var coffee = require('coffee-script');
 var less = require('less');
+var coffee = require('coffee-script');
 var _ = require('underscore');
 
-var def = function(name, func) {
-  this[name] = func;
-  exports[name] = func;
-};
-
-def('compileCoffee', function(filePath, encoding, callback) {
+exports.compileCoffee = function(filePath, encoding, callback) {
   fs.readFile(filePath, encoding, function(err, content) {
     var code = null;
 
@@ -27,8 +22,8 @@ def('compileCoffee', function(filePath, encoding, callback) {
 
     callback(null, code);
   });
-});
-def('compileLess', function(filePath, paths, encoding, callback) {
+};
+exports.compileLess = function(filePath, paths, encoding, callback) {
   fs.readFile(filePath, encoding, function(err, content) {
     if (err) {
       callback(err);
@@ -36,15 +31,15 @@ def('compileLess', function(filePath, paths, encoding, callback) {
     }
     less.render(content, { paths: paths.concat([path.dirname(filePath)]) }, callback);
   });
-});
-def('safeReplace', function(str, target, newString) {
+};
+exports.safeReplace = function(str, target, newString) {
   var i = str.indexOf(target);
   if (i === -1) {
     return str;
   }
   return str.slice(0, i) + newString + str.slice(i + target.length);
-});
-def('safeReplaceAll', function(str, target, newString) {
+};
+exports.safeReplaceAll = function(str, target, newString) {
   while (true) {
     var i = str.indexOf(target);
 
@@ -54,8 +49,8 @@ def('safeReplaceAll', function(str, target, newString) {
 
     str = str.slice(0, i) + newString + str.slice(i + target.length);
   }
-});
-def('execAll', function(regexp, str) {
+};
+exports.execAll = function(regexp, str) {
   var match;
   var matches = [];
 
@@ -64,8 +59,8 @@ def('execAll', function(regexp, str) {
   }
 
   return matches;
-});
-def('createTag', function(name, attributes, content) {
+};
+exports.createTag = function(name, attributes, content) {
   attributes = attributes || {};
 
   if (_.isUndefined(content) && typeof attributes === 'string') {
@@ -78,12 +73,26 @@ def('createTag', function(name, attributes, content) {
   }).map(function(key) {
     return " " + key + '="' + attributes[key] + '"';
   }).join('') + (typeof content == 'string' ? ">" + content + "</" + name + ">" : " />");
-});
-def('isPathAbsolute', function(filename) {
+};
+exports.isPathAbsolute = function(filename) {
   return path.resolve(filename) === filename;
-});
-def('escapeInlineScript', function(script) {
+};
+exports.escapeInlineScript = function(script) {
   return script.replace(/<\/( )*script>/g, function(str) {
     return str.replace("</", "\\x3C/");
   });
-});
+};
+exports.getValueForFirstKeyMatching = function(obj, predicate) {
+  var r = Object.keys(obj).filter(predicate);
+  return r.length > 0 ? obj[r[0]] : undefined;
+};
+exports.allEqual = function(array) {
+  var different = false;
+  array.map(JSON.stringify).reduce(function(x, y) {
+    if (!_.isEqual(x, y)) {
+      different = true;
+    }
+    return y;
+  });
+  return !different;
+}

@@ -14,6 +14,8 @@ it "should expose the expected helpers", ->
     'createTag'
     'isPathAbsolute'
     'escapeInlineScript'
+    'getValueForFirstKeyMatching'
+    'allEqual'
   ]
 
 
