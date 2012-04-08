@@ -23,12 +23,12 @@ test 'inlining-images', {
   """
 }, { }, """
   <html>
-    <link rel="stylesheet" type="text/css" href="/opra-cache/one.css" />
+    <link rel="stylesheet" type="text/css" href="/.opra-cache/one.css" />
     <link rel="stylesheet" type="text/css" href="two.css" />
     <link rel="stylesheet" type="text/css" href="one.css" />
   </html>
 """, {
-  '/opra-cache/one.css': """
+  '/.opra-cache/one.css': """
     div {
       width: 10px;
       height: 20px;

@@ -152,7 +152,7 @@ var filter1 = function(files, meta, callback) {
       return;
     }
 
-    var newName = '/' + path.join('opra-cache', path.relative(assetRoot, item.absolutePath));
+    var newName = '/' + path.join('.opra-cache', path.relative(assetRoot, item.absolutePath));
     var r2 = path.join(assetRoot, newName);
     var haveReplaced = false;
 
@@ -236,7 +236,7 @@ def('transform', function(assetRoot, pars, encoding, indexFile, matches, content
 
   var getNpmFolder = function() {
     var r1 = path.relative(assetRoot, indexFile);
-    var r2 = path.join(assetRoot, 'opra-cache', r1);
+    var r2 = path.join(assetRoot, '.opra-cache', r1);
     var r3 = r2 + '-npm';
     return r3;
   };
