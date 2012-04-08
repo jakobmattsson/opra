@@ -123,8 +123,116 @@ def('filesFromNPM', function(first, assetRoot, d, filename, aliases, callback) {
   });
 });
 
-def('transform', function(assetRoot, pars, encoding, indexFile, matches, content, callback) {
+
+var dataUrl = function(filename, callback) {
+  fs.readFile(filename, function(err, data) {
+    if (err) {
+      callback(err);
+      return;
+    }
+
+    var format = path.extname(filename).slice(1);
+    var enc = data.toString('base64');
+
+    if (enc.length >= Math.pow(2, 15)) {
+      console.log("Warning: Very long encoded string; IE (and possibly other browsers) wont like this!");
+    }
+
+    callback(null, "url(data:image/" + format + ";base64," + enc + ")");
+  });
+};
+
+
+var filter1 = function(files, meta, callback) {
+  var assetRoot = meta.assetRoot;
+
+  async.forEachSeries(files, function(item, callback) {
+    if (!_.contains(item.params, 'datauris')) {
+      callback();
+      return;
+    }
+
+    var newName = '/' + path.join('opra-cache', path.relative(assetRoot, item.absolutePath));
+    var r2 = path.join(assetRoot, newName);
+    var haveReplaced = false;
+
+    fs.readFile(item.absolutePath, item.encoding, function(err, data) {
+      if (err) {
+        callback(err);
+        return;
+      }
+
+      var matches = data.match(/url\('[^']*\.(png|jpeg|jpg|gif)'\)|url\("[^"]*\.(png|jpeg|jpg|gif)"\)/g) || [];
+
+      async.forEachSeries(matches, function(item, callback) {
+        var filename = item.slice(5).slice(0, -2);
+        var absolutePath = path.join(assetRoot, filename);
+
+        dataUrl(absolutePath, function(err, encoded) {
+          if (err) {
+            callback(err);
+            return;
+          }
+
+          haveReplaced = true;
+          data = helpers.safeReplace(data, item, encoded);
+
+          callback();
+        });
+
+      }, function(err) {
+        powerfs.writeFile(r2, data, item.encoding, function(err) {
+
+          if (haveReplaced) {
+            item.absolutePath = r2;
+            item.name = newName;
+          }
+
+          callback();
+        });
+      });
+    });
+  }, callback);
+};
+var filter2 = function(files, meta, callback) {
   var hasPreludedCommonJS = false;
+  var assetRoot = meta.assetRoot;
+  var getNpmFolder = meta.getNpmFolder;
+
+  var npmreqs = files.filter(function(file) {
+    return _.contains(file.params, 'npm');
+  });
+
+  async.forEachSeries(npmreqs, function(item, callback) {
+    var aliases = item.params.filter(function(xx) {
+      return _.startsWith(xx, 'as:');
+    }).map(function(xx) {
+      return xx.slice(3);
+    });
+    build.filesFromNPM(!hasPreludedCommonJS, assetRoot, item.name, getNpmFolder(), aliases, function(err) {
+      hasPreludedCommonJS = true;
+      callback(err);
+    });
+  }, function(err) {
+    if (err) {
+      callback(err);
+      return;
+    }
+
+    npmreqs.forEach(function(n) {
+      var name = n.name;
+      n.absolutePath = path.join(getNpmFolder(), name.split('@')[0] + ".js");
+      n.name = "/" + path.relative(assetRoot, n.absolutePath);
+      n.type = 'js';
+      n.encoding = 'utf8';
+    });
+
+    callback();
+  });
+};
+
+
+def('transform', function(assetRoot, pars, encoding, indexFile, matches, content, callback) {
 
   var getNpmFolder = function() {
     var r1 = path.relative(assetRoot, indexFile);
@@ -138,10 +246,6 @@ def('transform', function(assetRoot, pars, encoding, indexFile, matches, content
     var old_outfiles = cc.files;
 
     var shouldConcat = _.contains(d.params, 'concat');
-
-    var npmreqs = d.files.filter(function(file) {
-      return _.contains(file.params, 'npm');
-    });
 
     var expandedFiles = d.files.map(function(file) {
       if (_.contains(file.params, 'npm') && file.params.some(function(p) { return _.startsWith(p, 'as:'); })) {
@@ -166,19 +270,20 @@ def('transform', function(assetRoot, pars, encoding, indexFile, matches, content
       files: _.flatten(expandedFiles)
     };
 
-    async.forEachSeries(npmreqs, function(item, callback) {
-      var aliases = item.params.filter(function(xx) {
-        return _.startsWith(xx, 'as:');
-      }).map(function(xx) {
-        return xx.slice(3);
-      });
-      build.filesFromNPM(!hasPreludedCommonJS, assetRoot, item.name, getNpmFolder(), aliases, function(err) {
-        hasPreludedCommonJS = true;
+    async.forEachSeries([filter2, filter1], function(filt, callback) {
+      filt(ps.files, { assetRoot: assetRoot, getNpmFolder: getNpmFolder }, callback);
+    }, function(err) {
+      if (err) {
         callback(err);
-      });
-    }, function() {
+        return;
+      }
 
-      var fc = function(err, data, outfiles) {
+      read.filesToInlineBasic(pars, ps.files, {
+        shouldConcat: shouldConcat,
+        filename: d.filename,
+        absolutePath: d.filename ? path.join(assetRoot, d.filename) : undefined,
+        fileType: d.type
+      }, function(err, data, outfiles) {
         if (err) {
           callback(err);
           return;
@@ -188,24 +293,8 @@ def('transform', function(assetRoot, pars, encoding, indexFile, matches, content
           cont: helpers.safeReplace(next_content, d.match, data),
           files: old_outfiles.concat(outfiles || [])
         });
-      };
-
-      npmreqs.forEach(function(n) {
-        var name = n.name;
-        n.absolutePath = path.join(getNpmFolder(), name.split('@')[0] + ".js");
-        n.name = "/" + path.relative(assetRoot, n.absolutePath);
-        n.type = 'js';
-        n.encoding = 'utf8';
       });
-
-      read.filesToInlineBasic(pars, ps.files, {
-        shouldConcat: shouldConcat,
-        filename: d.filename,
-        absolutePath: d.filename ? path.join(assetRoot, d.filename) : undefined,
-        fileType: d.type
-      }, fc);
     });
-
   }, callback);
 });
 
