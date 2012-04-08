@@ -1,9 +1,5 @@
 node_modules
-bar.js
-c.css
-foo.js
 npm-debug.log
-script.js
-.DS_Store
+.*
 src-cov
 test-coverage
