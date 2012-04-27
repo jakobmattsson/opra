@@ -7,10 +7,13 @@ files = {
         underscore@1.1.0 npm
         one.js module inline
         one.js inline
+        two.coffee module inline
+        two.coffee inline
       -->
     </html>
   """
   "one.js": "exports.square = function(x) { return x * x; };"
+  "two.coffee": "exports.sqrt = (x) -> Math.sqrt x"
 }
 
 test 'module', files, { }, """
@@ -23,6 +26,26 @@ test 'module', files, { }, """
     </script>
     <script type="text/javascript">
       exports.square = function(x) { return x * x; };
+    </script>
+    <script type="text/javascript">
+      (function() {
+      
+        require.define('two.coffee', function(require, module, exports, __dirname, __filename) {
+          return exports.sqrt = function(x) {
+            return Math.sqrt(x);
+          };
+        });
+      
+      }).call(this);
+    </script>
+    <script type="text/javascript">
+      (function() {
+      
+        exports.sqrt = function(x) {
+          return Math.sqrt(x);
+        };
+      
+      }).call(this);
     </script>
   </html>
 """

@@ -146,6 +146,15 @@ var filter3 = function(files, meta, callback) {
   var assetRoot = meta.assetRoot;
 
   async.forEachSeries(files, function(item, callback) {
+    var type = null;
+
+    if (_.endsWith(item.name, '.js')) {
+      type = "js";
+    }
+    if (_.endsWith(item.name, '.coffee')) {
+      type = "coffee";
+    }
+
     if (!_.contains(item.params, 'module')) {
       callback();
       return;
@@ -162,11 +171,22 @@ var filter3 = function(files, meta, callback) {
         return;
       }
 
-      var newData = "require.define('" + pathRelativeToRoot + "', function(require, module, exports, __dirname, __filename) {\n";
+      var newData = "";
+
+      if (type == "js") {
+        newData += "require.define('" + pathRelativeToRoot + "', function(require, module, exports, __dirname, __filename) {\n";
+      }
+      if (type == "coffee") {
+        newData += "require.define '" + pathRelativeToRoot + "', (require, module, exports, __dirname, __filename) ->\n";
+      }
+
       newData += data.split('\n').map(function(x) {
         return "  " + x;
       }).join('\n');
-      newData += "\n});\n";
+
+      if (type == "js") {
+        newData += "\n});";
+      }
 
       powerfs.writeFile(r2, newData, item.encoding, function(err) {
         if (err) {
