@@ -142,6 +142,45 @@ var dataUrl = function(filename, callback) {
   });
 };
 
+var filter3 = function(files, meta, callback) {
+  var assetRoot = meta.assetRoot;
+
+  async.forEachSeries(files, function(item, callback) {
+    if (!_.contains(item.params, 'module')) {
+      callback();
+      return;
+    }
+
+    var pathRelativeToRoot = path.relative(assetRoot, item.absolutePath);
+    var newName = '/' + path.join('.opra-cache', path.relative(assetRoot, item.absolutePath));
+    var r2 = path.join(assetRoot, newName);
+    var haveReplaced = false;
+
+    fs.readFile(item.absolutePath, item.encoding, function(err, data) {
+      if (err) {
+        callback(err);
+        return;
+      }
+
+      var newData = "require.define('" + pathRelativeToRoot + "', function(require, module, exports, __dirname, __filename) {\n";
+      newData += data.split('\n').map(function(x) {
+        return "  " + x;
+      }).join('\n');
+      newData += "\n});\n";
+
+      powerfs.writeFile(r2, newData, item.encoding, function(err) {
+        if (err) {
+          callback(err);
+          return;
+        }
+
+        item.absolutePath = r2;
+        item.name = newName;
+        callback();
+      });
+    });
+  }, callback);
+};
 
 var filter1 = function(files, meta, callback) {
   var assetRoot = meta.assetRoot;
@@ -270,7 +309,7 @@ def('transform', function(assetRoot, pars, encoding, indexFile, matches, content
       files: _.flatten(expandedFiles)
     };
 
-    async.forEachSeries([filter2, filter1], function(filt, callback) {
+    async.forEachSeries([filter2, filter1, filter3], function(filt, callback) {
       filt(ps.files, { assetRoot: assetRoot, getNpmFolder: getNpmFolder }, callback);
     }, function(err) {
       if (err) {

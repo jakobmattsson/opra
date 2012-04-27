@@ -238,12 +238,12 @@ describe 'parse.flagMatches', ->
     parse.flagMatches([{
       params: ['concat', 'a']
       files: [{
-        params: ['compress', 'datauris', 'paths', 'ids', 'escape', 'screen', 'ie7', 'print', 'npm', 'a', 'inline']
+        params: ['compress', 'datauris', 'paths', 'ids', 'escape', 'screen', 'ie7', 'print', 'npm', 'a', 'inline', 'module']
       }]
     }]).should.eql([{
       params: ['concat']
       files: [{
-        params: ['compress', 'datauris', 'escape', 'ids', 'ie7', 'inline', 'npm', 'paths', 'print', 'screen']
+        params: ['compress', 'datauris', 'escape', 'ids', 'ie7', 'inline', 'module', 'npm', 'paths', 'print', 'screen']
       }]
     }])
 
