@@ -244,9 +244,6 @@ var filter1 = function(files, meta, callback) {
 var filter2 = function(files, meta, callback) {
   var hasPreludedCommonJS = false;
   var assetRoot = meta.assetRoot;
-  var getNpmFolder = function() {
-    return meta.getNpmFolder(meta.assetRoot, meta.indexFile);
-  };
 
   var npmreqs = files.filter(function(file) {
     return _.contains(file.params, 'npm');
@@ -258,7 +255,7 @@ var filter2 = function(files, meta, callback) {
     }).map(function(xx) {
       return xx.slice(3);
     });
-    build.filesFromNPM(!hasPreludedCommonJS, assetRoot, item.name, getNpmFolder(), aliases, function(err) {
+    build.filesFromNPM(!hasPreludedCommonJS, assetRoot, item.name, getNpmFolder(meta.assetRoot, meta.indexFile), aliases, function(err) {
       hasPreludedCommonJS = true;
       callback(err);
     });
@@ -270,7 +267,7 @@ var filter2 = function(files, meta, callback) {
 
     npmreqs.forEach(function(n) {
       var name = n.name;
-      n.absolutePath = path.join(getNpmFolder(), name.split('@')[0] + ".js");
+      n.absolutePath = path.join(getNpmFolder(meta.assetRoot, meta.indexFile), name.split('@')[0] + ".js");
       n.name = "/" + path.relative(assetRoot, n.absolutePath);
       n.type = 'js';
       n.encoding = 'utf8';
@@ -281,6 +278,41 @@ var filter2 = function(files, meta, callback) {
 };
 
 
-exports.filter1 = filter1;
-exports.filter2 = filter2;
-exports.filter3 = filter3;
+
+
+
+
+
+
+var getNpmFolder = function(assetRoot, indexFile) {
+  var r1 = path.relative(assetRoot, indexFile);
+  var r2 = path.join(assetRoot, '.opra-cache', r1);
+  var r3 = r2 + '-npm';
+  return r3;
+};
+
+var expandNPM = function(file, assetRoot, indexFile, callback) {
+  if (_.contains(file.params, 'npm') && file.params.some(function(p) { return _.startsWith(p, 'as:'); })) {
+
+    var abs = path.join(getNpmFolder(assetRoot, indexFile), file.name.split('@')[0] + "-require.js");
+    var reqFile = {
+      absolutePath: abs,
+      name: "/" + path.relative(assetRoot, abs),
+      type: 'js',
+      encoding: 'utf8',
+      spaces: file.spaces,
+      params: _.without(file.params, 'npm')
+    };
+    callback(null, [file, reqFile]);
+  } else {
+    callback(null);
+  }
+};
+
+
+exports.preprocFilters = [filter2, filter1, filter3];
+exports.expandFilters = [expandNPM];
+
+
+
+

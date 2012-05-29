@@ -42,28 +42,7 @@ def('filePathToAbsolute', function(filename, assetRoot, indexFileDir) {
   return path.join(helpers.isPathAbsolute(filename) ? assetRoot : indexFileDir, filename);
 });
 
-var getNpmFolder = function(assetRoot, indexFile) {
-  var r1 = path.relative(assetRoot, indexFile);
-  var r2 = path.join(assetRoot, '.opra-cache', r1);
-  var r3 = r2 + '-npm';
-  return r3;
-};
 
-var expandNPM = function(getNpmFolder, file, assetRoot, indexFile) {
-  if (_.contains(file.params, 'npm') && file.params.some(function(p) { return _.startsWith(p, 'as:'); })) {
-
-    var abs = path.join(getNpmFolder(assetRoot, indexFile), file.name.split('@')[0] + "-require.js");
-    var reqFile = {
-      absolutePath: abs,
-      name: "/" + path.relative(assetRoot, abs),
-      type: 'js',
-      encoding: 'utf8',
-      spaces: file.spaces,
-      params: _.without(file.params, 'npm')
-    };
-    return [file, reqFile];
-  }
-};
 
 
 def('transform', function(assetRoot, pars, encoding, indexFile, matches, content, callback) {
@@ -76,45 +55,59 @@ def('transform', function(assetRoot, pars, encoding, indexFile, matches, content
 
     var shouldConcat = _.contains(d.params, 'concat');
 
-    var expandedFiles = d.files.map(function(file) {
-      var f2 = expandNPM(getNpmFolder, file, assetRoot, indexFile);
-      if (f2) {
-        return f2;
-      }
-      return [file];
-    });
+    var expandFilters = filters.expandFilters.concat([function(f, as, index, callback) {
+      callback(null, f);
+    }]);
 
-    var ps = {
-      spaces: d.spaces,
-      files: _.flatten(expandedFiles)
-    };
 
-    async.forEachSeries([filters.filter2, filters.filter1, filters.filter3], function(filt, callback) {
-      filt(ps.files, { assetRoot: assetRoot, indexFile: indexFile, getNpmFolder: getNpmFolder }, callback);
-    }, function(err) {
-      if (err) {
-        callback(err);
-        return;
-      }
+    var then = function(expandedFiles) {
 
-      read.filesToInlineBasic(pars, ps.files, {
-        shouldConcat: shouldConcat,
-        filename: d.filename,
-        absolutePath: d.filename ? path.join(assetRoot, d.filename) : undefined,
-        fileType: d.type
-      }, function(err, data, outfiles) {
+      var ps = {
+        spaces: d.spaces,
+        files: _.flatten(expandedFiles)
+      };
+
+      async.forEachSeries(filters.preprocFilters, function(filt, callback) {
+        filt(ps.files, { assetRoot: assetRoot, indexFile: indexFile }, callback);
+      }, function(err) {
         if (err) {
           callback(err);
           return;
         }
 
-        callback(err, {
-          cont: helpers.safeReplace(next_content, d.match, data),
-          files: old_outfiles.concat(outfiles || [])
+        read.filesToInlineBasic(pars, ps.files, {
+          shouldConcat: shouldConcat,
+          filename: d.filename,
+          absolutePath: d.filename ? path.join(assetRoot, d.filename) : undefined,
+          fileType: d.type
+        }, function(err, data, outfiles) {
+          if (err) {
+            callback(err);
+            return;
+          }
+
+          callback(err, {
+            cont: helpers.safeReplace(next_content, d.match, data),
+            files: old_outfiles.concat(outfiles || [])
+          });
         });
       });
+
+    };
+
+    async.map(d.files, function(file, callback) {
+      async.map(expandFilters, function(filter, callback) {
+        filter(file, assetRoot, indexFile, callback);
+      }, function(err, suggestions) {
+        callback(err, _.compact(suggestions).first());
+      });
+    }, function(err, ex2) {
+      // handle error
+      then(ex2);
     });
+
   }, callback);
+
 });
 
 def('buildConstructor', function(dependencies) {
