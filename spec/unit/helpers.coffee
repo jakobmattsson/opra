@@ -37,7 +37,7 @@ describe 'helpers.compileCoffee', ->
 
   it 'should fail if the file does not exist', (done) ->
     helpers.compileCoffee 'nonexisting.coffee', 'utf8', (err, code) ->
-      err.toString().should.include('no such file')
+      err.toString().should.include('ENOENT')
       done()
 
 
@@ -59,7 +59,7 @@ describe 'helpers.compileLess', ->
 
   it 'should fail if the file does not exist', (done) ->
     helpers.compileLess 'nonexisting.less', [], 'utf8', (err, code) ->
-      err.toString().should.include('no such file')
+      err.toString().should.include('ENOENT')
       done()
 
 

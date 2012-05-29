@@ -27,7 +27,7 @@ it "should log an error and then move on if the given file could not be found", 
   }, { }, () ->
     logged.length.should.equal(2)
     logged[0].should.equal("OPRA ERROR (while searching for path/someurl.html)")
-    logged[1].toString().should.include('no such file')
+    logged[1].toString().should.include('ENOENT')
     done()
 
 
