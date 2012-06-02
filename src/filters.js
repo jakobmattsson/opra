@@ -133,7 +133,9 @@ var dataUrl = function(filename, callback) {
 var filter3 = function(files, meta, callback) {
   var assetRoot = meta.assetRoot;
 
-  async.forEachSeries(files, function(item, callback) {
+  var globs = _.flatten(_.pluck(files, 'globs'));
+
+  async.forEachSeries(globs, function(item, callback) {
     var type = null;
 
     if (_.endsWith(item.name, '.js')) {
@@ -193,7 +195,9 @@ var filter3 = function(files, meta, callback) {
 var filter1 = function(files, meta, callback) {
   var assetRoot = meta.assetRoot;
 
-  async.forEachSeries(files, function(item, callback) {
+  var globs = _.flatten(_.pluck(files, 'globs'));
+
+  async.forEachSeries(globs, function(item, callback) {
     if (!_.contains(item.params, 'datauris')) {
       callback();
       return;
@@ -300,6 +304,14 @@ var expandNPM = function(file, assetRoot, indexFile, callback) {
       name: "/" + path.relative(assetRoot, abs),
       type: 'js',
       encoding: 'utf8',
+      globs: [{
+        absolutePath: abs,
+        name: "/" + path.relative(assetRoot, abs),
+        type: 'js',
+        encoding: 'utf8',
+        spaces: file.spaces,
+        params: _.without(file.params, 'npm')
+      }],
       spaces: file.spaces,
       params: _.without(file.params, 'npm')
     };

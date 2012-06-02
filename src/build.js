@@ -172,27 +172,23 @@ def('buildConstructor', function(dependencies) {
         return;
       }
 
-      // some ugly preprocessing in order to merge globbed files with non-globbed
-      res.matches.forEach(function(m) {
-        m.files = _.flatten(m.files.map(function(file) {
-          if (!_.contains(file.params, 'npm')) {
-            return file.globs.map(function(g) {
-              return _.extend({}, file, {
-                name: g
-              });
-            });
-          } else {
-            return [file];
-          }
-        }));
-      });
-
+      // Glob-preprocessing
       res.matches.forEach(function(match) {
         match.type = build.filetype(match.filename, compiler);
         match.files.forEach(function(file) {
           file.absolutePath = build.filePathToAbsolute(file.name, assetRoot, indexFileDir);
           file.encoding = encoding;
           file.type = build.filetype(file.name, compiler);
+          file.globs = file.globs.map(function(x) {
+            return {
+              name: x,
+              params: file.params,
+              spaces: file.spaces,
+              absolutePath: build.filePathToAbsolute(x, assetRoot, indexFileDir),
+              encoding: encoding,
+              type: build.filetype(x, compiler)
+            };
+          });
         });
       });
 

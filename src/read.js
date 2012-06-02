@@ -156,15 +156,37 @@ var stuffs = exports.stuffs = function(data, opraBlock, callback) {
   }
 };
 
+// Tar ett opra-block och returnerar två saker:
+// * Koden som ska stoppas in i HTML-filen
+// * En lista med filer [{ content: string, name: string }] som ska skapas
 var filesToInlineBasic = exports.filesToInlineBasic = function(deps, files, opraBlock, callback) {
 
   async.mapSeries(files, function(file, callback) {
-    fetchFileData(file, opraBlock.shouldConcat, opraBlock.filename, deps.compiler, callback);
+
+    if (_.contains(file.params, 'npm')) {
+      fetchFileData(file, opraBlock.shouldConcat, opraBlock.filename, deps.compiler, callback);
+    } else {
+
+      var gfiles = file.globs.map(function(x) {
+        return _.extend({}, x, {
+          params: file.params,
+          spaces: file.spaces
+        });
+      });
+
+      async.mapSeries(gfiles, function(gfile, callback) {
+        fetchFileData(gfile, opraBlock.shouldConcat, opraBlock.filename, deps.compiler, callback);
+      }, function(err, data) {
+        callback(err, data);
+      });
+    }
   }, function(err, data) {
     if (err) {
       callback(err);
       return;
     }
+
+    data = _.flatten(data);
 
     data = data.map(applyEscaping).map(function(x) {
       return applyCompression(x, deps.compressor);
