@@ -1,11 +1,9 @@
 var fs = require('fs');
 var path = require('path');
 var async = require('async');
-var cleanCSS = require('clean-css');
 var glob = require('glob');
 var powerfs = require('powerfs');
 var _ = require('underscore');
-var uglify = require('uglify-js');
 
 var helpers = require('./helpers.js');
 var parse = require('./parse.js');
@@ -157,15 +155,6 @@ def('buildConstructor', function(dependencies) {
       }
     };
 
-    var compressor = {
-      css: function(code, callback) {
-        return cleanCSS.process(code);
-      },
-      js: function(code, callback) {
-        return uglify(code || '');
-      }
-    };
-
     var autoNumber = 0;
 
     parse.parseFile(assetRoot, globalFlags, indexFile, encoding, function(err, res) {
@@ -202,7 +191,7 @@ def('buildConstructor', function(dependencies) {
         });
       });
 
-      build.transform(assetRoot, { compiler: compiler, compressor: compressor }, encoding, indexFile, res.matches, res.content, function(err, resa) {
+      build.transform(assetRoot, { compiler: compiler }, encoding, indexFile, res.matches, res.content, function(err, resa) {
         if (err) {
           callback(err);
           return;
@@ -222,9 +211,42 @@ def('buildConstructor', function(dependencies) {
 });
 
 
+def('extend', function(f) {
+  var hooks = {};
+  f(hooks);
+  
+  if (hooks.tag) {
+    tagHooks.push(hooks.tag);
+  }
+  if (hooks.postTag) {
+    postTagHooks.push(hooks.postTag);
+  }
+  if (hooks.file) {
+    fileHooks.push(hooks.file);
+  }
+  if (hooks.preventContent) {
+    preventContentHooks.push(hooks.preventContent);
+  }
+  if (hooks.concatable) {
+    concatableHooks.push(hooks.concatable);
+  }
+  if (hooks.fileFetcher) {
+    fileFetcherHooks.push(hooks.fileFetcher);
+  }
+  if (hooks.data) {
+    dataHooks.push(hooks.data);
+  }
+});
 
-
-
+var hooks = {
+  tag: [],
+  postTag: [],
+  file: [],
+  preventContent: [],
+  concatable: [],
+  fileFetcher: [],
+  data: []
+};
 
 
 var tagHooks = [];
@@ -302,29 +324,6 @@ fileHooks.push(function(tag, deps) {
   return {
     file: tag.file,
     content: tag.file.type == 'js' && _.contains(tag.file.params, 'escape') ? helpers.escapeInlineScript(tag.content) : tag.content
-  };
-});
-fileHooks.push(function(tag, deps) {
-  var compressor = deps.compressor;
-
-  if (_.isUndefined(tag.content)) {
-    return tag;
-  }
-
-  var c = function() {
-    if (_.contains(tag.file.params, 'compress')) {
-      if (tag.file.type == 'css') {
-        return compressor.css(tag.content);
-      } else if (tag.file.type == 'js') {
-        return compressor.js(tag.content || '');
-      }
-    }
-    return tag.content;
-  };
-
-  return {
-    file: tag.file,
-    content: c()
   };
 });
 
