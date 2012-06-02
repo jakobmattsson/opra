@@ -74,6 +74,13 @@ exports.createTag = function(name, attributes, content) {
     return " " + key + '="' + attributes[key] + '"';
   }).join('') + (typeof content == 'string' ? ">" + content + "</" + name + ">" : " />");
 };
+exports.createTagData = function(name, attributes, content) {
+  return { name: name, attributes: attributes || {}, content: content };
+};
+exports.createTagFromData = function(data) {
+  return exports.createTag(data.name, data.attributes, data.content);
+};
+
 exports.isPathAbsolute = function(filename) {
   return path.resolve(filename) === filename;
 };

@@ -12,6 +12,8 @@ it "should expose the expected helpers", ->
     'safeReplaceAll'
     'execAll'
     'createTag'
+    'createTagData'
+    'createTagFromData'
     'isPathAbsolute'
     'escapeInlineScript'
     'getValueForFirstKeyMatching'

@@ -3,17 +3,83 @@ var async = require('async');
 var _ = require('underscore');
 var helpers = require('./helpers.js');
 
+var tagHooks = [];
+var postTagHooks = [];
+var fileHooks = [];
+
+
+tagHooks.push(function(file, tag) {
+  var spaces = file.spaces.slice(2);
+
+
+  if (tag.content && (!_.contains(file.params, 'compress') || file.type == 'other')) {
+    tag.content = tag.content.trim().split('\n').map(function(s) {
+      return file.spaces + s;
+    }).join('\n');
+    tag.content = "\n" + tag.content + "\n" + spaces;
+  }
+
+  return tag;
+});
+
+tagHooks.push(function(file, tag) {
+  var media = exports.paramsToMediaType(file.params);
+  if (media) {
+    tag.attributes.media = media;
+  }
+  return tag;
+});
+tagHooks.push(function(file, tag) {
+  if (file.type != 'js' && file.type != 'css' && _.contains(file.params, 'ids')) {
+    tag.attributes.id = "opra-" + path.basename(file.name).split('.')[0];
+  }
+  return tag;
+});
+tagHooks.push(function(file, tag) {
+  if (_.contains(file.params, 'paths')) {
+    tag.attributes['data-path'] = file.name
+  }
+  return tag;
+});
+
+
+postTagHooks.push(function(file, tag) {
+  if (whichIE(file.params) == 'ie7') {
+    return "<!--[if IE 7]>" + tag + "<![endif]-->";
+  }
+  return tag;
+});
+
+
+fileHooks.push(function(file, deps) {
+  return applyEscaping(file);
+});
+fileHooks.push(function(file, deps) {
+  return applyCompression(file, deps.compressor);
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 var whichIE = exports.whichIE = function(params) {
   if (_.contains(params, "ie7")) {
     return "ie7";
   }
   return undefined;
-};
-var wrappIE = exports.wrappIE = function(params, str) {
-  if (whichIE(params) == 'ie7') {
-    return "<!--[if IE 7]>" + str + "<![endif]-->";
-  }
-  return str;
 };
 var paramsToMediaType = exports.paramsToMediaType = function(params) {
   if (_.contains(params, 'screen')) {
@@ -26,41 +92,57 @@ var paramsToMediaType = exports.paramsToMediaType = function(params) {
 };
 
 var tagifyWithContent = exports.tagifyWithContent = function(file, content) {
-  var spaces = file.spaces.slice(2);
 
-  if (!_.contains(file.params, 'compress') || file.type == 'other') {
-    content = content.trim().split('\n').map(function(s) {
-      return file.spaces + s;
-    }).join('\n');
-    content = "\n" + content + "\n" + spaces;
+  var tag = "";
+
+  if (_.isUndefined(content)) {
+    if (file.type == 'css') {
+      tag = {
+        name: 'link',
+        attributes: { rel: 'stylesheet', type: 'text/css', href: file.name },
+        content: null
+      };
+    } else if (file.type == 'js') {
+      tag = {
+        name: 'script',
+        attributes: { type: 'text/javascript', src: file.name },
+        content: ''
+      };
+    } else {
+      return "";
+    }
+  } else {
+    if (file.type == 'css') {
+      tag = helpers.createTagData('style', {
+        type: 'text/css',
+      }, content);
+    } else if (file.type == 'js') {
+      tag = helpers.createTagData('script', {
+        type: 'text/javascript'
+      }, content);
+    } else {
+      tag = helpers.createTagData('script', {
+        type: 'text/x-opra'
+      }, content);
+    }
   }
 
-  var csstag = helpers.createTag('style', {
-    type: 'text/css',
-    media: exports.paramsToMediaType(file.params),
-    'data-path': _.contains(file.params, 'paths') ? file.name : undefined
-  }, content);
-  var jstag = helpers.createTag('script', {
-    type: file.type == 'js' ? 'text/javascript' : 'text/x-opra',
-    id: file.type != 'js' && _.contains(file.params, 'ids') ? "opra-" + path.basename(file.name).split('.')[0] : undefined,
-    'data-path': _.contains(file.params, 'paths') ? file.name : undefined
-  }, content);
+  tagHooks.forEach(function(hook) {
+    tag = hook(file, tag);
+  });
 
-  return spaces + exports.wrappIE(file.params, file.type == 'css' ? csstag : jstag);
-};
-var tagifyWithoutContent = exports.tagifyWithoutContent = function(file) {
-  var isCss = file.type === 'css';
-  var css = helpers.createTag('link', { rel: 'stylesheet', type: 'text/css', media: exports.paramsToMediaType(file.params), href: file.name });
-  var js = helpers.createTag('script', { type: 'text/javascript', src: file.name }, '');
-  return file.spaces.slice(2) + exports.wrappIE(file.params, isCss ? css : js);
+  tag = helpers.createTagFromData(tag);
+
+  postTagHooks.forEach(function(hook) {
+    tag = hook(file, tag);
+  });
+
+  return tag ? file.spaces.slice(2) + tag : '';
 };
 var tagify = exports.tagify = function(tags) {
   return tags.map(function(tag) {
     if (_.isUndefined(tag.content)) {
-      if (tag.file.type == 'other') {
-        return '';
-      }
-      return exports.tagifyWithoutContent(tag.file);
+      return exports.tagifyWithContent(tag.file);
     } else {
       return exports.tagifyWithContent(tag.file, tag.content);
     }
@@ -188,8 +270,11 @@ var filesToInlineBasic = exports.filesToInlineBasic = function(deps, files, opra
 
     data = _.flatten(data);
 
-    data = data.map(applyEscaping).map(function(x) {
-      return applyCompression(x, deps.compressor);
+    data = data.map(function(d) {
+      fileHooks.forEach(function(hook) {
+        d = hook(d, deps);
+      });
+      return d;
     });
 
     stuffs(data, opraBlock, function(err, data) {
@@ -204,7 +289,9 @@ var filesToInlineBasic = exports.filesToInlineBasic = function(deps, files, opra
           return;
         }
 
-        var tags = _.pluck(data, 'file').map(exports.tagifyWithoutContent);
+        var tags = _.pluck(data, 'file').map(function(f) {
+          return exports.tagifyWithContent(f);
+        });
         var outfiles = data.map(function(d) { return { name: d.file.absolutePath, content: d.content }; });
 
         callback(null, tags, outfiles);

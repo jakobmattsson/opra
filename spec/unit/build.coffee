@@ -32,16 +32,6 @@ describe 'build.whichIE', ->
 
 
 
-describe 'build.wrappIE', ->
-
-  it 'should wrapp ie7', () ->
-    read.wrappIE(['a', 'ie7'], 'foobar').should.equal("<!--[if IE 7]>foobar<![endif]-->")
-
-  it 'should return the original string if no IEs', () ->
-    read.wrappIE(['a', 'b'], 'foobar').should.equal("foobar")
-
-
-
 describe 'build.paramsToMediaType', ->
 
   it 'should find screen', () ->
