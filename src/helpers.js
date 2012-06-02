@@ -81,7 +81,6 @@ exports.createTagData = function(name, attributes, content) {
 exports.createTagFromData = function(data) {
   return exports.createTag(data.name, data.attributes, data.content);
 };
-
 exports.isPathAbsolute = function(filename) {
   return path.resolve(filename) === filename;
 };

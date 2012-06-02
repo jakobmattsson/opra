@@ -1,26 +1,14 @@
 var fs = require('fs');
 var path = require('path');
 var async = require('async');
-var glob = require('glob');
-var powerfs = require('powerfs');
 var _ = require('underscore');
 
 var helpers = require('./helpers.js');
 var parse = require('./parse.js');
-var read = exports;
 var build = exports;
 
 var def = function(name, func) {
   exports[name] = func;
-};
-var propagate = function(callback, f) {
-  return function(err) {
-    if (err) {
-      callback(err);
-      return;
-    }
-    return f.apply(this, Array.prototype.slice.call(arguments, 1));
-  };
 };
 
 
@@ -31,17 +19,12 @@ def('filetype', function(filename, compiler) {
     return _.endsWith(filename, '.' + type) ? compiler[type].target : memo;
   }, 'other');
 });
-
 def('resolveIndexFileDir', function(filename) {
   return path.resolve(process.cwd(), path.dirname(filename));
 });
 def('filePathToAbsolute', function(filename, assetRoot, indexFileDir) {
   return path.join(helpers.isPathAbsolute(filename) ? assetRoot : indexFileDir, filename);
 });
-
-
-
-
 def('transform', function(assetRoot, pars, encoding, indexFile, matches, content, callback) {
 
 
@@ -72,7 +55,7 @@ def('transform', function(assetRoot, pars, encoding, indexFile, matches, content
           return;
         }
 
-        read.filesToInlineBasic(pars, ps.files, {
+        build.filesToStrings(pars, ps.files, {
           shouldConcat: shouldConcat,
           filename: d.filename,
           absolutePath: d.filename ? path.join(assetRoot, d.filename) : undefined,
@@ -106,7 +89,6 @@ def('transform', function(assetRoot, pars, encoding, indexFile, matches, content
   }, callback);
 
 });
-
 def('buildConstructor', function(dependencies) {
   return function(indexFile, settings, callback) {
 
@@ -210,98 +192,10 @@ def('buildConstructor', function(dependencies) {
 });
 
 
-def('extend', function(f) {
-  var h = {};
-  f(h);
-
-  Object.keys(h).forEach(function(key) {
-    if (hooks[key]) {
-      if (_.isArray(h[key])) {
-        hooks[key] = (hooks[key] || []).concat(h[key]);
-      } else {
-        hooks[key].push(h[key]);
-      }
-    }
-  })
-});
-
-
-
-var hooks = {
-  tag: [],
-  postTag: [],
-  file: [],
-  preventContent: [],
-  concatable: [],
-  fileFetcher: [],
-  data: [],
-  preproc: [],
-  expand: []
-};
-
-
-hooks.tag.push(function(file, tag) {
-  var spaces = file.spaces.slice(2);
-
-
-  if (tag.content && (!_.contains(file.params, 'compress') || file.type == 'other')) {
-    tag.content = tag.content.trim().split('\n').map(function(s) {
-      return file.spaces + s;
-    }).join('\n');
-    tag.content = "\n" + tag.content + "\n" + spaces;
-  }
-
-  return tag;
-});
-
-
-
-
-hooks.file.push(function(tag, deps) {
-  if (_.isUndefined(tag.content)) {
-    return tag;
-  }
-  return {
-    file: tag.file,
-    content: tag.file.type == 'js' && _.contains(tag.file.params, 'escape') ? helpers.escapeInlineScript(tag.content) : tag.content
-  };
-});
-
-
-hooks.preventContent.push(function(file, blockParams) {
-  return _.contains(file.params, 'inline');
-});
-hooks.preventContent.push(function(file, blockParams) {
-  return blockParams.shouldConcat && blockParams.outfilename;
-});
-
-
-hooks.concatable.push(function(file, content) {
-  return _.contains(file.params, 'inline');
-});
-
-
-hooks.fileFetcher.push(function(file, opraBlock, deps, callback) {
-  if (_.contains(file.params, 'npm')) {
-    fetchFileData(file, opraBlock, deps.compiler, callback);
-  } else {
-    callback();
-  }
-});
-
-
-
-
-
-
-
-
-
 var tagify = exports.tagify = function(tags) {
   return tags.map(function(tag) {
     var file = tag.file;
     var content = tag.content;
-
 
     var tag = "";
 
@@ -337,32 +231,28 @@ var tagify = exports.tagify = function(tags) {
       }
     }
 
-    hooks.tag.forEach(function(hook) {
-      tag = hook(file, tag);
-    });
+    tag = hooks.tag.reduce(function(acc, hook) {
+      return hook(file, acc);
+    }, tag);
 
     tag = helpers.createTagFromData(tag);
 
-    hooks.postTag.forEach(function(hook) {
-      tag = hook(file, tag);
-    });
+    tag = hooks.postTag.reduce(function(acc, hook) {
+      return hook(file, acc);
+    }, tag);
 
     return tag ? file.spaces.slice(2) + tag : '';
 
   }).filter(function(x) { return x; }).join('\n');
 };
-
 var fetchFileData = exports.fetchFileData = function(file, opraBlock, compiler, callback) {
-
-  var shouldConcat = opraBlock.shouldConcat
-  var outfilename = opraBlock.filename;
 
   var actualCallback = function(err, data) {
     callback(err, { file: file, content: data });
   };
 
   var anyTrue = hooks.preventContent.some(function(hook) {
-    return hook(file, { shouldConcat: shouldConcat, outfilename: outfilename });
+    return hook(file, { shouldConcat: opraBlock.shouldConcat, outfilename: opraBlock.filename });
   });
 
   if (!anyTrue) {
@@ -379,12 +269,7 @@ var fetchFileData = exports.fetchFileData = function(file, opraBlock, compiler, 
     }
   }
 };
-
-
-
-
-
-var filesToInlineBasic = exports.filesToInlineBasic = function(deps, files, opraBlock, callback) {
+var filesToStrings = exports.filesToStrings = function(deps, files, opraBlock, callback) {
 
   var extendedFetchers = hooks.fileFetcher.concat([function(file, opraBlock, deps, callback) {
     var gfiles = file.globs.map(function(x) {
@@ -434,4 +319,102 @@ var filesToInlineBasic = exports.filesToInlineBasic = function(deps, files, opra
     });
   });
 };
+
+
+
+
+
+
+
+
+
+def('extend', function(f) {
+  var h = {};
+  f(h);
+
+  Object.keys(h).forEach(function(key) {
+    if (hooks[key]) {
+      if (_.isArray(h[key])) {
+        hooks[key] = (hooks[key] || []).concat(h[key]);
+      } else {
+        hooks[key].push(h[key]);
+      }
+    }
+  })
+});
+
+var hooks = {
+  tag: [],
+  postTag: [],
+  file: [],
+  preventContent: [],
+  concatable: [],
+  fileFetcher: [],
+  data: [],
+  preproc: [],
+  expand: []
+};
+
+
+
+
+
+
+
+
+
+
+
+// Vet inte riktigt var den här hör hemma...
+hooks.tag.push(function(file, tag) {
+  var spaces = file.spaces.slice(2);
+
+
+  if (tag.content && (!_.contains(file.params, 'compress') || file.type == 'other')) {
+    tag.content = tag.content.trim().split('\n').map(function(s) {
+      return file.spaces + s;
+    }).join('\n');
+    tag.content = "\n" + tag.content + "\n" + spaces;
+  }
+
+  return tag;
+});
+
+
+
+// Inlining (detta är allt, men anledningen till att det funkar är att koden i princip är skriven för "default" inlining. Kanske kan bryta ut de sakerna mer ovan.)
+hooks.preventContent.push(function(file, blockParams) {
+  return _.contains(file.params, 'inline');
+});
+hooks.concatable.push(function(file, content) {
+  return _.contains(file.params, 'inline');
+});
+hooks.file.push(function(tag, deps) {
+  if (_.isUndefined(tag.content)) {
+    return tag;
+  }
+  return {
+    file: tag.file,
+    content: tag.file.type == 'js' && _.contains(tag.file.params, 'escape') ? helpers.escapeInlineScript(tag.content) : tag.content
+  };
+});
+
+
+
+// Concat
+hooks.preventContent.push(function(file, blockParams) {
+  return blockParams.shouldConcat && blockParams.outfilename;
+});
+
+
+
+// Denna ska ligga i NPM-filen (men först måste fetchFileData kunna plockas ut på något sätt)
+hooks.fileFetcher.push(function(file, opraBlock, deps, callback) {
+  if (_.contains(file.params, 'npm')) {
+    fetchFileData(file, opraBlock, deps.compiler, callback);
+  } else {
+    callback();
+  }
+});
+
 
