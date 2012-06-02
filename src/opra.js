@@ -10,6 +10,11 @@ exports.serve = serve.serveConstructor({
 });
 exports.extend = build.extend;
 
+build.extend(require('./hooks/npm.js'));
 build.extend(require('./hooks/compression.js'));
 build.extend(require('./hooks/conditionalExplorer.js'));
 build.extend(require('./hooks/concatenation.js'));
+build.extend(require('./hooks/mediaTypes.js'));
+build.extend(require('./hooks/tagId.js'));
+build.extend(require('./hooks/dataPath.js'));
+build.extend(require('./hooks/datauris.js'));

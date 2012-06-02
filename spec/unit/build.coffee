@@ -21,20 +21,6 @@ describe 'build.filetype', ->
 
 
 
-describe 'build.paramsToMediaType', ->
-
-  it 'should find screen', () ->
-    build.paramsToMediaType(['a', 'screen', 'b']).should.equal('screen')
-
-  it 'should find print', () ->
-    build.paramsToMediaType(['a', 'b', 'print']).should.equal('print')
-
-  it 'should prefer screen over print', () ->
-    build.paramsToMediaType(['screen', 'b', 'print']).should.equal('screen')
-    build.paramsToMediaType(['print', 'b', 'screen']).should.equal('screen')
-
-  it 'should not return if anything if no media types', () ->
-    assert(build.paramsToMediaType(['a', 'b', 'c']) == undefined)
 
 # Reuse this for "applyCompression"
 #

@@ -8,7 +8,6 @@ var _ = require('underscore');
 var helpers = require('./helpers.js');
 var parse = require('./parse.js');
 var read = exports;
-var filters = require('./filters.js');
 var build = exports;
 
 var def = function(name, func) {
@@ -53,7 +52,7 @@ def('transform', function(assetRoot, pars, encoding, indexFile, matches, content
 
     var shouldConcat = _.contains(d.params, 'concat');
 
-    var expandFilters = filters.expandFilters.concat([function(f, as, index, callback) {
+    var expandFilters = hooks.expand.concat([function(f, as, index, callback) {
       callback(null, f);
     }]);
 
@@ -65,7 +64,7 @@ def('transform', function(assetRoot, pars, encoding, indexFile, matches, content
         files: _.flatten(expandedFiles)
       };
 
-      async.forEachSeries(filters.preprocFilters, function(filt, callback) {
+      async.forEachSeries(hooks.preproc, function(filt, callback) {
         filt(ps.files, { assetRoot: assetRoot, indexFile: indexFile }, callback);
       }, function(err) {
         if (err) {
@@ -217,10 +216,16 @@ def('extend', function(f) {
 
   Object.keys(h).forEach(function(key) {
     if (hooks[key]) {
-      hooks[key].push(h[key]);
+      if (_.isArray(h[key])) {
+        hooks[key] = (hooks[key] || []).concat(h[key]);
+      } else {
+        hooks[key].push(h[key]);
+      }
     }
   })
 });
+
+
 
 var hooks = {
   tag: [],
@@ -229,18 +234,9 @@ var hooks = {
   preventContent: [],
   concatable: [],
   fileFetcher: [],
-  data: []
-};
-
-
-var paramsToMediaType = exports.paramsToMediaType = function(params) {
-  if (_.contains(params, 'screen')) {
-    return 'screen';
-  }
-  if (_.contains(params, 'print')) {
-    return 'print';
-  }
-  return undefined;
+  data: [],
+  preproc: [],
+  expand: []
 };
 
 
@@ -255,25 +251,6 @@ hooks.tag.push(function(file, tag) {
     tag.content = "\n" + tag.content + "\n" + spaces;
   }
 
-  return tag;
-});
-hooks.tag.push(function(file, tag) {
-  var media = exports.paramsToMediaType(file.params);
-  if (media) {
-    tag.attributes.media = media;
-  }
-  return tag;
-});
-hooks.tag.push(function(file, tag) {
-  if (file.type != 'js' && file.type != 'css' && _.contains(file.params, 'ids')) {
-    tag.attributes.id = "opra-" + path.basename(file.name).split('.')[0];
-  }
-  return tag;
-});
-hooks.tag.push(function(file, tag) {
-  if (_.contains(file.params, 'paths')) {
-    tag.attributes['data-path'] = file.name
-  }
   return tag;
 });
 
@@ -300,13 +277,7 @@ hooks.preventContent.push(function(file, blockParams) {
 
 
 hooks.concatable.push(function(file, content) {
-  return paramsToMediaType(file.params);
-});
-hooks.concatable.push(function(file, content) {
   return _.contains(file.params, 'inline');
-});
-hooks.concatable.push(function(file, content) {
-  return file.type;
 });
 
 

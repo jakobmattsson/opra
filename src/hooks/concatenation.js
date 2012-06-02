@@ -1,8 +1,12 @@
 var _ = require('underscore');
 var helpers = require('../helpers');
 
-
 module.exports = function(hooks) {
+
+  hooks.concatable = function(file, content) {
+    return file.type;
+  };
+
   hooks.data = function(data, opraBlock, concatable, callback) {
     if (opraBlock.shouldConcat) {
       var areAllEqual = concatable.every(function(hook, i) {
@@ -43,5 +47,3 @@ module.exports = function(hooks) {
     }
   };
 };
-
-
