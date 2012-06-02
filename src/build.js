@@ -166,15 +166,25 @@ def('buildConstructor', function(dependencies) {
       }
     };
 
+    var autoNumber = 0;
+
     parse.parseFile(assetRoot, globalFlags, indexFile, encoding, function(err, res) {
       if (err) {
         callback(err);
         return;
       }
 
+      res.matches.forEach(function(match) {
+        if (_.contains(match.params, 'concat') && !match.filename) {
+          autoNumber++;
+          match.filename = '__opra-concat-' + autoNumber;
+          match.type = null;
+        }
+      });
+
       // Glob-preprocessing
       res.matches.forEach(function(match) {
-        match.type = build.filetype(match.filename, compiler);
+        match.type = match.type || build.filetype(match.filename, compiler);
         match.files.forEach(function(file) {
           file.absolutePath = build.filePathToAbsolute(file.name, assetRoot, indexFileDir);
           file.encoding = encoding;

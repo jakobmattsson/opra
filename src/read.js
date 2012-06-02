@@ -6,6 +6,26 @@ var helpers = require('./helpers.js');
 var tagHooks = [];
 var postTagHooks = [];
 var fileHooks = [];
+var preventContentHooks = [];
+var concatableHooks = [];
+
+
+
+var whichIE = exports.whichIE = function(params) {
+  if (_.contains(params, "ie7")) {
+    return "ie7";
+  }
+  return undefined;
+};
+var paramsToMediaType = exports.paramsToMediaType = function(params) {
+  if (_.contains(params, 'screen')) {
+    return 'screen';
+  }
+  if (_.contains(params, 'print')) {
+    return 'print';
+  }
+  return undefined;
+};
 
 
 tagHooks.push(function(file, tag) {
@@ -21,7 +41,6 @@ tagHooks.push(function(file, tag) {
 
   return tag;
 });
-
 tagHooks.push(function(file, tag) {
   var media = exports.paramsToMediaType(file.params);
   if (media) {
@@ -51,11 +70,59 @@ postTagHooks.push(function(file, tag) {
 });
 
 
-fileHooks.push(function(file, deps) {
-  return applyEscaping(file);
+fileHooks.push(function(tag, deps) {
+  if (_.isUndefined(tag.content)) {
+    return tag;
+  }
+  return {
+    file: tag.file,
+    content: tag.file.type == 'js' && _.contains(tag.file.params, 'escape') ? helpers.escapeInlineScript(tag.content) : tag.content
+  };
 });
-fileHooks.push(function(file, deps) {
-  return applyCompression(file, deps.compressor);
+fileHooks.push(function(tag, deps) {
+  var compressor = deps.compressor;
+
+  if (_.isUndefined(tag.content)) {
+    return tag;
+  }
+
+  var c = function() {
+    if (_.contains(tag.file.params, 'compress')) {
+      if (tag.file.type == 'css') {
+        return compressor.css(tag.content);
+      } else if (tag.file.type == 'js') {
+        return compressor.js(tag.content || '');
+      }
+    }
+    return tag.content;
+  };
+
+  return {
+    file: tag.file,
+    content: c()
+  };
+});
+
+
+preventContentHooks.push(function(file, blockParams) {
+  return _.contains(file.params, 'inline');
+});
+preventContentHooks.push(function(file, blockParams) {
+  return blockParams.shouldConcat && blockParams.outfilename;
+});
+
+
+concatableHooks.push(function(file, content) {
+  return paramsToMediaType(file.params);
+});
+concatableHooks.push(function(file, content) {
+  return _.contains(file.params, 'inline');
+});
+concatableHooks.push(function(file, content) {
+  return whichIE(file.params);
+});
+concatableHooks.push(function(file, content) {
+  return file.type;
 });
 
 
@@ -64,32 +131,6 @@ fileHooks.push(function(file, deps) {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-var whichIE = exports.whichIE = function(params) {
-  if (_.contains(params, "ie7")) {
-    return "ie7";
-  }
-  return undefined;
-};
-var paramsToMediaType = exports.paramsToMediaType = function(params) {
-  if (_.contains(params, 'screen')) {
-    return 'screen';
-  }
-  if (_.contains(params, 'print')) {
-    return 'print';
-  }
-  return undefined;
-};
 
 var tagifyWithContent = exports.tagifyWithContent = function(file, content) {
 
@@ -141,11 +182,7 @@ var tagifyWithContent = exports.tagifyWithContent = function(file, content) {
 };
 var tagify = exports.tagify = function(tags) {
   return tags.map(function(tag) {
-    if (_.isUndefined(tag.content)) {
-      return exports.tagifyWithContent(tag.file);
-    } else {
-      return exports.tagifyWithContent(tag.file, tag.content);
-    }
+    return exports.tagifyWithContent(tag.file, tag.content);
   }).filter(function(x) { return x; }).join('\n');
 };
 
@@ -155,7 +192,11 @@ var fetchFileData = exports.fetchFileData = function(file, shouldConcat, outfile
     callback(err, { file: file, content: data });
   };
 
-  if (!_.contains(file.params, 'inline') && !(shouldConcat && outfilename)) {
+  var anyTrue = preventContentHooks.some(function(hook) {
+    return hook(file, { shouldConcat: shouldConcat, outfilename: outfilename });
+  });
+
+  if (!anyTrue) {
     actualCallback(null, undefined);
   } else {
     var matchingCompiler = helpers.getValueForFirstKeyMatching(compiler, function(key) {
@@ -169,55 +210,28 @@ var fetchFileData = exports.fetchFileData = function(file, shouldConcat, outfile
     }
   }
 };
-var applyEscaping = exports.applyEscaping = function(tag) {
-  if (_.isUndefined(tag.content)) {
-    return tag;
-  }
-  return {
-    file: tag.file,
-    content: tag.file.type == 'js' && _.contains(tag.file.params, 'escape') ? helpers.escapeInlineScript(tag.content) : tag.content
-  };
-};
-var applyCompression = exports.applyCompression = function(tag, compressor) {
-  if (_.isUndefined(tag.content)) {
-    return tag;
-  }
-
-  var c = function() {
-    if (_.contains(tag.file.params, 'compress')) {
-      if (tag.file.type == 'css') {
-        return compressor.css(tag.content);
-      } else if (tag.file.type == 'js') {
-        return compressor.js(tag.content || '');
-      }
-    }
-    return tag.content;
-  };
-
-  return {
-    file: tag.file,
-    content: c()
-  };
-};
 var stuffs = exports.stuffs = function(data, opraBlock, callback) {
   var allIsInline = data.every(function(x) { return _.contains(x.file.params, 'inline'); });
 
-  if (opraBlock.shouldConcat && (opraBlock.filename || allIsInline)) {
+  if (opraBlock.shouldConcat) {
 
-    var areAllEqual = helpers.allEqual(data.map(function(d) {
-      return {
-        inline: _.contains(d.file.params, 'inline'),
-        ie: whichIE(d.file.params),
-        type: d.file.type,
-        media: exports.paramsToMediaType(d.file.params)
-      };
-    }));
+    var areAllEqual = concatableHooks.every(function(hook, i) {
+      var objs = data.map(function(d) {
+        return hook(d.file, d.content);
+      });
+      return helpers.allEqual(objs);
+    })
 
     if (!areAllEqual) {
       callback("Concatenation failed; make sure file types, media types and ie-constraints are equivalent within all blocks");
       return;
     }
+  }
 
+
+
+
+  if (opraBlock.shouldConcat) {
     if (data.length === 0) {
       callback(null, []);
     } else {
@@ -283,16 +297,16 @@ var filesToInlineBasic = exports.filesToInlineBasic = function(deps, files, opra
         return;
       }
 
-      if (opraBlock.shouldConcat && opraBlock.filename) {
-        if (data.some(function(d) { return opraBlock.fileType != d.file.type; })) {
-          callback("Invalid filetype! Use 'js' or 'css'.");
-          return;
-        }
-
+      if (opraBlock.shouldConcat && opraBlock.filename && !_.contains(data[0].file.params, 'inline')) {
         var tags = _.pluck(data, 'file').map(function(f) {
           return exports.tagifyWithContent(f);
         });
-        var outfiles = data.map(function(d) { return { name: d.file.absolutePath, content: d.content }; });
+        var outfiles = data.map(function(d) {
+          return {
+            name: d.file.absolutePath,
+            content: d.content
+          };
+        });
 
         callback(null, tags, outfiles);
       } else {
