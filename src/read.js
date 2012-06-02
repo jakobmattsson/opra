@@ -279,7 +279,7 @@ var filesToInlineBasic = exports.filesToInlineBasic = function(deps, files, opra
       if (data.length === 0) {
         callback(null, exports.tagify(data));
       } else {
-        data = [{
+        var dd = [{
           file: {
             name: opraBlock.filename,
             params: data[0].file.params,
@@ -291,11 +291,11 @@ var filesToInlineBasic = exports.filesToInlineBasic = function(deps, files, opra
           content: _.pluck(data, 'content').join(data[0].file.type == 'js' ? ';\n' : '\n')
         }];
 
-        if (opraBlock.shouldConcat && opraBlock.filename && !_.contains(data[0].file.params, 'inline')) {
-          var tags = _.pluck(data, 'file').map(function(f) {
+        if (opraBlock.shouldConcat && opraBlock.filename && !_.contains(dd[0].file.params, 'inline')) {
+          var tags = _.pluck(dd, 'file').map(function(f) {
             return exports.tagifyWithContent(f);
           });
-          var outfiles = data.map(function(d) {
+          var outfiles = dd.map(function(d) {
             return {
               name: d.file.absolutePath,
               content: d.content
@@ -304,7 +304,7 @@ var filesToInlineBasic = exports.filesToInlineBasic = function(deps, files, opra
 
           callback(null, tags, outfiles);
         } else {
-          callback(null, exports.tagify(data));
+          callback(null, exports.tagify(dd));
         }
 
 
