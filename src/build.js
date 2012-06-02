@@ -214,7 +214,7 @@ def('buildConstructor', function(dependencies) {
 def('extend', function(f) {
   var h = {};
   f(h);
-  
+
   Object.keys(h).forEach(function(key) {
     if (hooks[key]) {
       hooks[key].push(h[key]);
@@ -233,12 +233,6 @@ var hooks = {
 };
 
 
-var whichIE = exports.whichIE = function(params) {
-  if (_.contains(params, "ie7")) {
-    return "ie7";
-  }
-  return undefined;
-};
 var paramsToMediaType = exports.paramsToMediaType = function(params) {
   if (_.contains(params, 'screen')) {
     return 'screen';
@@ -284,12 +278,6 @@ hooks.tag.push(function(file, tag) {
 });
 
 
-hooks.postTag.push(function(file, tag) {
-  if (whichIE(file.params) == 'ie7') {
-    return "<!--[if IE 7]>" + tag + "<![endif]-->";
-  }
-  return tag;
-});
 
 
 hooks.file.push(function(tag, deps) {
@@ -318,9 +306,6 @@ hooks.concatable.push(function(file, content) {
   return _.contains(file.params, 'inline');
 });
 hooks.concatable.push(function(file, content) {
-  return whichIE(file.params);
-});
-hooks.concatable.push(function(file, content) {
   return file.type;
 });
 
@@ -333,46 +318,6 @@ hooks.fileFetcher.push(function(file, opraBlock, deps, callback) {
   }
 });
 
-
-hooks.data.push(function(data, opraBlock, callback) {
-  if (opraBlock.shouldConcat) {
-    var areAllEqual = hooks.concatable.every(function(hook, i) {
-      var objs = data.map(function(d) {
-        return hook(d.file, d.content);
-      });
-      return helpers.allEqual(objs);
-    })
-
-    if (!areAllEqual) {
-      callback("Concatenation failed; make sure file types, media types and ie-constraints are equivalent within all blocks");
-      return;
-    }
-
-    if (data.length === 0) {
-      callback(null, { tags: '' });
-    } else {
-      var dd = {
-        file: {
-          name: opraBlock.filename,
-          params: data[0].file.params,
-          spaces: data[0].file.spaces,
-          absolutePath: opraBlock.absolutePath,
-          encoding: 'utf8', // it should be possible to choose this one
-          type: data[0].file.type
-        },
-        content: _.pluck(data, 'content').join(data[0].file.type == 'js' ? ';\n' : '\n')
-      };
-
-      if (opraBlock.shouldConcat && opraBlock.filename && !_.contains(dd.file.params, 'inline')) {
-        callback(null, { tags: [{ file: dd.file }], outfiles: [{ name: dd.file.absolutePath, content: dd.content }] });
-      } else {
-        callback(null, { tags: [dd] });
-      }
-    }
-  } else {
-    callback();
-  }
-});
 
 
 
@@ -503,7 +448,7 @@ var filesToInlineBasic = exports.filesToInlineBasic = function(deps, files, opra
     });
 
     helpers.firstNonNullSeries(hooks.data, function(hook, callback) {
-      hook(data, opraBlock, callback)
+      hook(data, opraBlock, hooks.concatable, callback)
     }, function(err, value) {
       if (err) {
         callback(err);

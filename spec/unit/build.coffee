@@ -21,16 +21,6 @@ describe 'build.filetype', ->
 
 
 
-describe 'build.whichIE', ->
-
-  it 'should find ie7', () ->
-    build.whichIE(['a', 'b', 'ie7']).should.equal('ie7')
-
-  it 'should not return if anything if no IEs', () ->
-    assert(build.whichIE(['a', 'b', 'c']) == undefined)
-
-
-
 describe 'build.paramsToMediaType', ->
 
   it 'should find screen', () ->
