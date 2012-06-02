@@ -14,6 +14,7 @@ it "should expose the expected helpers", ->
     'createTag'
     'createTagData'
     'createTagFromData'
+    'firstNonNullSeries'
     'isPathAbsolute'
     'escapeInlineScript'
     'getValueForFirstKeyMatching'

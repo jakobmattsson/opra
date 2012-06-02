@@ -8,7 +8,7 @@ var postTagHooks = [];
 var fileHooks = [];
 var preventContentHooks = [];
 var concatableHooks = [];
-
+var fileFetcherHooks = [];
 
 
 var whichIE = exports.whichIE = function(params) {
@@ -126,8 +126,13 @@ concatableHooks.push(function(file, content) {
 });
 
 
-
-
+fileFetcherHooks.push(function(file, opraBlock, deps, callback) {
+  if (_.contains(file.params, 'npm')) {
+    fetchFileData(file, opraBlock, deps.compiler, callback);
+  } else {
+    callback();
+  }
+});
 
 
 
@@ -186,7 +191,10 @@ var tagify = exports.tagify = function(tags) {
   }).filter(function(x) { return x; }).join('\n');
 };
 
-var fetchFileData = exports.fetchFileData = function(file, shouldConcat, outfilename, compiler, callback) {
+var fetchFileData = exports.fetchFileData = function(file, opraBlock, compiler, callback) {
+
+  var shouldConcat = opraBlock.shouldConcat
+  var outfilename = opraBlock.filename;
 
   var actualCallback = function(err, data) {
     callback(err, { file: file, content: data });
@@ -210,72 +218,34 @@ var fetchFileData = exports.fetchFileData = function(file, shouldConcat, outfile
     }
   }
 };
-var stuffs = exports.stuffs = function(data, opraBlock, callback) {
-  var allIsInline = data.every(function(x) { return _.contains(x.file.params, 'inline'); });
-
-  if (opraBlock.shouldConcat) {
-
-    var areAllEqual = concatableHooks.every(function(hook, i) {
-      var objs = data.map(function(d) {
-        return hook(d.file, d.content);
-      });
-      return helpers.allEqual(objs);
-    })
-
-    if (!areAllEqual) {
-      callback("Concatenation failed; make sure file types, media types and ie-constraints are equivalent within all blocks");
-      return;
-    }
-  }
 
 
 
 
-  if (opraBlock.shouldConcat) {
-    if (data.length === 0) {
-      callback(null, []);
-    } else {
-      callback(null, [{
-        file: {
-          name: opraBlock.filename,
-          params: data[0].file.params,
-          spaces: data[0].file.spaces,
-          absolutePath: opraBlock.absolutePath,
-          encoding: 'utf8', // it should be possible to choose this one
-          type: data[0].file.type
-        },
-        content: _.pluck(data, 'content').join(data[0].file.type == 'js' ? ';\n' : '\n')
-      }]);
-    }
-  } else {
-    callback(null, data);
-  }
-};
+// Denna ska läggas sist i hook-listan, som en inbyggd default så att säga.
+fileFetcherHooks.push(function(file, opraBlock, deps, callback) {
+  var gfiles = file.globs.map(function(x) {
+    return _.extend({}, x, {
+      params: file.params,
+      spaces: file.spaces
+    });
+  });
 
-// Tar ett opra-block och returnerar två saker:
-// * Koden som ska stoppas in i HTML-filen
-// * En lista med filer [{ content: string, name: string }] som ska skapas
+  async.mapSeries(gfiles, function(gfile, callback) {
+    fetchFileData(gfile, opraBlock, deps.compiler, callback);
+  }, callback);
+});
+
+
+
 var filesToInlineBasic = exports.filesToInlineBasic = function(deps, files, opraBlock, callback) {
 
   async.mapSeries(files, function(file, callback) {
-
-    if (_.contains(file.params, 'npm')) {
-      fetchFileData(file, opraBlock.shouldConcat, opraBlock.filename, deps.compiler, callback);
-    } else {
-
-      var gfiles = file.globs.map(function(x) {
-        return _.extend({}, x, {
-          params: file.params,
-          spaces: file.spaces
-        });
-      });
-
-      async.mapSeries(gfiles, function(gfile, callback) {
-        fetchFileData(gfile, opraBlock.shouldConcat, opraBlock.filename, deps.compiler, callback);
-      }, function(err, data) {
-        callback(err, data);
-      });
-    }
+    helpers.firstNonNullSeries(fileFetcherHooks, function(hook, callback) {
+      hook(file, opraBlock, deps, callback);
+    }, function(err, value) {
+      callback(err, value);
+    });
   }, function(err, data) {
     if (err) {
       callback(err);
@@ -291,27 +261,56 @@ var filesToInlineBasic = exports.filesToInlineBasic = function(deps, files, opra
       return d;
     });
 
-    stuffs(data, opraBlock, function(err, data) {
-      if (err) {
-        callback(err);
+
+    if (opraBlock.shouldConcat) {
+
+      var areAllEqual = concatableHooks.every(function(hook, i) {
+        var objs = data.map(function(d) {
+          return hook(d.file, d.content);
+        });
+        return helpers.allEqual(objs);
+      })
+
+      if (!areAllEqual) {
+        callback("Concatenation failed; make sure file types, media types and ie-constraints are equivalent within all blocks");
         return;
       }
 
-      if (opraBlock.shouldConcat && opraBlock.filename && !_.contains(data[0].file.params, 'inline')) {
-        var tags = _.pluck(data, 'file').map(function(f) {
-          return exports.tagifyWithContent(f);
-        });
-        var outfiles = data.map(function(d) {
-          return {
-            name: d.file.absolutePath,
-            content: d.content
-          };
-        });
-
-        callback(null, tags, outfiles);
-      } else {
+      if (data.length === 0) {
         callback(null, exports.tagify(data));
+      } else {
+        data = [{
+          file: {
+            name: opraBlock.filename,
+            params: data[0].file.params,
+            spaces: data[0].file.spaces,
+            absolutePath: opraBlock.absolutePath,
+            encoding: 'utf8', // it should be possible to choose this one
+            type: data[0].file.type
+          },
+          content: _.pluck(data, 'content').join(data[0].file.type == 'js' ? ';\n' : '\n')
+        }];
+
+        if (opraBlock.shouldConcat && opraBlock.filename && !_.contains(data[0].file.params, 'inline')) {
+          var tags = _.pluck(data, 'file').map(function(f) {
+            return exports.tagifyWithContent(f);
+          });
+          var outfiles = data.map(function(d) {
+            return {
+              name: d.file.absolutePath,
+              content: d.content
+            };
+          });
+
+          callback(null, tags, outfiles);
+        } else {
+          callback(null, exports.tagify(data));
+        }
+
+
       }
-    });
+    } else {
+      callback(null, exports.tagify(data));
+    }
   });
 };

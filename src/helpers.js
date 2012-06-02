@@ -2,6 +2,7 @@ var fs = require('fs');
 var path = require('path');
 var less = require('less');
 var coffee = require('coffee-script');
+var async = require('async');
 var _ = require('underscore');
 
 exports.compileCoffee = function(filePath, encoding, callback) {
@@ -103,3 +104,26 @@ exports.allEqual = function(array) {
   });
   return !different;
 }
+exports.firstNonNullSeries = function(array, func, callback) {
+  var breakObj = {};
+  async.forEach(array, function(item, callback) {
+    func(item, function(err, value) {
+      if (err) {
+        callback(err);
+        return;
+      }
+      if (_.isUndefined(value)) {
+        callback();
+      } else {
+        breakObj.value = value;
+        callback(breakObj);
+      }
+    });
+  }, function(err) {
+    if (err == breakObj) {
+      callback(null, breakObj.value);
+    } else {
+      callback(err);
+    }
+  });
+};
