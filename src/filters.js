@@ -11,7 +11,6 @@ var uglify = require('uglify-js');
 
 var helpers = require('./helpers.js');
 var parse = require('./parse.js');
-var read = require('./read.js');
 var build = exports;
 
 var def = function(name, func) {

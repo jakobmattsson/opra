@@ -4,7 +4,6 @@ powerfs = require 'powerfs'
 assert = require 'assert'
 build = require('../setup.js').requireSource('build.js')
 parse = require('../setup.js').requireSource('parse.js')
-read = require('../setup.js').requireSource('read.js')
 
 
 
@@ -25,27 +24,27 @@ describe 'build.filetype', ->
 describe 'build.whichIE', ->
 
   it 'should find ie7', () ->
-    read.whichIE(['a', 'b', 'ie7']).should.equal('ie7')
+    build.whichIE(['a', 'b', 'ie7']).should.equal('ie7')
 
   it 'should not return if anything if no IEs', () ->
-    assert(read.whichIE(['a', 'b', 'c']) == undefined)
+    assert(build.whichIE(['a', 'b', 'c']) == undefined)
 
 
 
 describe 'build.paramsToMediaType', ->
 
   it 'should find screen', () ->
-    read.paramsToMediaType(['a', 'screen', 'b']).should.equal('screen')
+    build.paramsToMediaType(['a', 'screen', 'b']).should.equal('screen')
 
   it 'should find print', () ->
-    read.paramsToMediaType(['a', 'b', 'print']).should.equal('print')
+    build.paramsToMediaType(['a', 'b', 'print']).should.equal('print')
 
   it 'should prefer screen over print', () ->
-    read.paramsToMediaType(['screen', 'b', 'print']).should.equal('screen')
-    read.paramsToMediaType(['print', 'b', 'screen']).should.equal('screen')
+    build.paramsToMediaType(['screen', 'b', 'print']).should.equal('screen')
+    build.paramsToMediaType(['print', 'b', 'screen']).should.equal('screen')
 
   it 'should not return if anything if no media types', () ->
-    assert(read.paramsToMediaType(['a', 'b', 'c']) == undefined)
+    assert(build.paramsToMediaType(['a', 'b', 'c']) == undefined)
 
 # Reuse this for "applyCompression"
 #
