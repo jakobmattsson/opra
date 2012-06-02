@@ -212,30 +212,14 @@ def('buildConstructor', function(dependencies) {
 
 
 def('extend', function(f) {
-  var hooks = {};
-  f(hooks);
+  var h = {};
+  f(h);
   
-  if (hooks.tag) {
-    tagHooks.push(hooks.tag);
-  }
-  if (hooks.postTag) {
-    postTagHooks.push(hooks.postTag);
-  }
-  if (hooks.file) {
-    fileHooks.push(hooks.file);
-  }
-  if (hooks.preventContent) {
-    preventContentHooks.push(hooks.preventContent);
-  }
-  if (hooks.concatable) {
-    concatableHooks.push(hooks.concatable);
-  }
-  if (hooks.fileFetcher) {
-    fileFetcherHooks.push(hooks.fileFetcher);
-  }
-  if (hooks.data) {
-    dataHooks.push(hooks.data);
-  }
+  Object.keys(h).forEach(function(key) {
+    if (hooks[key]) {
+      hooks[key].push(h[key]);
+    }
+  })
 });
 
 var hooks = {
@@ -247,15 +231,6 @@ var hooks = {
   fileFetcher: [],
   data: []
 };
-
-
-var tagHooks = [];
-var postTagHooks = [];
-var fileHooks = [];
-var preventContentHooks = [];
-var concatableHooks = [];
-var fileFetcherHooks = [];
-var dataHooks = [];
 
 
 var whichIE = exports.whichIE = function(params) {
@@ -275,7 +250,7 @@ var paramsToMediaType = exports.paramsToMediaType = function(params) {
 };
 
 
-tagHooks.push(function(file, tag) {
+hooks.tag.push(function(file, tag) {
   var spaces = file.spaces.slice(2);
 
 
@@ -288,20 +263,20 @@ tagHooks.push(function(file, tag) {
 
   return tag;
 });
-tagHooks.push(function(file, tag) {
+hooks.tag.push(function(file, tag) {
   var media = exports.paramsToMediaType(file.params);
   if (media) {
     tag.attributes.media = media;
   }
   return tag;
 });
-tagHooks.push(function(file, tag) {
+hooks.tag.push(function(file, tag) {
   if (file.type != 'js' && file.type != 'css' && _.contains(file.params, 'ids')) {
     tag.attributes.id = "opra-" + path.basename(file.name).split('.')[0];
   }
   return tag;
 });
-tagHooks.push(function(file, tag) {
+hooks.tag.push(function(file, tag) {
   if (_.contains(file.params, 'paths')) {
     tag.attributes['data-path'] = file.name
   }
@@ -309,7 +284,7 @@ tagHooks.push(function(file, tag) {
 });
 
 
-postTagHooks.push(function(file, tag) {
+hooks.postTag.push(function(file, tag) {
   if (whichIE(file.params) == 'ie7') {
     return "<!--[if IE 7]>" + tag + "<![endif]-->";
   }
@@ -317,7 +292,7 @@ postTagHooks.push(function(file, tag) {
 });
 
 
-fileHooks.push(function(tag, deps) {
+hooks.file.push(function(tag, deps) {
   if (_.isUndefined(tag.content)) {
     return tag;
   }
@@ -328,29 +303,29 @@ fileHooks.push(function(tag, deps) {
 });
 
 
-preventContentHooks.push(function(file, blockParams) {
+hooks.preventContent.push(function(file, blockParams) {
   return _.contains(file.params, 'inline');
 });
-preventContentHooks.push(function(file, blockParams) {
+hooks.preventContent.push(function(file, blockParams) {
   return blockParams.shouldConcat && blockParams.outfilename;
 });
 
 
-concatableHooks.push(function(file, content) {
+hooks.concatable.push(function(file, content) {
   return paramsToMediaType(file.params);
 });
-concatableHooks.push(function(file, content) {
+hooks.concatable.push(function(file, content) {
   return _.contains(file.params, 'inline');
 });
-concatableHooks.push(function(file, content) {
+hooks.concatable.push(function(file, content) {
   return whichIE(file.params);
 });
-concatableHooks.push(function(file, content) {
+hooks.concatable.push(function(file, content) {
   return file.type;
 });
 
 
-fileFetcherHooks.push(function(file, opraBlock, deps, callback) {
+hooks.fileFetcher.push(function(file, opraBlock, deps, callback) {
   if (_.contains(file.params, 'npm')) {
     fetchFileData(file, opraBlock, deps.compiler, callback);
   } else {
@@ -359,9 +334,9 @@ fileFetcherHooks.push(function(file, opraBlock, deps, callback) {
 });
 
 
-dataHooks.push(function(data, opraBlock, callback) {
+hooks.data.push(function(data, opraBlock, callback) {
   if (opraBlock.shouldConcat) {
-    var areAllEqual = concatableHooks.every(function(hook, i) {
+    var areAllEqual = hooks.concatable.every(function(hook, i) {
       var objs = data.map(function(d) {
         return hook(d.file, d.content);
       });
@@ -446,13 +421,13 @@ var tagify = exports.tagify = function(tags) {
       }
     }
 
-    tagHooks.forEach(function(hook) {
+    hooks.tag.forEach(function(hook) {
       tag = hook(file, tag);
     });
 
     tag = helpers.createTagFromData(tag);
 
-    postTagHooks.forEach(function(hook) {
+    hooks.postTag.forEach(function(hook) {
       tag = hook(file, tag);
     });
 
@@ -470,7 +445,7 @@ var fetchFileData = exports.fetchFileData = function(file, opraBlock, compiler, 
     callback(err, { file: file, content: data });
   };
 
-  var anyTrue = preventContentHooks.some(function(hook) {
+  var anyTrue = hooks.preventContent.some(function(hook) {
     return hook(file, { shouldConcat: shouldConcat, outfilename: outfilename });
   });
 
@@ -495,7 +470,7 @@ var fetchFileData = exports.fetchFileData = function(file, opraBlock, compiler, 
 
 var filesToInlineBasic = exports.filesToInlineBasic = function(deps, files, opraBlock, callback) {
 
-  var extendedFetchers = fileFetcherHooks.concat([function(file, opraBlock, deps, callback) {
+  var extendedFetchers = hooks.fileFetcher.concat([function(file, opraBlock, deps, callback) {
     var gfiles = file.globs.map(function(x) {
       return _.extend({}, x, {
         params: file.params,
@@ -521,13 +496,13 @@ var filesToInlineBasic = exports.filesToInlineBasic = function(deps, files, opra
     data = _.flatten(data);
 
     data = data.map(function(d) {
-      fileHooks.forEach(function(hook) {
+      hooks.file.forEach(function(hook) {
         d = hook(d, deps);
       });
       return d;
     });
 
-    helpers.firstNonNullSeries(dataHooks, function(hook, callback) {
+    helpers.firstNonNullSeries(hooks.data, function(hook, callback) {
       hook(data, opraBlock, callback)
     }, function(err, value) {
       if (err) {
