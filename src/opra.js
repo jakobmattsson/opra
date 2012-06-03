@@ -10,6 +10,7 @@ exports.serve = serve.serveConstructor({
 });
 exports.extend = build.extend;
 
+build.extend(require('./hooks/inlining.js'));
 build.extend(require('./hooks/npm.js'));
 build.extend(require('./hooks/compression.js'));
 build.extend(require('./hooks/conditionalExplorer.js'));

@@ -330,14 +330,6 @@ exports.filesToStrings = function(deps, files, opraBlock, callback) {
   });
 };
 
-
-
-
-
-
-
-
-
 exports.extend = function(f) {
   var h = {};
   f(h);
@@ -384,31 +376,10 @@ hooks.tag.push(function(file, tag) {
     tag.content = "\n" + tag.content + "\n" + spaces;
   }
 
+  // if (tag.content && _.contains(file.params, 'compress') && (file.type == 'js' || file.type == 'css')) {
+  //   tag.content = tag.content.trim();
+  // }
+
+
   return tag;
-});
-
-
-
-// Inlining (detta är allt, men anledningen till att det funkar är att koden i princip är skriven för "default" inlining. Kanske kan bryta ut de sakerna mer ovan.)
-hooks.preventContent.push(function(file, blockParams) {
-  return _.contains(file.params, 'inline');
-});
-hooks.concatable.push(function(file, content) {
-  return _.contains(file.params, 'inline');
-});
-hooks.file.push(function(tag, deps) {
-  if (_.isUndefined(tag.content)) {
-    return tag;
-  }
-  return {
-    file: tag.file,
-    content: tag.file.type == 'js' && _.contains(tag.file.params, 'escape') ? helpers.escapeInlineScript(tag.content) : tag.content
-  };
-});
-
-
-
-// Concat
-hooks.preventContent.push(function(file, blockParams) {
-  return blockParams.shouldConcat && blockParams.outfilename;
 });

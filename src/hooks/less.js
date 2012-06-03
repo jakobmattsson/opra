@@ -7,16 +7,12 @@ module.exports = function(hooks) {
     from: 'less',
     to: 'css',
     compile: function(filePath, encoding, assetRoot, callback) {
-      console.log("COMPILE", filePath, encoding, assetRoot)
-      
-      var paths = [assetRoot];
-
       fs.readFile(filePath, encoding, function(err, content) {
         if (err) {
           callback(err);
           return;
         }
-        less.render(content, { paths: paths.concat([path.dirname(filePath)]) }, callback);
+        less.render(content, { paths: [assetRoot, path.dirname(filePath)] }, callback);
       });
     }
   };

@@ -7,6 +7,10 @@ module.exports = function(hooks) {
     return file.type;
   };
 
+  hooks.preventContent = function(file, blockParams) {
+    return blockParams.shouldConcat && blockParams.outfilename;
+  };
+
   hooks.data = function(data, opraBlock, concatable, callback) {
     if (opraBlock.shouldConcat) {
       var areAllEqual = concatable.every(function(hook, i) {
