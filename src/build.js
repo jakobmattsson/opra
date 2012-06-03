@@ -222,17 +222,23 @@ exports.tagify = function(tags) {
       }
     } else {
       if (file.type == 'css') {
-        tag = helpers.createTagData('style', {
-          type: 'text/css',
-        }, content);
+        tag = {
+          name: 'style',
+          attributes: { type: 'text/css' },
+          content: content
+        };
       } else if (file.type == 'js') {
-        tag = helpers.createTagData('script', {
-          type: 'text/javascript'
-        }, content);
+        tag = {
+          name: 'script',
+          attributes: { type: 'text/javascript' },
+          content: content
+        };
       } else {
-        tag = helpers.createTagData('script', {
-          type: 'text/x-opra'
-        }, content);
+        tag = {
+          name: 'script',
+          attributes: { type: 'text/x-opra' },
+          content: content
+        };
       }
     }
 
@@ -240,7 +246,7 @@ exports.tagify = function(tags) {
       return hook(file, acc);
     }, tag);
 
-    tag = helpers.createTagFromData(tag);
+    tag = helpers.createTag(tag);
 
     tag = hooks.postTag.reduce(function(acc, hook) {
       return hook(file, acc);

@@ -10,8 +10,6 @@ it "should expose the expected helpers", ->
     'safeReplaceAll'
     'execAll'
     'createTag'
-    'createTagData'
-    'createTagFromData'
     'firstNonNullSeries'
     'isPathAbsolute'
     'getValueForFirstKeyMatching'
@@ -59,16 +57,16 @@ describe 'helpers.execAll', ->
 describe 'helpers.createTag', ->
 
   it 'should create a proper html tag', ->
-    helpers.createTag('a', { href: '#', id: 'test' }, 'Text').should.equal('<a href="#" id="test">Text</a>')
+    helpers.createTag({ name: 'a', attributes: { href: '#', id: 'test' }, content: 'Text'}).should.equal('<a href="#" id="test">Text</a>')
 
   it 'should be able to create tags without content', ->
-    helpers.createTag('a', { href: '#', id: 'test' }).should.equal('<a href="#" id="test" />')
+    helpers.createTag({ name: 'a', attributes: { href: '#', id: 'test' }}).should.equal('<a href="#" id="test" />')
 
   it 'should default to no attributes', ->
-    helpers.createTag('a').should.equal('<a />')
+    helpers.createTag({ name: 'a' }).should.equal('<a />')
 
   it 'should be possible to create content without attributes', ->
-    helpers.createTag('a', 'content').should.equal('<a>content</a>')
+    helpers.createTag({ name: 'a', content: 'content'}).should.equal('<a>content</a>')
 
 
 

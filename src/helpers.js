@@ -30,8 +30,10 @@ exports.execAll = function(regexp, str) {
 
   return matches;
 };
-exports.createTag = function(name, attributes, content) {
-  attributes = attributes || {};
+exports.createTag = function(tag) {
+  var name = tag.name;
+  var attributes = tag.attributes || {};
+  var content = tag.content;
 
   if (_.isUndefined(content) && typeof attributes === 'string') {
     content = attributes;
@@ -43,12 +45,6 @@ exports.createTag = function(name, attributes, content) {
   }).map(function(key) {
     return " " + key + '="' + attributes[key] + '"';
   }).join('') + (typeof content == 'string' ? ">" + content + "</" + name + ">" : " />");
-};
-exports.createTagData = function(name, attributes, content) {
-  return { name: name, attributes: attributes || {}, content: content };
-};
-exports.createTagFromData = function(data) {
-  return exports.createTag(data.name, data.attributes, data.content);
 };
 exports.isPathAbsolute = function(filename) {
   return path.resolve(filename) === filename;
