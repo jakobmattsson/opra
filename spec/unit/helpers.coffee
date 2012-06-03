@@ -14,7 +14,6 @@ it "should expose the expected helpers", ->
     'createTagFromData'
     'firstNonNullSeries'
     'isPathAbsolute'
-    'escapeInlineScript'
     'getValueForFirstKeyMatching'
     'allEqual'
   ]
@@ -78,13 +77,3 @@ describe 'helpers.isPathAbsolute', ->
   it 'should check for initial slashes', ->
     helpers.isPathAbsolute('/test').should.be.true
     helpers.isPathAbsolute('bin').should.be.false
-
-
-
-describe 'helpers.escapeInlineScript', ->
-
-  it 'should replace tag-opening with escape sequence', ->
-    helpers.escapeInlineScript('script <script></script> script').should.equal('script <script>\\x3C/script> script')
-
-  it 'should return strings without inline scripts as-is', ->
-    helpers.escapeInlineScript('script').should.equal('script')

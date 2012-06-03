@@ -1,4 +1,3 @@
-var fs = require('fs');
 var path = require('path');
 var async = require('async');
 var _ = require('underscore');
@@ -53,11 +52,6 @@ exports.createTagFromData = function(data) {
 };
 exports.isPathAbsolute = function(filename) {
   return path.resolve(filename) === filename;
-};
-exports.escapeInlineScript = function(script) {
-  return script.replace(/<\/( )*script>/g, function(str) {
-    return str.replace("</", "\\x3C/");
-  });
 };
 exports.getValueForFirstKeyMatching = function(obj, predicate) {
   var r = Object.keys(obj).filter(predicate);
