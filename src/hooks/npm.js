@@ -222,7 +222,17 @@ var expandNPM = function(file, assetRoot, indexFile, callback) {
   }
 };
 
+var fetcher = function(file, opraBlock, fetchFileData, callback) {
+  if (_.contains(file.params, 'npm')) {
+    fetchFileData(file, opraBlock, callback);
+  } else {
+    callback();
+  }
+};
+
+
 module.exports = function(hooks) {
   hooks.preproc = [filter2, filter3];
   hooks.expand = expandNPM;
+  hooks.fileFetcher = fetcher;
 };

@@ -1,38 +1,8 @@
 var fs = require('fs');
 var path = require('path');
-var less = require('less');
-var coffee = require('coffee-script');
 var async = require('async');
 var _ = require('underscore');
 
-exports.compileCoffee = function(filePath, encoding, callback) {
-  fs.readFile(filePath, encoding, function(err, content) {
-    var code = null;
-
-    if (err) {
-      callback(err);
-      return;
-    }
-
-    try {
-      code = coffee.compile(content);
-    } catch (e) {
-      callback(e);
-      return;
-    }
-
-    callback(null, code);
-  });
-};
-exports.compileLess = function(filePath, paths, encoding, callback) {
-  fs.readFile(filePath, encoding, function(err, content) {
-    if (err) {
-      callback(err);
-      return;
-    }
-    less.render(content, { paths: paths.concat([path.dirname(filePath)]) }, callback);
-  });
-};
 exports.safeReplace = function(str, target, newString) {
   var i = str.indexOf(target);
   if (i === -1) {

@@ -18,3 +18,5 @@ build.extend(require('./hooks/mediaTypes.js'));
 build.extend(require('./hooks/tagId.js'));
 build.extend(require('./hooks/dataPath.js'));
 build.extend(require('./hooks/datauris.js'));
+build.extend(require('./hooks/less.js'));
+build.extend(require('./hooks/coffee-script.js'));

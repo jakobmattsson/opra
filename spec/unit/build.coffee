@@ -7,39 +7,47 @@ parse = require('../setup.js').requireSource('parse.js')
 
 
 
-describe 'build.filetype', ->
+describe 'build.compileCoffee', ->
 
-  it 'should find the filetype from the suffix and the compiler', () ->
-    build.filetype('test.foo', {
-      foo: { target: 'bar' }
-    }).should.equal('bar')
+  it 'should compile coffeescript from a file', (done) ->
+    fs.writeFile 'test.coffee', 'x = 2', 'utf8', () ->
+      build.getCompiler().coffee.compile 'test.coffee', 'utf8', [], (err, code) ->
+        should.ifError(err)
+        code.should.include('var x;')
+        fs.unlink 'test.coffee', done
 
-  it 'should "other" if no none is found', () ->
-    build.filetype('test.foo', {
-      bar: { target: 'bar' }
-    }).should.equal('other')
+  it 'should fail if the coffeescript is invalid', (done) ->
+    fs.writeFile 'test.coffee', '=====', 'utf8', () ->
+      build.getCompiler().coffee.compile 'test.coffee', 'utf8', [], (err, code) ->
+        err.toString().should.include('Parse error')
+        fs.unlink 'test.coffee', done
+
+  it 'should fail if the file does not exist', (done) ->
+    build.getCompiler().coffee.compile 'nonexisting.coffee', 'utf8', [], (err, code) ->
+      err.toString().should.include('ENOENT')
+      done()
 
 
 
+describe 'build.compileLess', ->
 
-# Reuse this for "applyCompression"
-#
-# describe 'build.compressor', ->
-# 
-#   it 'should compress javascript', () ->
-#     build.compressor('js', ['compress', 'bar'], '1 + 1').should.equal('2')
-# 
-#   it 'should compress css', () ->
-#     build.compressor('css', ['foo', 'compress'], 'a { color: red }').should.equal('a{color:red}')
-# 
-#   it 'should not compress formats other than javascript or css', () ->
-#     build.compressor('tpl', ['compress'], '1 + 1').should.equal('1 + 1')
-# 
-#   it 'should not compress javascript if the compress param is missing', () ->
-#     build.compressor('js', ['foo', 'bar'], '1 + 1').should.equal('1 + 1')
-# 
-#   it 'should not compress css if the compress param is missing', () ->
-#     build.compressor('css', ['foo', 'bar'], 'a { color: red }').should.equal('a { color: red }')
+  it 'should compile less from a file', (done) ->
+    fs.writeFile 'test.less', '@test: #ff0000; a { color: @test; }', 'utf8', () ->
+      build.getCompiler().less.compile 'test.less', 'utf8', [], (err, code) ->
+        should.ifError(err)
+        code.should.include('color: #ff0000')
+        fs.unlink 'test.less', done
+
+  it 'should fail if the coffeescript is invalid', (done) ->
+    fs.writeFile 'test.less', '=====', 'utf8', () ->
+      build.getCompiler().less.compile 'test.less', 'utf8', [], (err, code) ->
+        err.type.should.equal('Parse')
+        fs.unlink 'test.less', done
+
+  it 'should fail if the file does not exist', (done) ->
+    build.getCompiler().less.compile 'nonexisting.less', 'utf8', [], (err, code) ->
+      err.toString().should.include('ENOENT')
+      done()
 
 
 

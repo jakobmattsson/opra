@@ -5,27 +5,24 @@ var _ = require('underscore');
 
 var helpers = require('./helpers.js');
 var parse = require('./parse.js');
-var build = exports;
-
-var def = function(name, func) {
-  exports[name] = func;
-};
 
 
 
 
-def('filetype', function(filename, compiler) {
+exports.filetype = function(filename) {
+  var compiler = exports.getCompiler();
+
   return Object.keys(compiler).reduce(function(memo, type) {
     return _.endsWith(filename, '.' + type) ? compiler[type].target : memo;
   }, 'other');
-});
-def('resolveIndexFileDir', function(filename) {
+};
+exports.resolveIndexFileDir = function(filename) {
   return path.resolve(process.cwd(), path.dirname(filename));
-});
-def('filePathToAbsolute', function(filename, assetRoot, indexFileDir) {
+};
+exports.filePathToAbsolute = function(filename, assetRoot, indexFileDir) {
   return path.join(helpers.isPathAbsolute(filename) ? assetRoot : indexFileDir, filename);
-});
-def('transform', function(assetRoot, pars, encoding, indexFile, matches, content, callback) {
+};
+exports.transform = function(assetRoot, pars, encoding, indexFile, matches, content, callback) {
 
 
 
@@ -55,7 +52,7 @@ def('transform', function(assetRoot, pars, encoding, indexFile, matches, content
           return;
         }
 
-        build.filesToStrings(pars, ps.files, {
+        exports.filesToStrings(pars, ps.files, {
           shouldConcat: shouldConcat,
           filename: d.filename,
           absolutePath: d.filename ? path.join(assetRoot, d.filename) : undefined,
@@ -88,8 +85,8 @@ def('transform', function(assetRoot, pars, encoding, indexFile, matches, content
 
   }, callback);
 
-});
-def('buildConstructor', function(dependencies) {
+};
+exports.buildConstructor = function(dependencies) {
   return function(indexFile, settings, callback) {
 
     if (!callback && typeof settings == 'function') {
@@ -98,7 +95,7 @@ def('buildConstructor', function(dependencies) {
     }
     settings = settings || {};
 
-    var indexFileDir = build.resolveIndexFileDir(indexFile);
+    var indexFileDir = exports.resolveIndexFileDir(indexFile);
     var encoding = settings.encoding || 'utf8';
     var assetRoot = path.resolve(settings.assetRoot || indexFileDir);
 
@@ -111,30 +108,40 @@ def('buildConstructor', function(dependencies) {
       ids: settings.ids
     };
 
-    var compiler = {
-      css: {
-        target: 'css',
-        compile: fs.readFile
-      },
-      js: {
-        target: 'js',
-        compile: fs.readFile
-      },
-      less: {
-        target: 'css',
-        compile: function(file, encoding, callback) {
-          helpers.compileLess(file, [assetRoot], encoding, callback);
-        }
-      },
-      coffee: {
-        target: 'js',
-        compile: helpers.compileCoffee
-      },
-      '.': {
-        target: 'other',
-        compile: fs.readFile
+    exports.getCompiler = function() {
+
+      var reader = function(filePath, encoding, assetRoot, callback) {
+        fs.readFile(filePath, encoding, callback);
       }
+
+      var compiler = {
+        css: {
+          target: 'css',
+          compile: reader
+        },
+        js: {
+          target: 'js',
+          compile: reader
+        },
+        '.': {
+          target: 'other',
+          compile: reader
+        }
+      };
+
+      hooks.compiler.forEach(function(hook) {
+        if (compiler[hook.from]) {
+          console.log("WARNING - overriding " + hook.from + "-compiler.");
+        }
+        compiler[hook.from] = {
+          target: hook.to,
+          compile: hook.compile
+        };
+      });
+
+      return compiler;
     };
+
 
     var autoNumber = 0;
 
@@ -154,25 +161,25 @@ def('buildConstructor', function(dependencies) {
 
       // Glob-preprocessing
       res.matches.forEach(function(match) {
-        match.type = match.type || build.filetype(match.filename, compiler);
+        match.type = match.type || exports.filetype(match.filename);
         match.files.forEach(function(file) {
-          file.absolutePath = build.filePathToAbsolute(file.name, assetRoot, indexFileDir);
+          file.absolutePath = exports.filePathToAbsolute(file.name, assetRoot, indexFileDir);
           file.encoding = encoding;
-          file.type = build.filetype(file.name, compiler);
+          file.type = exports.filetype(file.name);
           file.globs = file.globs.map(function(x) {
             return {
               name: x,
               params: file.params,
               spaces: file.spaces,
-              absolutePath: build.filePathToAbsolute(x, assetRoot, indexFileDir),
+              absolutePath: exports.filePathToAbsolute(x, assetRoot, indexFileDir),
               encoding: encoding,
-              type: build.filetype(x, compiler)
+              type: exports.filetype(x)
             };
           });
         });
       });
 
-      build.transform(assetRoot, { compiler: compiler }, encoding, indexFile, res.matches, res.content, function(err, resa) {
+      exports.transform(assetRoot, { compiler: null, assetRoot: assetRoot }, encoding, indexFile, res.matches, res.content, function(err, resa) {
         if (err) {
           callback(err);
           return;
@@ -189,10 +196,8 @@ def('buildConstructor', function(dependencies) {
       });
     });
   };
-});
-
-
-var tagify = exports.tagify = function(tags) {
+};
+exports.tagify = function(tags) {
   return tags.map(function(tag) {
     var file = tag.file;
     var content = tag.content;
@@ -245,33 +250,38 @@ var tagify = exports.tagify = function(tags) {
 
   }).filter(function(x) { return x; }).join('\n');
 };
-var fetchFileData = exports.fetchFileData = function(file, opraBlock, compiler, callback) {
+exports.filesToStrings = function(deps, files, opraBlock, callback) {
 
-  var actualCallback = function(err, data) {
-    callback(err, { file: file, content: data });
-  };
+  var getData = function(file, opraBlock, callback) {
 
-  var anyTrue = hooks.preventContent.some(function(hook) {
-    return hook(file, { shouldConcat: opraBlock.shouldConcat, outfilename: opraBlock.filename });
-  });
+    var actualCallback = function(err, data) {
+      callback(err, { file: file, content: data });
+    };
 
-  if (!anyTrue) {
-    actualCallback(null, undefined);
-  } else {
-    var matchingCompiler = helpers.getValueForFirstKeyMatching(compiler, function(key) {
-      return _.endsWith(file.name, '.' + key);
+    var anyTrue = hooks.preventContent.some(function(hook) {
+      return hook(file, { shouldConcat: opraBlock.shouldConcat, outfilename: opraBlock.filename });
     });
 
-    if (matchingCompiler) {
-      matchingCompiler.compile(file.absolutePath, file.encoding, actualCallback);
+    if (!anyTrue) {
+      actualCallback(null, undefined);
     } else {
-      compiler['.'].compile(file.absolutePath, file.encoding, actualCallback);
-    }
-  }
-};
-var filesToStrings = exports.filesToStrings = function(deps, files, opraBlock, callback) {
+      var compiler = exports.getCompiler();
+      var matchingCompiler = helpers.getValueForFirstKeyMatching(compiler, function(key) {
+        return _.endsWith(file.name, '.' + key);
+      });
 
-  var extendedFetchers = hooks.fileFetcher.concat([function(file, opraBlock, deps, callback) {
+      if (matchingCompiler) {
+        matchingCompiler.compile(file.absolutePath, file.encoding, deps.assetRoot, actualCallback);
+      } else {
+        compiler['.'].compile(file.absolutePath, file.encoding, deps.assetRoot, actualCallback);
+      }
+    }
+  };
+
+
+
+
+  var extendedFetchers = hooks.fileFetcher.concat([function(file, opraBlock, fetchFileData, callback) {
     var gfiles = file.globs.map(function(x) {
       return _.extend({}, x, {
         params: file.params,
@@ -280,13 +290,13 @@ var filesToStrings = exports.filesToStrings = function(deps, files, opraBlock, c
     });
 
     async.mapSeries(gfiles, function(gfile, callback) {
-      fetchFileData(gfile, opraBlock, deps.compiler, callback);
+      fetchFileData(gfile, opraBlock, callback);
     }, callback);
   }]);
 
   async.mapSeries(files, function(file, callback) {
     helpers.firstNonNullSeries(extendedFetchers, function(hook, callback) {
-      hook(file, opraBlock, deps, callback);
+      hook(file, opraBlock, getData, callback);
     }, callback);
   }, function(err, data) {
     if (err) {
@@ -328,7 +338,7 @@ var filesToStrings = exports.filesToStrings = function(deps, files, opraBlock, c
 
 
 
-def('extend', function(f) {
+exports.extend = function(f) {
   var h = {};
   f(h);
 
@@ -341,7 +351,7 @@ def('extend', function(f) {
       }
     }
   })
-});
+};
 
 var hooks = {
   tag: [],
@@ -352,12 +362,9 @@ var hooks = {
   fileFetcher: [],
   data: [],
   preproc: [],
+  compiler: [],
   expand: []
 };
-
-
-
-
 
 
 
@@ -405,16 +412,3 @@ hooks.file.push(function(tag, deps) {
 hooks.preventContent.push(function(file, blockParams) {
   return blockParams.shouldConcat && blockParams.outfilename;
 });
-
-
-
-// Denna ska ligga i NPM-filen (men först måste fetchFileData kunna plockas ut på något sätt)
-hooks.fileFetcher.push(function(file, opraBlock, deps, callback) {
-  if (_.contains(file.params, 'npm')) {
-    fetchFileData(file, opraBlock, deps.compiler, callback);
-  } else {
-    callback();
-  }
-});
-
-

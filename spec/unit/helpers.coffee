@@ -6,8 +6,6 @@ helpers = require('../setup.js').requireSource('helpers.js')
 
 it "should expose the expected helpers", ->
   helpers.should.have.keys [
-    'compileCoffee'
-    'compileLess'
     'safeReplace'
     'safeReplaceAll'
     'execAll'
@@ -21,49 +19,6 @@ it "should expose the expected helpers", ->
     'allEqual'
   ]
 
-
-
-describe 'helpers.compileCoffee', ->
-
-  it 'should compile coffeescript from a file', (done) ->
-    fs.writeFile 'test.coffee', 'x = 2', 'utf8', () ->
-      helpers.compileCoffee 'test.coffee', 'utf8', (err, code) ->
-        should.ifError(err)
-        code.should.include('var x;')
-        fs.unlink 'test.coffee', done
-
-  it 'should fail if the coffeescript is invalid', (done) ->
-    fs.writeFile 'test.coffee', '=====', 'utf8', () ->
-      helpers.compileCoffee 'test.coffee', 'utf8', (err, code) ->
-        err.toString().should.include('Parse error')
-        fs.unlink 'test.coffee', done
-
-  it 'should fail if the file does not exist', (done) ->
-    helpers.compileCoffee 'nonexisting.coffee', 'utf8', (err, code) ->
-      err.toString().should.include('ENOENT')
-      done()
-
-
-
-describe 'helpers.compileLess', ->
-
-  it 'should compile less from a file', (done) ->
-    fs.writeFile 'test.less', '@test: #ff0000; a { color: @test; }', 'utf8', () ->
-      helpers.compileLess 'test.less', [], 'utf8', (err, code) ->
-        should.ifError(err)
-        code.should.include('color: #ff0000')
-        fs.unlink 'test.less', done
-
-  it 'should fail if the coffeescript is invalid', (done) ->
-    fs.writeFile 'test.less', '=====', 'utf8', () ->
-      helpers.compileLess 'test.less', [], 'utf8', (err, code) ->
-        err.type.should.equal('Parse')
-        fs.unlink 'test.less', done
-
-  it 'should fail if the file does not exist', (done) ->
-    helpers.compileLess 'nonexisting.less', [], 'utf8', (err, code) ->
-      err.toString().should.include('ENOENT')
-      done()
 
 
 
