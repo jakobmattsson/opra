@@ -7,12 +7,12 @@ module.exports = function(hooks) {
     return file.type;
   };
 
-  hooks.preventContent = function(file, blockParams) {
-    return blockParams.shouldConcat && blockParams.outfilename;
+  hooks.preventContent = function(file, opraBlock) {
+    return _.contains(opraBlock.params, 'concat') && opraBlock.filename;
   };
 
   hooks.data = function(data, opraBlock, concatable, callback) {
-    if (opraBlock.shouldConcat) {
+    if (_.contains(opraBlock.params, 'concat')) {
       var areAllEqual = concatable.every(function(hook, i) {
         var objs = data.map(function(d) {
           return hook(d.file, d.content);
@@ -40,7 +40,7 @@ module.exports = function(hooks) {
           content: _.pluck(data, 'content').join(data[0].file.type == 'js' ? ';\n' : '\n')
         };
 
-        if (opraBlock.shouldConcat && opraBlock.filename && !_.contains(dd.file.params, 'inline')) {
+        if (_.contains(opraBlock.params, 'concat') && opraBlock.filename && !_.contains(dd.file.params, 'inline')) {
           callback(null, { tags: [{ file: dd.file }], outfiles: [{ name: dd.file.absolutePath, content: dd.content }] });
         } else {
           callback(null, { tags: [dd] });

@@ -153,7 +153,9 @@ var filter3 = function(files, meta, callback) {
         callback();
       });
     });
-  }, callback);
+  }, function(err) {
+    callback(err, files);
+  });
 };
 var filter2 = function(files, meta, callback) {
   var hasPreludedCommonJS = false;
@@ -187,7 +189,7 @@ var filter2 = function(files, meta, callback) {
       n.encoding = 'utf8';
     });
 
-    callback();
+    callback(null, files);
   });
 };
 var getNpmFolder = function(assetRoot, indexFile) {

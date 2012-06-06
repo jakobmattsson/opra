@@ -3,7 +3,7 @@ var cleanCSS = require('clean-css');
 var uglify = require('uglify-js');
 
 module.exports = function(hooks) {
-  hooks.file = function(tag, deps) {
+  hooks.file = function(tag) {
 
     var compressor = {
       css: function(code, callback) {

@@ -10,13 +10,13 @@ var escapeInlineScript = function(script) {
 
 
 module.exports = function(hooks) {
-  hooks.preventContent = function(file, blockParams) {
+  hooks.preventContent = function(file, opraBlock) {
     return _.contains(file.params, 'inline');
   };
   hooks.concatable = function(file, content) {
     return _.contains(file.params, 'inline');
   };
-  hooks.file = function(tag, deps) {
+  hooks.file = function(tag) {
     if (_.isUndefined(tag.content)) {
       return tag;
     }

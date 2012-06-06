@@ -15,177 +15,71 @@ var propagate = function(callback, func) {
     }
     return func.apply(this, Array.prototype.slice.call(arguments, 1));
   };
-}
+};
+var reduceArray = function(seeds, reducers, transform) {
+  return seeds.map(function(seed) {
+    return reducers.reduce(transform, seed);
+  });
+};
+var fileSaver = function(files, defaultEncoding, callback) {
+  async.forEach(files || [], function(file, callback) {
+    fs.writeFile(file.name, file.content, file.encoding || defaultEncoding, callback);
+  }, callback);
+};
 
 
-exports.filetype = function(filename) {
+var defaultExpand = function(f, as, index, callback) {
+  callback(null, f);
+};
+var defaultFetcher = function(file, opraBlock, fetchFileData, callback) {
+  var gfiles = file.globs.map(function(x) {
+    return _.extend({}, x, {
+      params: file.params,
+      spaces: file.spaces
+    });
+  });
+
+  async.mapSeries(gfiles, function(gfile, callback) {
+    fetchFileData(gfile, opraBlock, callback);
+  }, callback);
+};
+
+exports.getFileTypes = function() {
   var compiler = exports.getCompiler();
-
   return Object.keys(compiler).reduce(function(memo, type) {
-    return _.endsWith(filename, '.' + type) ? compiler[type].target : memo;
+    memo[type] = compiler[type].target;
+    return memo;
+  }, {
+    js: 'js',
+    css: 'css',
+  });
+};
+exports.getCompiler = function() {
+  var compiler = { };
+
+  hooks.compiler.forEach(function(hook) {
+    if (compiler[hook.from]) {
+      console.log("WARNING - overriding " + hook.from + "-compiler.");
+    }
+    compiler[hook.from] = {
+      target: hook.to,
+      compile: hook.compile
+    };
+  });
+
+  return compiler;
+};
+exports.filetype = function(filename) {
+  var fts = exports.getFileTypes();
+  return Object.keys(fts).reduce(function(memo, from) {
+    return _.endsWith(filename, '.' + from) ? fts[from] : memo;
   }, 'other');
 };
 exports.resolveIndexFileDir = function(filename) {
   return path.resolve(process.cwd(), path.dirname(filename));
 };
-exports.filePathToAbsolute = function(filename, assetRoot, indexFileDir) {
-  return path.join(helpers.isPathAbsolute(filename) ? assetRoot : indexFileDir, filename);
-};
-exports.transform = function(assetRoot, pars, encoding, indexFile, matches, content, callback) {
 
 
-
-  async.reduce(matches, { cont: content, files: [] }, function(cc, d, callback) {
-    var next_content = cc.cont;
-    var old_outfiles = cc.files;
-
-    var shouldConcat = _.contains(d.params, 'concat');
-
-    var expandFilters = hooks.expand.concat([function(f, as, index, callback) {
-      callback(null, f);
-    }]);
-
-
-    var then = function(expandedFiles) {
-
-      var ps = {
-        spaces: d.spaces,
-        files: _.flatten(expandedFiles)
-      };
-
-      async.forEachSeries(hooks.preproc, function(filt, callback) {
-        filt(ps.files, { assetRoot: assetRoot, indexFile: indexFile }, callback);
-      }, propagate(callback, function() {
-        exports.filesToStrings(pars, ps.files, {
-          shouldConcat: shouldConcat,
-          filename: d.filename,
-          absolutePath: d.filename ? path.join(assetRoot, d.filename) : undefined,
-          fileType: d.type
-        }, propagate(callback, function(data, outfiles) {
-          callback(null, {
-            cont: helpers.safeReplace(next_content, d.match, data),
-            files: old_outfiles.concat(outfiles || [])
-          });
-        }));
-      }));
-
-    };
-
-    async.map(d.files, function(file, callback) {
-      async.map(expandFilters, function(filter, callback) {
-        filter(file, assetRoot, indexFile, callback);
-      }, function(err, suggestions) {
-        callback(err, _.compact(suggestions).first());
-      });
-    }, function(err, ex2) {
-      // handle error
-      then(ex2);
-    });
-
-  }, callback);
-
-};
-exports.buildConstructor = function(dependencies) {
-  return function(indexFile, settings, callback) {
-
-    if (!callback && typeof settings == 'function') {
-      callback = settings;
-      settings = {};
-    }
-    settings = settings || {};
-
-    var indexFileDir = exports.resolveIndexFileDir(indexFile);
-    var encoding = settings.encoding || 'utf8';
-    var assetRoot = path.resolve(settings.assetRoot || indexFileDir);
-
-    var globalFlags = {
-      concat: settings.concat,
-      inline: settings.inline,
-      compress: settings.compress,
-      paths: settings.paths,
-      escape: settings.escape,
-      ids: settings.ids
-    };
-
-    exports.getCompiler = function() {
-
-      var reader = function(filePath, encoding, assetRoot, callback) {
-        fs.readFile(filePath, encoding, callback);
-      }
-
-      var compiler = {
-        css: {
-          target: 'css',
-          compile: reader
-        },
-        js: {
-          target: 'js',
-          compile: reader
-        },
-        '.': {
-          target: 'other',
-          compile: reader
-        }
-      };
-
-      hooks.compiler.forEach(function(hook) {
-        if (compiler[hook.from]) {
-          console.log("WARNING - overriding " + hook.from + "-compiler.");
-        }
-        compiler[hook.from] = {
-          target: hook.to,
-          compile: hook.compile
-        };
-      });
-
-      return compiler;
-    };
-
-
-    var autoNumber = 0;
-
-    parse.parseFile(assetRoot, globalFlags, indexFile, encoding, propagate(callback, function(res) {
-      res.matches.forEach(function(match) {
-        if (_.contains(match.params, 'concat') && !match.filename) {
-          autoNumber++;
-          match.filename = '__opra-concat-' + autoNumber;
-          match.type = null;
-        }
-      });
-
-      // Glob-preprocessing
-      res.matches.forEach(function(match) {
-        match.type = match.type || exports.filetype(match.filename);
-        match.files.forEach(function(file) {
-          file.absolutePath = exports.filePathToAbsolute(file.name, assetRoot, indexFileDir);
-          file.encoding = encoding;
-          file.type = exports.filetype(file.name);
-          file.globs = file.globs.map(function(x) {
-            return {
-              name: x,
-              params: file.params,
-              spaces: file.spaces,
-              absolutePath: exports.filePathToAbsolute(x, assetRoot, indexFileDir),
-              encoding: encoding,
-              type: exports.filetype(x)
-            };
-          });
-        });
-      });
-
-      exports.transform(assetRoot, { compiler: null, assetRoot: assetRoot }, encoding, indexFile, res.matches, res.content, propagate(callback, function(resa) {
-        var res = resa.cont;
-        var outfiles = resa.files;
-
-        async.forEach(outfiles || [], function(file, callback) {
-          fs.writeFile(file.name, file.content, file.encoding || encoding, callback);
-        }, function(err) {
-          callback(err, res);
-        });
-      }));
-    }));
-  };
-};
 exports.tagify = function(tags) {
   return tags.map(function(tag) {
     var file = tag.file;
@@ -245,74 +139,120 @@ exports.tagify = function(tags) {
 
   }).filter(function(x) { return x; }).join('\n');
 };
-exports.filesToStrings = function(deps, files, opraBlock, callback) {
 
-  var getData = function(file, opraBlock, callback) {
 
-    var actualCallback = function(err, data) {
-      callback(err, { file: file, content: data });
+
+exports.buildConstructor = function(dependencies) {
+  return function(indexFile, settings, callback) {
+
+    if (!callback && typeof settings == 'function') {
+      callback = settings;
+      settings = {};
+    }
+    settings = settings || {};
+
+    var indexFileDir = exports.resolveIndexFileDir(indexFile);
+    var encoding = settings.encoding || 'utf8';
+    var assetRoot = path.resolve(settings.assetRoot || indexFileDir);
+
+    var globalFlags = {
+      concat: settings.concat,
+      inline: settings.inline,
+      compress: settings.compress,
+      paths: settings.paths,
+      escape: settings.escape,
+      ids: settings.ids
     };
 
-    var anyTrue = hooks.preventContent.some(function(hook) {
-      return hook(file, { shouldConcat: opraBlock.shouldConcat, outfilename: opraBlock.filename });
-    });
+    var expandFilters = hooks.expand.concat([defaultExpand]);
+    var extendedFetchers = hooks.fileFetcher.concat([defaultFetcher]);
 
-    if (!anyTrue) {
-      actualCallback(null, undefined);
-    } else {
-      var compiler = exports.getCompiler();
-      var matchingCompiler = helpers.getValueForFirstKeyMatching(compiler, function(key) {
+    var getData = function(file, opraBlock, callback) {
+
+      var actualCallback = function(err, data) {
+        callback(err, { file: file, content: data });
+      };
+
+      var anyTrue = hooks.preventContent.some(function(hook) {
+        return hook(file, opraBlock);
+      });
+
+      if (!anyTrue) {
+        actualCallback(null, undefined);
+        return;
+      }
+
+      var matchingCompiler = helpers.getValueForFirstKeyMatching(exports.getCompiler(), function(key) {
         return _.endsWith(file.name, '.' + key);
       });
 
       if (matchingCompiler) {
-        matchingCompiler.compile(file.absolutePath, file.encoding, deps.assetRoot, actualCallback);
+        matchingCompiler.compile(file.absolutePath, file.encoding, assetRoot, actualCallback);
       } else {
-        compiler['.'].compile(file.absolutePath, file.encoding, deps.assetRoot, actualCallback);
+        fs.readFile(file.absolutePath, file.encoding, actualCallback);
       }
-    }
-  };
+    };
 
+    parse.parseFile(assetRoot, globalFlags, indexFile, indexFileDir, encoding, propagate(callback, function(res) {
 
-
-
-  var extendedFetchers = hooks.fileFetcher.concat([function(file, opraBlock, fetchFileData, callback) {
-    var gfiles = file.globs.map(function(x) {
-      return _.extend({}, x, {
-        params: file.params,
-        spaces: file.spaces
+      res.matches.forEach(function(match) {
+        match.type = match.type || exports.filetype(match.filename);
+        match.files.forEach(function(file) {
+          file.type = exports.filetype(file.name);
+          file.globs.forEach(function(x) {
+            x.type = exports.filetype(x.name);
+          });
+        });
       });
-    });
 
-    async.mapSeries(gfiles, function(gfile, callback) {
-      fetchFileData(gfile, opraBlock, callback);
-    }, callback);
-  }]);
+      async.reduce(res.matches, { cont: res.content, files: [] }, function(cc, d, callback) {
+        async.map(d.files, function(file, callback) {
+          async.map(expandFilters, function(filter, callback) {
+            filter(file, assetRoot, indexFile, callback);
+          }, propagate(callback, function(suggestions) {
+            callback(null, _.compact(suggestions).first());
+          }));
+        }, propagate(callback, function(expandedFiles) {
+          async.reduce(hooks.preproc, _.flatten(expandedFiles), function(acca, filt, callback) {
+            filt(acca, { assetRoot: assetRoot, indexFile: indexFile }, callback);
+          }, propagate(callback, function(outs) {
 
-  async.mapSeries(files, function(file, callback) {
-    helpers.firstNonNullSeries(extendedFetchers, function(hook, callback) {
-      hook(file, opraBlock, getData, callback);
-    }, callback);
-  }, propagate(callback, function(data) {
-    data = _.flatten(data);
+            var callb = propagate(callback, function(data, outfiles) {
+              callback(null, {
+                cont: helpers.safeReplace(cc.cont, d.match, data),
+                files: cc.files.concat(outfiles || [])
+              });
+            });
 
-    data = data.map(function(d) {
-      hooks.file.forEach(function(hook) {
-        d = hook(d, deps);
-      });
-      return d;
-    });
+            async.mapSeries(outs, function(file, callback) {
+              helpers.firstNonNullSeries(extendedFetchers, function(hook, callback) {
+                hook(file, d, getData, callback);
+              }, callback);
+            }, propagate(callb, function(data) {
 
-    helpers.firstNonNullSeries(hooks.data, function(hook, callback) {
-      hook(data, opraBlock, hooks.concatable, callback)
-    }, propagate(callback, function(value) {
-      if (!value) {
-        callback(null, exports.tagify(data));
-      } else {
-        callback(null, exports.tagify(value.tags), value.outfiles);
-      }
+              var d2 = reduceArray(_.flatten(data), hooks.file, function(acc, hook) {
+                return hook(acc);
+              });
+
+              helpers.firstNonNullSeries(hooks.data, function(hook, callback) {
+                hook(d2, d, hooks.concatable, callback)
+              }, propagate(callb, function(value) {
+                if (!value) {
+                  callb(null, exports.tagify(d2));
+                } else {
+                  callb(null, exports.tagify(value.tags), value.outfiles);
+                }
+              }));
+            }));
+          }));
+        }));
+      }, propagate(callback, function(resa) {
+        fileSaver(resa.files, encoding, propagate(callback, function() {
+          callback(null, resa.cont);
+        }));
+      }));
     }));
-  }));
+  };
 };
 
 exports.extend = function(f) {
