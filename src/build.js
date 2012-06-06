@@ -7,6 +7,15 @@ var helpers = require('./helpers.js');
 var parse = require('./parse.js');
 
 
+var propagate = function(callback, func) {
+  return function(err) {
+    if (err) {
+      callback(err);
+      return;
+    }
+    return func.apply(this, Array.prototype.slice.call(arguments, 1));
+  };
+}
 
 
 exports.filetype = function(filename) {
@@ -46,29 +55,19 @@ exports.transform = function(assetRoot, pars, encoding, indexFile, matches, cont
 
       async.forEachSeries(hooks.preproc, function(filt, callback) {
         filt(ps.files, { assetRoot: assetRoot, indexFile: indexFile }, callback);
-      }, function(err) {
-        if (err) {
-          callback(err);
-          return;
-        }
-
+      }, propagate(callback, function() {
         exports.filesToStrings(pars, ps.files, {
           shouldConcat: shouldConcat,
           filename: d.filename,
           absolutePath: d.filename ? path.join(assetRoot, d.filename) : undefined,
           fileType: d.type
-        }, function(err, data, outfiles) {
-          if (err) {
-            callback(err);
-            return;
-          }
-
-          callback(err, {
+        }, propagate(callback, function(data, outfiles) {
+          callback(null, {
             cont: helpers.safeReplace(next_content, d.match, data),
             files: old_outfiles.concat(outfiles || [])
           });
-        });
-      });
+        }));
+      }));
 
     };
 
@@ -145,12 +144,7 @@ exports.buildConstructor = function(dependencies) {
 
     var autoNumber = 0;
 
-    parse.parseFile(assetRoot, globalFlags, indexFile, encoding, function(err, res) {
-      if (err) {
-        callback(err);
-        return;
-      }
-
+    parse.parseFile(assetRoot, globalFlags, indexFile, encoding, propagate(callback, function(res) {
       res.matches.forEach(function(match) {
         if (_.contains(match.params, 'concat') && !match.filename) {
           autoNumber++;
@@ -179,12 +173,7 @@ exports.buildConstructor = function(dependencies) {
         });
       });
 
-      exports.transform(assetRoot, { compiler: null, assetRoot: assetRoot }, encoding, indexFile, res.matches, res.content, function(err, resa) {
-        if (err) {
-          callback(err);
-          return;
-        }
-
+      exports.transform(assetRoot, { compiler: null, assetRoot: assetRoot }, encoding, indexFile, res.matches, res.content, propagate(callback, function(resa) {
         var res = resa.cont;
         var outfiles = resa.files;
 
@@ -193,8 +182,8 @@ exports.buildConstructor = function(dependencies) {
         }, function(err) {
           callback(err, res);
         });
-      });
-    });
+      }));
+    }));
   };
 };
 exports.tagify = function(tags) {
@@ -304,12 +293,7 @@ exports.filesToStrings = function(deps, files, opraBlock, callback) {
     helpers.firstNonNullSeries(extendedFetchers, function(hook, callback) {
       hook(file, opraBlock, getData, callback);
     }, callback);
-  }, function(err, data) {
-    if (err) {
-      callback(err);
-      return;
-    }
-
+  }, propagate(callback, function(data) {
     data = _.flatten(data);
 
     data = data.map(function(d) {
@@ -321,19 +305,14 @@ exports.filesToStrings = function(deps, files, opraBlock, callback) {
 
     helpers.firstNonNullSeries(hooks.data, function(hook, callback) {
       hook(data, opraBlock, hooks.concatable, callback)
-    }, function(err, value) {
-      if (err) {
-        callback(err);
-        return;
-      }
-
+    }, propagate(callback, function(value) {
       if (!value) {
         callback(null, exports.tagify(data));
       } else {
-        callback(err, exports.tagify(value.tags), value.outfiles);
+        callback(null, exports.tagify(value.tags), value.outfiles);
       }
-    });
-  });
+    }));
+  }));
 };
 
 exports.extend = function(f) {
