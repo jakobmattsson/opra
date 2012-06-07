@@ -43,6 +43,54 @@ var defaultFetcher = function(file, opraBlock, fetchFileData, callback) {
     fetchFileData(gfile, opraBlock, callback);
   }, callback);
 };
+var defaultSomething = function(data, opraBlock, concatable, callback) {
+  callback(null, { tags: data });
+};
+
+var defaultTagCreator = function(file, content, callback) {
+  var tag = undefined;
+  
+  if (_.isUndefined(content)) {
+    if (file.type == 'css') {
+      tag = {
+        name: 'link',
+        attributes: { rel: 'stylesheet', type: 'text/css', href: file.name },
+        content: null
+      };
+    } else if (file.type == 'js') {
+      tag = {
+        name: 'script',
+        attributes: { type: 'text/javascript', src: file.name },
+        content: ''
+      };
+    } else {
+      tag = undefined;
+    }
+  } else {
+    if (file.type == 'css') {
+      tag = {
+        name: 'style',
+        attributes: { type: 'text/css' },
+        content: content
+      };
+    } else if (file.type == 'js') {
+      tag = {
+        name: 'script',
+        attributes: { type: 'text/javascript' },
+        content: content
+      };
+    } else {
+      tag = {
+        name: 'script',
+        attributes: { type: 'text/x-opra' },
+        content: content
+      };
+    }
+  }
+  
+  callback(null, tag);
+};
+
 
 exports.getFileTypes = function() {
   var compiler = exports.getCompiler();
@@ -80,64 +128,39 @@ exports.resolveIndexFileDir = function(filename) {
 };
 
 
-exports.tagify = function(tags) {
-  return tags.map(function(tag) {
+exports.tagify = function(tags, callback) {
+  async.map(tags, function(tag, callback) {
     var file = tag.file;
     var content = tag.content;
 
-    var tag = "";
+    var tagCreators = (hooks.tagCreator || []).concat([defaultTagCreator]);
 
-    if (_.isUndefined(content)) {
-      if (file.type == 'css') {
-        tag = {
-          name: 'link',
-          attributes: { rel: 'stylesheet', type: 'text/css', href: file.name },
-          content: null
-        };
-      } else if (file.type == 'js') {
-        tag = {
-          name: 'script',
-          attributes: { type: 'text/javascript', src: file.name },
-          content: ''
-        };
-      } else {
-        return "";
+    helpers.firstNonNullSeries(tagCreators, function(hook, callback) {
+      hook(file, content, callback);
+    }, function(err, tag) {
+
+
+      if (_.isUndefined(tag)) {
+        callback(null, "");
+        return;
       }
-    } else {
-      if (file.type == 'css') {
-        tag = {
-          name: 'style',
-          attributes: { type: 'text/css' },
-          content: content
-        };
-      } else if (file.type == 'js') {
-        tag = {
-          name: 'script',
-          attributes: { type: 'text/javascript' },
-          content: content
-        };
-      } else {
-        tag = {
-          name: 'script',
-          attributes: { type: 'text/x-opra' },
-          content: content
-        };
-      }
-    }
 
-    tag = hooks.tag.reduce(function(acc, hook) {
-      return hook(file, acc);
-    }, tag);
+      tag = hooks.tag.reduce(function(acc, hook) {
+        return hook(file, acc);
+      }, tag);
 
-    tag = helpers.createTag(tag);
+      tag = helpers.createTag(tag);
 
-    tag = hooks.postTag.reduce(function(acc, hook) {
-      return hook(file, acc);
-    }, tag);
+      tag = hooks.postTag.reduce(function(acc, hook) {
+        return hook(file, acc);
+      }, tag);
+      
+      callback(null, tag ? file.spaces.slice(2) + tag : '');
+    });
 
-    return tag ? file.spaces.slice(2) + tag : '';
-
-  }).filter(function(x) { return x; }).join('\n');
+  }, function(err, res) {
+    callback(err, res.filter(function(x) { return x; }).join('\n'));
+  });
 };
 
 
@@ -166,6 +189,25 @@ exports.buildConstructor = function(dependencies) {
 
     var expandFilters = hooks.expand.concat([defaultExpand]);
     var extendedFetchers = hooks.fileFetcher.concat([defaultFetcher]);
+    var extendedDataHooks = hooks.data.concat([defaultSomething]);
+
+    var addTypes = function(res) {
+      return res.map(function(match) {
+        return _.extend({}, match, {
+          type: match.type || exports.filetype(match.filename),
+          files: match.files.map(function(file) {
+            return _.extend({}, file, {
+              type: exports.filetype(file.name),
+              globs: file.globs.map(function(x) {
+                return _.extend({}, x, {
+                  type: exports.filetype(x.name)
+                })
+              })
+            })
+          })
+        })
+      })
+    }
 
     var getData = function(file, opraBlock, callback) {
 
@@ -193,34 +235,23 @@ exports.buildConstructor = function(dependencies) {
       }
     };
 
-    parse.parseFile(assetRoot, globalFlags, indexFile, indexFileDir, encoding, propagate(callback, function(res) {
-
-      res.matches.forEach(function(match) {
-        match.type = match.type || exports.filetype(match.filename);
-        match.files.forEach(function(file) {
-          file.type = exports.filetype(file.name);
-          file.globs.forEach(function(x) {
-            x.type = exports.filetype(x.name);
-          });
-        });
-      });
-
-      async.reduce(res.matches, { cont: res.content, files: [] }, function(cc, d, callback) {
+    parse.parseFile(assetRoot, globalFlags, indexFile, indexFileDir, encoding, propagate(callback, function(parseResult) {
+      async.reduce(addTypes(parseResult.matches), { cont: parseResult.content, files: [] }, function(cc, d, callback) {
         async.map(d.files, function(file, callback) {
-          async.map(expandFilters, function(filter, callback) {
-            filter(file, assetRoot, indexFile, callback);
+          async.map(expandFilters, function(hook, callback) {
+            hook(file, assetRoot, indexFile, callback);
           }, propagate(callback, function(suggestions) {
             callback(null, _.compact(suggestions).first());
           }));
         }, propagate(callback, function(expandedFiles) {
-          async.reduce(hooks.preproc, _.flatten(expandedFiles), function(acca, filt, callback) {
-            filt(acca, { assetRoot: assetRoot, indexFile: indexFile }, callback);
+          async.reduce(hooks.preproc, _.flatten(expandedFiles), function(acca, hook, callback) {
+            hook(acca, {assetRoot: assetRoot, indexFile: indexFile }, callback);
           }, propagate(callback, function(outs) {
 
-            var callb = propagate(callback, function(data, outfiles) {
+            var callb = propagate(callback, function(result) {
               callback(null, {
-                cont: helpers.safeReplace(cc.cont, d.match, data),
-                files: cc.files.concat(outfiles || [])
+                cont: helpers.safeReplace(cc.cont, d.match, result.data),
+                files: cc.files.concat(result.outfiles || [])
               });
             });
 
@@ -234,21 +265,23 @@ exports.buildConstructor = function(dependencies) {
                 return hook(acc);
               });
 
-              helpers.firstNonNullSeries(hooks.data, function(hook, callback) {
+              helpers.firstNonNullSeries(extendedDataHooks, function(hook, callback) {
                 hook(d2, d, hooks.concatable, callback)
-              }, propagate(callb, function(value) {
-                if (!value) {
-                  callb(null, exports.tagify(d2));
-                } else {
-                  callb(null, exports.tagify(value.tags), value.outfiles);
-                }
+              }, propagate(callb, function(out) {
+                
+                exports.tagify(out.tags, function(err, data) {
+                  callb(null, {
+                    data: data,
+                    outfiles: out.outfiles
+                  });
+                });
               }));
             }));
           }));
         }));
-      }, propagate(callback, function(resa) {
-        fileSaver(resa.files, encoding, propagate(callback, function() {
-          callback(null, resa.cont);
+      }, propagate(callback, function(r) {
+        fileSaver(r.files, encoding, propagate(callback, function() {
+          callback(null, r.cont);
         }));
       }));
     }));
@@ -260,28 +293,16 @@ exports.extend = function(f) {
   f(h);
 
   Object.keys(h).forEach(function(key) {
-    if (hooks[key]) {
-      if (_.isArray(h[key])) {
-        hooks[key] = (hooks[key] || []).concat(h[key]);
-      } else {
-        hooks[key].push(h[key]);
-      }
+    hooks[key] = hooks[key] || [];
+    if (_.isArray(h[key])) {
+      hooks[key] = hooks[key].concat(h[key]);
+    } else {
+      hooks[key].push(h[key]);
     }
   })
 };
 
-var hooks = {
-  tag: [],
-  postTag: [],
-  file: [],
-  preventContent: [],
-  concatable: [],
-  fileFetcher: [],
-  data: [],
-  preproc: [],
-  compiler: [],
-  expand: []
-};
+var hooks = { };
 
 
 
@@ -290,6 +311,7 @@ var hooks = {
 
 
 // Vet inte riktigt var den här hör hemma...
+hooks.tag = [];
 hooks.tag.push(function(file, tag) {
   var spaces = file.spaces.slice(2);
 
