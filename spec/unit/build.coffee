@@ -7,50 +7,6 @@ parse = require('../setup.js').requireSource('parse.js')
 
 
 
-describe 'build.compileCoffee', ->
-
-  it 'should compile coffeescript from a file', (done) ->
-    fs.writeFile 'test.coffee', 'x = 2', 'utf8', () ->
-      build.getCompiler().coffee.compile 'test.coffee', 'utf8', [], (err, code) ->
-        should.ifError(err)
-        code.should.include('var x;')
-        fs.unlink 'test.coffee', done
-
-  it 'should fail if the coffeescript is invalid', (done) ->
-    fs.writeFile 'test.coffee', '=====', 'utf8', () ->
-      build.getCompiler().coffee.compile 'test.coffee', 'utf8', [], (err, code) ->
-        err.toString().should.include('Parse error')
-        fs.unlink 'test.coffee', done
-
-  it 'should fail if the file does not exist', (done) ->
-    build.getCompiler().coffee.compile 'nonexisting.coffee', 'utf8', [], (err, code) ->
-      err.toString().should.include('ENOENT')
-      done()
-
-
-
-describe 'build.compileLess', ->
-
-  it 'should compile less from a file', (done) ->
-    fs.writeFile 'test.less', '@test: #ff0000; a { color: @test; }', 'utf8', () ->
-      build.getCompiler().less.compile 'test.less', 'utf8', [], (err, code) ->
-        should.ifError(err)
-        code.should.include('color: #ff0000')
-        fs.unlink 'test.less', done
-
-  it 'should fail if the coffeescript is invalid', (done) ->
-    fs.writeFile 'test.less', '=====', 'utf8', () ->
-      build.getCompiler().less.compile 'test.less', 'utf8', [], (err, code) ->
-        err.type.should.equal('Parse')
-        fs.unlink 'test.less', done
-
-  it 'should fail if the file does not exist', (done) ->
-    build.getCompiler().less.compile 'nonexisting.less', 'utf8', [], (err, code) ->
-      err.toString().should.include('ENOENT')
-      done()
-
-
-
 describe 'parse.getMatches', ->
 
   it 'should parse input data for filenames, spaces, params and files', () ->

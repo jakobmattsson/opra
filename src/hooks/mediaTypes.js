@@ -14,7 +14,9 @@ module.exports = function(hooks) {
   hooks.tag = function(file, tag) {
     var media = paramsToMediaType(file.params);
     if (media) {
-      tag.attributes.media = media;
+      return _.extend({}, tag, {
+        attributes: _.extend({}, tag.attributes, { media: media })
+      });
     }
     return tag;
   };

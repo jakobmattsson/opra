@@ -3,23 +3,23 @@ var build = require('./build.js');
 
 var b = build.buildConstructor({ });
 
-exports.build = b;
+exports.build = b.build;
 exports.serve = serve.serveConstructor({
-  build: b,
+  build: b.build,
   log: console.log.bind(console)
 });
-exports.extend = build.extend;
+exports.extend = b.extend;
 
-build.extend(require('./hooks/javascript.js'));
-build.extend(require('./hooks/css.js'));
-build.extend(require('./hooks/inlining.js'));
-build.extend(require('./hooks/npm.js'));
-build.extend(require('./hooks/compression.js'));
-build.extend(require('./hooks/conditionalExplorer.js'));
-build.extend(require('./hooks/concatenation.js'));
-build.extend(require('./hooks/mediaTypes.js'));
-build.extend(require('./hooks/tagId.js'));
-build.extend(require('./hooks/dataPath.js'));
-build.extend(require('./hooks/datauris.js'));
-build.extend(require('./hooks/less.js'));
-build.extend(require('./hooks/coffee-script.js'));
+exports.extend(require('./hooks/javascript.js'));
+exports.extend(require('./hooks/css.js'));
+exports.extend(require('./hooks/inlining.js'));
+exports.extend(require('./hooks/npm.js'));
+exports.extend(require('./hooks/compression.js'));
+exports.extend(require('./hooks/conditionalExplorer.js'));
+exports.extend(require('./hooks/concatenation.js'));
+exports.extend(require('./hooks/mediaTypes.js'));
+exports.extend(require('./hooks/tagId.js'));
+exports.extend(require('./hooks/dataPath.js'));
+exports.extend(require('./hooks/datauris.js'));
+exports.extend(require('./hooks/less.js'));
+exports.extend(require('./hooks/coffee-script.js'));

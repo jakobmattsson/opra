@@ -62,7 +62,7 @@ exports.allEqual = function(array) {
     return y;
   });
   return !different;
-}
+};
 exports.firstNonNullSeries = function(array, func, callback) {
   var breakObj = {};
   async.forEach(array, function(item, callback) {

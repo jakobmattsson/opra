@@ -23,4 +23,12 @@ module.exports = function(hooks) {
       callback();
     }
   }
+
+  hooks.compiler = {
+    from: 'js',
+    target: 'js',
+    compile: function(filePath, encoding, assetRoot, callback) {
+      fs.readFile(filePath, encoding, callback);
+    }
+  };
 };

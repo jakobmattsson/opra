@@ -172,7 +172,7 @@ var parseFile = exports.parseFile = function(assetRoot, globalFlags, indexFile, 
       });
 
       callback(null, res);
-    }
+    };
 
     globMatches(assetRoot, resolveIndexFileDir(indexFile), getMatches(content, "<!--OPRA", "-->"), function(err, matches) {
       if (err) {

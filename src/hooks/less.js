@@ -5,7 +5,7 @@ var less = require('less');
 module.exports = function(hooks) {
   hooks.compiler = {
     from: 'less',
-    to: 'css',
+    target: 'css',
     compile: function(filePath, encoding, assetRoot, callback) {
       fs.readFile(filePath, encoding, function(err, content) {
         if (err) {
