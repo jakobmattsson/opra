@@ -230,8 +230,8 @@ exports.buildConstructor = function(dependencies) {
               callback(null, _.compact(suggestions).first());
             }));
           }, propagate(callback, function(expandedFiles) {
-            async.reduce(hooks.preproc, _.flatten(expandedFiles), function(acca, hook, callback) {
-              hook(acca, { assetRoot: assetRoot, indexFile: indexFile }, callback);
+            async.reduce(hooks.preproc, _.flatten(expandedFiles), function(acc, hook, callback) {
+              hook(acc, { assetRoot: assetRoot, indexFile: indexFile }, callback);
             }, propagate(callback, function(outs) {
               async.mapSeries(outs, function(file, callback) {
                 helpers.firstNonNullSeries(extendedFetchers, function(hook, callback) {
