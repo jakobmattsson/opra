@@ -227,7 +227,7 @@ exports.buildConstructor = function(dependencies) {
             async.map(expandFilters, function(hook, callback) {
               hook(file, assetRoot, indexFile, callback);
             }, propagate(callback, function(suggestions) {
-              callback(null, _.compact(suggestions).first());
+              callback(null, _.first(_.compact(suggestions)));
             }));
           }, propagate(callback, function(expandedFiles) {
             async.reduce(hooks.preproc, _.flatten(expandedFiles), function(acc, hook, callback) {
