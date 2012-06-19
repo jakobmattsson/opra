@@ -5,9 +5,10 @@ var should = require('should');
 var sugar = require('sugar');
 var powerfs = require('powerfs');
 var async = require('async');
-var evil = require('evil').pollute(global);
+var evil = require('evil');
 var opra = require('./setup.js').requireSource('opra.js');
 
+var propagate = evil.methods.propagate;
 
 global.test = function(desc, mocks, args, output, del) {
   del = del || {};
