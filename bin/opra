@@ -23,7 +23,7 @@ var app = connect().use(opra.serve(dir)).use(jit(dir)).use(connect.static(dir));
 if (fourofour) {
   app.use(function(req, res, next) {
     if (req.headers.accept.indexOf('text/html') != -1) {
-      req.url = fourofours[0];
+      req.url = '/' + fourofour;
     }
     next();
   }).use(opra.serve(dir));
