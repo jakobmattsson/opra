@@ -65,7 +65,7 @@ exports.allEqual = function(array) {
 };
 exports.firstNonNullSeries = function(array, func, callback) {
   var breakObj = {};
-  async.forEach(array, function(item, callback) {
+  async.forEachSeries(array, function(item, callback) {
     func(item, function(err, value) {
       if (err) {
         callback(err);
