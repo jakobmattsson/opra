@@ -132,23 +132,62 @@ var flagMatches = exports.flagMatches = function(matches, globalFlags) {
     });
   });
 };
-var parseFile = exports.parseFile = function(assetRoot, globalFlags, indexFile, encoding, callback) {
+var parseFile = exports.parseFile = function(assetRoot, globalFlags, indexFile, indexFileDir, encoding, callback) {
   fs.readFile(indexFile, encoding, function(err, content) {
     if (err) {
       callback(err);
       return;
     }
 
+    var autoNumber = 0;
+
+    var apa = function(res) {
+      // This should be part of the concattenation hook
+      res.matches.forEach(function(match) {
+        if (_.contains(match.params, 'concat') && !match.filename) {
+          autoNumber++;
+          match.filename = '__opra-concat-' + autoNumber;
+          match.type = null;
+        }
+      });
+
+      res.matches.forEach(function(match) {
+        match.files.forEach(function(file) {
+          file.absolutePath = exports.filePathToAbsolute(file.name, assetRoot, indexFileDir);
+          file.encoding = encoding;
+          file.globs = file.globs.map(function(x) {
+            return {
+              name: x,
+              params: file.params,
+              spaces: file.spaces,
+              absolutePath: exports.filePathToAbsolute(x, assetRoot, indexFileDir),
+              encoding: encoding
+            };
+          });
+        });
+
+        if (match.filename) {
+          match.absolutePath = path.join(assetRoot, match.filename);
+        }
+      });
+
+      callback(null, res);
+    };
+
     globMatches(assetRoot, resolveIndexFileDir(indexFile), getMatches(content, "<!--OPRA", "-->"), function(err, matches) {
       if (err) {
         callback(err);
         return;
       }
-
-      callback(null, {
+      apa({
         matches: flagMatches(matches, globalFlags),
         content: content
       });
     });
   });
+};
+
+
+exports.filePathToAbsolute = function(filename, assetRoot, indexFileDir) {
+  return path.join(helpers.isPathAbsolute(filename) ? assetRoot : indexFileDir, filename);
 };

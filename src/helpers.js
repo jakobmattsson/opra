@@ -1,37 +1,7 @@
-var fs = require('fs');
 var path = require('path');
-var less = require('less');
-var coffee = require('coffee-script');
+var async = require('async');
 var _ = require('underscore');
 
-exports.compileCoffee = function(filePath, encoding, callback) {
-  fs.readFile(filePath, encoding, function(err, content) {
-    var code = null;
-
-    if (err) {
-      callback(err);
-      return;
-    }
-
-    try {
-      code = coffee.compile(content);
-    } catch (e) {
-      callback(e);
-      return;
-    }
-
-    callback(null, code);
-  });
-};
-exports.compileLess = function(filePath, paths, encoding, callback) {
-  fs.readFile(filePath, encoding, function(err, content) {
-    if (err) {
-      callback(err);
-      return;
-    }
-    less.render(content, { paths: paths.concat([path.dirname(filePath)]) }, callback);
-  });
-};
 exports.safeReplace = function(str, target, newString) {
   var i = str.indexOf(target);
   if (i === -1) {
@@ -60,8 +30,10 @@ exports.execAll = function(regexp, str) {
 
   return matches;
 };
-exports.createTag = function(name, attributes, content) {
-  attributes = attributes || {};
+exports.createTag = function(tag) {
+  var name = tag.name;
+  var attributes = tag.attributes || {};
+  var content = tag.content;
 
   if (_.isUndefined(content) && typeof attributes === 'string') {
     content = attributes;
@@ -77,11 +49,6 @@ exports.createTag = function(name, attributes, content) {
 exports.isPathAbsolute = function(filename) {
   return path.resolve(filename) === filename;
 };
-exports.escapeInlineScript = function(script) {
-  return script.replace(/<\/( )*script>/g, function(str) {
-    return str.replace("</", "\\x3C/");
-  });
-};
 exports.getValueForFirstKeyMatching = function(obj, predicate) {
   var r = Object.keys(obj).filter(predicate);
   return r.length > 0 ? obj[r[0]] : undefined;
@@ -95,4 +62,27 @@ exports.allEqual = function(array) {
     return y;
   });
   return !different;
-}
+};
+exports.firstNonNullSeries = function(array, func, callback) {
+  var breakObj = {};
+  async.forEach(array, function(item, callback) {
+    func(item, function(err, value) {
+      if (err) {
+        callback(err);
+        return;
+      }
+      if (_.isUndefined(value)) {
+        callback();
+      } else {
+        breakObj.value = value;
+        callback(breakObj);
+      }
+    });
+  }, function(err) {
+    if (err == breakObj) {
+      callback(null, breakObj.value);
+    } else {
+      callback(err);
+    }
+  });
+};

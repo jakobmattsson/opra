@@ -63,7 +63,7 @@ global.test = function(desc, mocks, args, output, del) {
             should.ifError(err);
             res.should.equal(output);
           } else {
-            err.should.equal(output.error);
+            output.error.should.equal(err);
           }
         } catch (ex) {
           complete(function(err) {

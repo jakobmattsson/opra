@@ -8,7 +8,7 @@ test 'funcational-params-as-stronger', {
         one.js
         two.js
       -->
-      <!--OPRA inline concat
+      <!--OPRA file.js inline concat
         one.js
         two.js
       -->
@@ -30,8 +30,7 @@ test 'funcational-params-as-stronger', {
     <script type="text/javascript" src="one.js"></script>
     <script type="text/javascript" src="one.js"></script>
     <script type="text/javascript" src="two.js"></script>
-    <script type="text/javascript" src="one.js"></script>
-    <script type="text/javascript" src="two.js"></script>
+    <script type="text/javascript" src="file.js"></script>
     <script type="text/javascript" src="script.js"></script>
   </html>
 """, {

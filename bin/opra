@@ -5,17 +5,29 @@ var connect = require('connect');
 var fs = require('fs');
 var path = require('path');
 var jit = require('express-jit-coffee');
+var powerfs = require('powerfs');
 
 var opra = require('../src/opra.js');
 
 var args = process.argv.slice(2);
 var ports = args.map(function(x) { return parseInt(x, 10); }).filter(function(x) { return x; }).concat([7000]);
-var dirs = args.filter(function(x) { return isNaN(parseInt(x, 10)); }).concat(['.']);
+var dirs = args.filter(function(x) { return powerfs.isDirectorySync(x); }).concat(['.']);
+var fourofours = args.filter(function(x) { return powerfs.isFileSync(x); });
+var fourofour = fourofours.length === 0 ? null : path.relative(dirs[0], fourofours[0]);
 
 var port = ports[0];
 var dir = path.resolve(process.cwd(), dirs[0]);
 
 var app = connect().use(opra.serve(dir)).use(jit(dir)).use(connect.static(dir));
 
+if (fourofour) {
+  app.use(function(req, res, next) {
+    if (req.headers.accept.indexOf('text/html') != -1) {
+      req.url = fourofours[0];
+    }
+    next();
+  }).use(opra.serve(dir));
+}
+
 http.createServer(app).listen(port);
-console.log("Serving " + dir + " at port " + port);
+console.log("Serving " + dir + " at port " + port + " with " + (fourofour || 'no response') + " for 404's");

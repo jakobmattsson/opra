@@ -18,6 +18,6 @@ test 'type-detection-include', {
     <link rel="stylesheet" type="text/css" href="one.css" />
     <script type="text/javascript" src="one.js"></script>
     <script type="text/javascript" src="one.coffee"></script>
-    <link rel="stylesheet" type="text/css" media="screen" href="one.less" />
+    <link rel="stylesheet" type="text/css" href="one.less" media="screen" />
   </html>
 """

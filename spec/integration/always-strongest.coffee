@@ -8,7 +8,7 @@ test 'always-strongest', {
         one.js
         two.js
       -->
-      <!--OPRA inline concat
+      <!--OPRA file.js inline concat
         one.js
         two.js
       -->
@@ -35,8 +35,7 @@ test 'always-strongest', {
     <script type="text/javascript">
       alert(2)
     </script>
-    <script type="text/javascript" src="one.js"></script>
-    <script type="text/javascript" src="two.js"></script>
+    <script type="text/javascript" src="file.js"></script>
     <script type="text/javascript" src="script.js"></script>
   </html>
 """, {

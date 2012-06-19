@@ -6,61 +6,16 @@ helpers = require('../setup.js').requireSource('helpers.js')
 
 it "should expose the expected helpers", ->
   helpers.should.have.keys [
-    'compileCoffee'
-    'compileLess'
     'safeReplace'
     'safeReplaceAll'
     'execAll'
     'createTag'
+    'firstNonNullSeries'
     'isPathAbsolute'
-    'escapeInlineScript'
     'getValueForFirstKeyMatching'
     'allEqual'
   ]
 
-
-
-describe 'helpers.compileCoffee', ->
-
-  it 'should compile coffeescript from a file', (done) ->
-    fs.writeFile 'test.coffee', 'x = 2', 'utf8', () ->
-      helpers.compileCoffee 'test.coffee', 'utf8', (err, code) ->
-        should.ifError(err)
-        code.should.include('var x;')
-        fs.unlink 'test.coffee', done
-
-  it 'should fail if the coffeescript is invalid', (done) ->
-    fs.writeFile 'test.coffee', '=====', 'utf8', () ->
-      helpers.compileCoffee 'test.coffee', 'utf8', (err, code) ->
-        err.toString().should.include('Parse error')
-        fs.unlink 'test.coffee', done
-
-  it 'should fail if the file does not exist', (done) ->
-    helpers.compileCoffee 'nonexisting.coffee', 'utf8', (err, code) ->
-      err.toString().should.include('ENOENT')
-      done()
-
-
-
-describe 'helpers.compileLess', ->
-
-  it 'should compile less from a file', (done) ->
-    fs.writeFile 'test.less', '@test: #ff0000; a { color: @test; }', 'utf8', () ->
-      helpers.compileLess 'test.less', [], 'utf8', (err, code) ->
-        should.ifError(err)
-        code.should.include('color: #ff0000')
-        fs.unlink 'test.less', done
-
-  it 'should fail if the coffeescript is invalid', (done) ->
-    fs.writeFile 'test.less', '=====', 'utf8', () ->
-      helpers.compileLess 'test.less', [], 'utf8', (err, code) ->
-        err.type.should.equal('Parse')
-        fs.unlink 'test.less', done
-
-  it 'should fail if the file does not exist', (done) ->
-    helpers.compileLess 'nonexisting.less', [], 'utf8', (err, code) ->
-      err.toString().should.include('ENOENT')
-      done()
 
 
 
@@ -102,16 +57,16 @@ describe 'helpers.execAll', ->
 describe 'helpers.createTag', ->
 
   it 'should create a proper html tag', ->
-    helpers.createTag('a', { href: '#', id: 'test' }, 'Text').should.equal('<a href="#" id="test">Text</a>')
+    helpers.createTag({ name: 'a', attributes: { href: '#', id: 'test' }, content: 'Text'}).should.equal('<a href="#" id="test">Text</a>')
 
   it 'should be able to create tags without content', ->
-    helpers.createTag('a', { href: '#', id: 'test' }).should.equal('<a href="#" id="test" />')
+    helpers.createTag({ name: 'a', attributes: { href: '#', id: 'test' }}).should.equal('<a href="#" id="test" />')
 
   it 'should default to no attributes', ->
-    helpers.createTag('a').should.equal('<a />')
+    helpers.createTag({ name: 'a' }).should.equal('<a />')
 
   it 'should be possible to create content without attributes', ->
-    helpers.createTag('a', 'content').should.equal('<a>content</a>')
+    helpers.createTag({ name: 'a', content: 'content'}).should.equal('<a>content</a>')
 
 
 
@@ -120,13 +75,3 @@ describe 'helpers.isPathAbsolute', ->
   it 'should check for initial slashes', ->
     helpers.isPathAbsolute('/test').should.be.true
     helpers.isPathAbsolute('bin').should.be.false
-
-
-
-describe 'helpers.escapeInlineScript', ->
-
-  it 'should replace tag-opening with escape sequence', ->
-    helpers.escapeInlineScript('script <script></script> script').should.equal('script <script>\\x3C/script> script')
-
-  it 'should return strings without inline scripts as-is', ->
-    helpers.escapeInlineScript('script').should.equal('script')

@@ -22,7 +22,7 @@ test 'default-to-inclusion', {
     <script type="text/javascript" src="one.js"></script>
     <script type="text/javascript" src="two.js"></script>
     <link rel="stylesheet" type="text/css" href="three.css" />
-    <link rel="stylesheet" type="text/css" media="screen" href="four.css" />
-    <link rel="stylesheet" type="text/css" media="print" href="five.css" />
+    <link rel="stylesheet" type="text/css" href="four.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="five.css" media="print" />
   </html>
 """
