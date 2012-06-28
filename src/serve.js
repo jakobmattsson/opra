@@ -1,4 +1,5 @@
 var url = require('url');
+var fs = require('fs');
 var path = require('path');
 var powerfs = require('powerfs');
 var _ = require('underscore');
@@ -16,6 +17,11 @@ exports.serveConstructor = function(dependencies) {
     return function(req, res, next) {
       var pathname = url.parse(req.url).pathname;
       var filepath = path.join(rootpath, pathname);
+
+      if (!fs.existsSync(filepath)) {
+        next();
+        return;
+      }
 
       powerfs.isDirectory(filepath, function(err, isDirectory) {
         if (err) {
