@@ -18,7 +18,9 @@ exports.serveConstructor = function(dependencies) {
       var pathname = url.parse(req.url).pathname;
       var filepath = path.join(rootpath, pathname);
 
-      if (!fs.existsSync(filepath)) {
+      var existsSync = fs.existsSync || path.existsSync; // Compatible with node 0.6 and 0.8
+
+      if (!existsSync(filepath)) {
         next();
         return;
       }
