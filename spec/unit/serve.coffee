@@ -17,7 +17,7 @@ it "should log an error and then move on if the given file could not be found", 
   logged = []
 
   serveFunc = serve.serveConstructor
-    log: (msg) -> logged = logged.concat(Array.prototype.slice.call(arguments))
+    log: dontCall
     build: dontCall
 
   connectFunc = serveFunc('path')
@@ -25,9 +25,6 @@ it "should log an error and then move on if the given file could not be found", 
   connectFunc {
     url: '/someurl.html'
   }, { }, () ->
-    logged.length.should.equal(2)
-    logged[0].should.equal("OPRA ERROR (while searching for path/someurl.html)")
-    logged[1].toString().should.include('ENOENT')
     done()
 
 
