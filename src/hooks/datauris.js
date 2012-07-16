@@ -49,7 +49,7 @@ module.exports = function(hooks) {
 
         async.forEachSeries(matches, function(match, callback) {
           var filename = match.slice(5).slice(0, -2);
-          var absolutePath = path.join(assetRoot, filename);
+          var absolutePath = path.join(path.dirname(item.absolutePath), filename);
 
           dataUrl(absolutePath, function(err, encoded) {
             if (err) {
