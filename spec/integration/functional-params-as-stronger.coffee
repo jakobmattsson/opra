@@ -39,4 +39,9 @@ test 'funcational-params-as-stronger', {
     1 + 1;
     alert(2)
   """
+  'file.js': """
+    alert(1)
+    1 + 1;
+    alert(2)
+  """
 }
