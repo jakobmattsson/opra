@@ -47,8 +47,8 @@ module.exports = function(hooks) {
 
         var matches = data.match(/url\('[^']*\.(png|jpeg|jpg|gif)'\)|url\("[^"]*\.(png|jpeg|jpg|gif)"\)/g) || [];
 
-        async.forEachSeries(matches, function(item, callback) {
-          var filename = item.slice(5).slice(0, -2);
+        async.forEachSeries(matches, function(match, callback) {
+          var filename = match.slice(5).slice(0, -2);
           var absolutePath = path.join(assetRoot, filename);
 
           dataUrl(absolutePath, function(err, encoded) {
@@ -58,7 +58,7 @@ module.exports = function(hooks) {
             }
 
             haveReplaced = true;
-            data = helpers.safeReplace(data, item, encoded);
+            data = helpers.safeReplace(data, match, encoded);
 
             callback();
           });
