@@ -45,7 +45,7 @@ module.exports = function(hooks) {
           return;
         }
 
-        var exp = 'url\\(\\s*[\'"]?([^\'"]*)\\.(png|jpeg|jpg|gif)[\'"]?\\s*\\)';
+        var exp = 'url\\(\\s*[\'"]?([^\\)\'"]*)\\.(png|jpeg|jpg|gif)[\'"]?\\s*\\)';
         var matches = data.match(new RegExp(exp, 'g')) || [];
 
         async.forEachSeries(matches, function(match, callback) {
