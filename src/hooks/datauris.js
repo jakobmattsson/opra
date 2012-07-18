@@ -45,10 +45,11 @@ module.exports = function(hooks) {
           return;
         }
 
-        var matches = data.match(/url\('[^']*\.(png|jpeg|jpg|gif)'\)|url\("[^"]*\.(png|jpeg|jpg|gif)"\)/g) || [];
+        var exp = 'url\\(\\s*[\'"]?([^\'"]*)\\.(png|jpeg|jpg|gif)[\'"]?\\s*\\)';
+        var matches = data.match(new RegExp(exp, 'g')) || [];
 
         async.forEachSeries(matches, function(match, callback) {
-          var filename = match.slice(5).slice(0, -2);
+          var filename = match.match(exp).slice(1).join('.');
           var absolutePath = path.join(path.dirname(item.absolutePath), filename);
 
           dataUrl(absolutePath, function(err, encoded) {
