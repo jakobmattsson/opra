@@ -34,7 +34,7 @@ test 'inlining-images', {
     span {
       width: 10px;
       height: 20px;
-      background-image: url(../assets/close.png)
+      background-image: url(   ../assets/close.png  )
     }
   """
 }, { }, """
