@@ -1,4 +1,5 @@
 var fs = require('fs');
+var powerfs = require('powerfs');
 var path = require('path');
 var async = require('async');
 var _ = require('underscore');
@@ -23,7 +24,7 @@ var reduceArray = function(seeds, reducers, transform) {
 };
 var fileSaver = function(files, defaultEncoding, callback) {
   async.forEach(files || [], function(file, callback) {
-    fs.writeFile(file.name, file.content, file.encoding || defaultEncoding, callback);
+    powerfs.writeFile(file.name, file.content, file.encoding || defaultEncoding, callback);
   }, callback);
 };
 var resolveFileDir = function(filename) {
