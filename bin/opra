@@ -6,19 +6,39 @@ var fs = require('fs');
 var path = require('path');
 var jit = require('express-jit-coffee');
 var powerfs = require('powerfs');
-
+var optimist = require('optimist');
 var opra = require('../src/opra.js');
 
-var args = process.argv.slice(2);
-var numbers = args.map(function(x) { return parseInt(x, 10); }).filter(function(x) { return x; });
-var nonNumbers = args.filter(function(x) { return !parseInt(x, 10); });
-var ports = numbers.concat([7000]);
-var dirs = nonNumbers.filter(function(x) { return powerfs.isDirectorySync(x); }).concat(['.']);
-var fourofours = nonNumbers.filter(function(x) { return powerfs.isFileSync(x); });
-var fourofour = fourofours.length === 0 ? null : path.relative(dirs[0], fourofours[0]);
+var argv = optimist
+  .usage('Runs a web server in the given directory, preprocessing all files using opra')
+  .describe('root', 'Root directory from where to run the server')
+  .describe('port', 'Port to run the web server on')
+  .describe('not-found', 'A file to respond with instead of 404')
+  .describe('version', 'Print the current version number')
+  .describe('help', 'Show this help message')
+  .default('port', 7000)
+  .default('root', '.')
+  .alias('root', 'r')
+  .alias('port', 'p')
+  .alias('not-found', 'n')
+  .alias('version', 'v')
+  .alias('help', 'h')
+  .argv;
 
-var port = ports[0];
-var dir = path.resolve(process.cwd(), dirs[0]);
+if (argv.help) {
+  console.log(optimist.help());
+  return;
+}
+if (argv.version) {
+  fs.readFile(path.join(__dirname, '../package.json'), 'utf8', function(err, data) {
+    console.log(err ? err : JSON.parse(data).version);
+  });
+  return;
+}
+
+var port = argv.port;
+var dir = path.resolve(process.cwd(), argv.root);
+var fourofour = argv['not-found'] ? path.relative(argv.root, argv['not-found']) : null;
 
 var app = connect().use(opra.serve(dir)).use(jit(dir)).use(connect.static(dir));
 
