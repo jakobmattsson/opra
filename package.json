@@ -1,7 +1,7 @@
 {
   "name": "opra",
   "description": "Single page app builder",
-  "main": "./src/opra.js",
+  "main": "./lib/opra.js",
   "bin": {
     "opra": "./bin/opra"
   },

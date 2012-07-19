@@ -7,7 +7,7 @@ var path = require('path');
 var jit = require('express-jit-coffee');
 var powerfs = require('powerfs');
 var optimist = require('optimist');
-var opra = require('../src/opra.js');
+var opra = require('../lib/opra.js');
 
 var argv = optimist
   .usage('Runs a web server in the given directory, preprocessing all files using opra')
