@@ -3,3 +3,4 @@ npm-debug.log
 .*
 src-cov
 test-coverage
+lib
