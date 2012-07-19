@@ -1,9 +1,10 @@
-fs = require("fs")
-path = require("path")
-async = require("async")
-powerfs = require("powerfs")
-_ = require("underscore")
-helpers = require("../helpers")
+fs = require 'fs'
+path = require 'path'
+async = require 'async'
+powerfs = require 'powerfs'
+_ = require 'underscore'
+helpers = require '../helpers'
+
 dataUrl = (filename, callback) ->
   fs.readFile filename, (err, data) ->
     if err

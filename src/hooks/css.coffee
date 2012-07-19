@@ -1,31 +1,30 @@
-fs = require("fs")
-path = require("path")
-less = require("less")
-_ = require("underscore")
+fs = require 'fs'
+path = require 'path'
+less = require 'less'
+_ = require 'underscore'
+
 module.exports = (hooks) ->
   hooks.tagCreator = (file, content, callback) ->
-    if file.type is "css"
-      if _.isUndefined(content)
+    if file.type != 'css'
+      callback()
+    else
+      if content?
         callback null,
-          name: "link"
+          name: 'style'
+          content: content
           attributes:
-            rel: "stylesheet"
-            type: "text/css"
-            href: file.name
-
-          content: null
+            type: 'text/css'
       else
         callback null,
-          name: "style"
+          name: 'link'
+          content: null
           attributes:
-            type: "text/css"
-
-          content: content
-    else
-      callback()
+            rel: 'stylesheet'
+            type: 'text/css'
+            href: file.name
 
   hooks.compiler =
-    from: "css"
-    target: "css"
+    from: 'css'
+    target: 'css'
     compile: (filePath, encoding, assetRoot, callback) ->
       fs.readFile filePath, encoding, callback

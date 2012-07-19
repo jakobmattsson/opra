@@ -1,23 +1,16 @@
-_ = require("underscore")
-cleanCSS = require("clean-css")
-uglify = require("uglify-js")
+_ = require 'underscore'
+cleanCSS = require 'clean-css'
+uglify = require 'uglify-js'
+
 module.exports = (hooks) ->
   hooks.file = (tag) ->
     compressor =
-      css: (code, callback) ->
-        cleanCSS.process code
+      css: (code, callback) -> cleanCSS.process code
+      js: (code, callback) -> uglify code || ''
 
-      js: (code, callback) ->
-        uglify code or ""
+    return tag if !tag.content? || !_(tag.file.params).contains('compress') || !compressor[tag.file.type]?
 
-    return tag  if _.isUndefined(tag.content)
-    c = ->
-      if _.contains(tag.file.params, "compress")
-        if tag.file.type == "css"
-          return compressor.css(tag.content)
-        else
-          return compressor.js(tag.content or "")  if tag.file.type is "js"
-      tag.content
-
-    file: tag.file
-    content: c()
+    return {
+      file: tag.file
+      content: compressor[tag.file.type](tag.content)
+    }
