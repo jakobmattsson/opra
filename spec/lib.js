@@ -5,10 +5,17 @@ var should = require('should');
 var sugar = require('sugar');
 var powerfs = require('powerfs');
 var async = require('async');
-var evil = require('evil');
 var opra = require('./setup.js').requireSource('opra.js');
 
-var propagate = evil.methods.propagate;
+var propagate = function(callback, f) {
+  return function(err) {
+    if (err) {
+      callback(err);
+      return;
+    }
+    return f.apply(this, Array.prototype.slice.call(arguments, 1));
+  };
+};
 
 global.test = function(desc, mocks, args, output, del) {
   del = del || {};
