@@ -39,7 +39,7 @@ global.test = function(desc, mocks, args, output, del) {
                       });
                     } else {
                       if (content !== del[d]) {
-                        content.should.equal(del[d]);
+                        content.should.eql(del[d]);
                       }
                     }
 
@@ -62,9 +62,9 @@ global.test = function(desc, mocks, args, output, del) {
         try {
           if (typeof output == 'string') {
             should.ifError(err);
-            res.should.equal(output);
+            res.should.eql(output);
           } else {
-            output.error.should.equal(err);
+            output.error.should.eql(err);
           }
         } catch (ex) {
           complete(function(err) {

@@ -61,9 +61,9 @@ it "should serve html files after calling build", (done) ->
       setHeader: (name, value) ->
         result.header[name] = value
       end: (data) ->
-        result.header['Content-Type'].should.equal('text/html')
-        result.header['Content-Length'].should.equal(7)
-        data.should.equal("content")
+        result.header['Content-Type'].should.eql('text/html')
+        result.header['Content-Length'].should.eql(7)
+        data.should.eql("content")
         powerfs.rmdir('some', done)
     }, dontCall
 
@@ -86,9 +86,9 @@ it "should serve the index.html-file if a directory is requested", (done) ->
       setHeader: (name, value) ->
         result.header[name] = value
       end: (data) ->
-        result.header['Content-Type'].should.equal('text/html')
-        result.header['Content-Length'].should.equal(7)
-        data.should.equal("content")
+        result.header['Content-Type'].should.eql('text/html')
+        result.header['Content-Length'].should.eql(7)
+        data.should.eql("content")
         powerfs.rmdir('some', done)
     }, dontCall
 
@@ -110,7 +110,7 @@ it "should report and error and call next if build fails", (done) ->
     connectFunc {
       url: '/index.html'
     }, { }, () ->
-      logged.length.should.equal(2)
-      logged[0].should.equal("OPRA ERROR while compiling /index.html")
-      logged[1].toString().should.equal('an exception')
+      logged.length.should.eql(2)
+      logged[0].should.eql("OPRA ERROR while compiling /index.html")
+      logged[1].toString().should.eql('an exception')
       powerfs.rmdir('path', done)
