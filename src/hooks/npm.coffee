@@ -1,54 +1,51 @@
-fs = require("fs")
-path = require("path")
-async = require("async")
-npm = require("npm")
-powerfs = require("powerfs")
-browserify = require("browserify")
-_ = require("underscore")
+fs = require 'fs'
+path = require 'path'
+async = require 'async'
+npm = require 'npm'
+powerfs = require 'powerfs'
+browserify = require 'browserify'
+_ = require 'underscore'
+
 propagate = (callback, f) ->
   (err) ->
-    if err
-      callback err
-      return
+    return callback err if err
     f.apply this, Array::slice.call(arguments, 1)
 
 buildNPM = (folder, packages, prelude, callback) ->
-  powerfs.mkdirp folder, propagate(callback, ->
+  powerfs.mkdirp folder, propagate callback, ->
     npm.load
-      loglevel: "silent"
-    , propagate(callback, ->
-      npm.commands.install folder, packages, propagate(callback, (data) ->
+      loglevel: 'silent'
+    , propagate callback, ->
+      npm.commands.install folder, packages, propagate callback, (data) ->
         cwd = process.cwd()
         process.chdir folder
         b = browserify()
         unless prelude
           b.files = []
           b.prepends = []
-        b.require packages.map((x) ->
-          x.split("@")[0]
-        )
+        b.require packages.map (x) -> x.split("@")[0]
         output = b.bundle()
         process.chdir cwd
         callback null, output
-      )
-    )
-  )
 
 filesFromNPM = (first, assetRoot, d, filename, aliases, callback) ->
-  packages = [ d ]
+  packages = [d]
   packageName = d.split("@")[0]
-  packageVersion = d.split("@").slice(1) or "any"
+  packageVersion = d.split("@").slice(1)[0] || ''
   delayedCallback = _.after(2, callback)
   requireFile = path.join(filename, packageName + "-require.js")
   packageFile = path.join(filename, packageName + ".js")
   versionFile = path.join(filename, packageName + ".version")
+
   requireContent = aliases.map((alias) ->
     "window['" + alias + "'] = require('" + packageName + "');"
   ).join("\n")
+
   if requireContent
     powerfs.writeFile requireFile, requireContent, "utf8", delayedCallback
   else
     delayedCallback()
+
   updateFile = ->
     buildNPM filename, [ d ], first, (err, data) ->
       if err
@@ -61,11 +58,9 @@ filesFromNPM = (first, assetRoot, d, filename, aliases, callback) ->
         powerfs.writeFile packageFile, data, "utf8", delayedCallback
 
   powerfs.fileExists versionFile, (exists) ->
-    unless exists
-      updateFile()
-      return
+    return updateFile() if !exists
     fs.readFile versionFile, "utf8", (err, data) ->
-      if err or data isnt packageVersion
+      if err || data != packageVersion
         updateFile()
       else
         delayedCallback()
