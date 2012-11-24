@@ -1,5 +1,6 @@
 _ = require 'underscore'
 helpers = require '../helpers'
+crypto = require 'crypto'
 
 module.exports = (hooks) ->
   hooks.concatable = (file, content) -> file.type
@@ -20,13 +21,17 @@ module.exports = (hooks) ->
         callback null,
           tags: ""
       else
+        content = _(data).pluck("content").join((if data[0].file.type is "js" then ";\n" else "\n"))
+        hashIdentifier = '$HASH'
+        hash = if opraBlock.absolutePath.indexOf(hashIdentifier) != -1 then crypto.createHash('md5').update(content).digest("hex").toUpperCase() else null
+
         dd =
-          content: _(data).pluck("content").join((if data[0].file.type is "js" then ";\n" else "\n"))
+          content: content
           file:
-            name: opraBlock.filename
+            name: opraBlock.filename.replace(hashIdentifier, hash)
             params: data[0].file.params
             spaces: data[0].file.spaces
-            absolutePath: opraBlock.absolutePath
+            absolutePath: opraBlock.absolutePath.replace(hashIdentifier, hash)
             encoding: "utf8"
             type: data[0].file.type
 
