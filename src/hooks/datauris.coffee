@@ -10,10 +10,18 @@ dataUrl = (filename, callback) ->
     if err
       callback err
       return
+
+    mimes =
+      png:  'image/png'
+      jpeg: 'image/jpeg'
+      jpg:  'image/jpg'
+      gif:  'image/gif'
+      woff: 'application/x-font-woff'
+
     format = path.extname(filename).slice(1)
     enc = data.toString("base64")
     console.log "Warning: Very long encoded string; IE (and possibly other browsers) wont like this!"  if enc.length >= Math.pow(2, 15)
-    callback null, "url(data:image/" + format + ";base64," + enc + ")"
+    callback null, "url(data:" + mimes[format] + ";base64," + enc + ")"
 
 module.exports = (hooks) ->
   hooks.preproc = (files, meta, callback) ->
@@ -30,7 +38,7 @@ module.exports = (hooks) ->
         if err
           callback err
           return
-        exp = "url\\(\\s*['\"]?([^\\)'\"]*)\\.(png|jpeg|jpg|gif)['\"]?\\s*\\)"
+        exp = "url\\(\\s*['\"]?([^\\)'\"]*)\\.(png|jpeg|jpg|gif|woff)['\"]?\\s*\\)"
         matches = data.match(new RegExp(exp, "g")) or []
         async.forEachSeries matches, ((match, callback) ->
           filename = match.match(exp).slice(1).join(".")
