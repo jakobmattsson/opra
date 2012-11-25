@@ -40,9 +40,16 @@ module.exports = (hooks) ->
           return
         exp = "url\\(\\s*['\"]?([^\\)'\"]*)\\.(png|jpeg|jpg|gif|woff)['\"]?\\s*\\)"
         matches = data.match(new RegExp(exp, "g")) or []
+
         async.forEachSeries matches, ((match, callback) ->
           filename = match.match(exp).slice(1).join(".")
-          absolutePath = path.join(path.dirname(item.absolutePath), filename)
+
+          absolutePath = null
+          if helpers.isPathAbsolute filename
+            absolutePath = path.join(assetRoot, filename)
+          else
+            absolutePath = path.join(path.dirname(item.absolutePath), filename)
+
           dataUrl absolutePath, (err, encoded) ->
             if err
               callback err
