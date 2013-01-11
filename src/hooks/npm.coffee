@@ -23,7 +23,10 @@ buildNPM = (folder, packages, prelude, callback) ->
         unless prelude
           b.files = []
           b.prepends = []
-        b.require packages.map (x) -> x.split("@")[0]
+
+        packages.map((x) -> x.split("@")[0]).forEach (file) ->
+          b.require(file)
+
         output = b.bundle()
         process.chdir cwd
         callback null, output
