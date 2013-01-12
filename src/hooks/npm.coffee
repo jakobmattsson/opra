@@ -24,8 +24,15 @@ buildNPM = (folder, packages, prelude, callback) ->
           b.files = []
           b.prepends = []
 
-        packages.map((x) -> x.split("@")[0]).forEach (file) ->
-          b.require(file)
+        allFiles = packages.map((x) -> x.split("@")[0])
+        allFile = path.join(folder, '__my_package.js')
+
+        outText = allFiles.map (x) ->
+          "require('#{x}')"
+        .join('\n')
+        fs.writeFileSync(allFile, outText)
+
+        b.require(allFile)
 
         output = b.bundle()
         process.chdir cwd
