@@ -5,7 +5,8 @@ var should = require('should');
 var sugar = require('sugar');
 var powerfs = require('powerfs');
 var async = require('async');
-var opra = require('./setup.js').requireSource('opra.js');
+var jscov = require('jscov');
+var opra = require(jscov.cover('..', 'lib', 'opra.js'));
 
 var propagate = function(callback, f) {
   return function(err) {

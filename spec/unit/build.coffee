@@ -2,8 +2,9 @@ fs = require 'fs'
 should = require 'should'
 powerfs = require 'powerfs'
 assert = require 'assert'
-build = require('../setup.js').requireSource('build.js')
-parse = require('../setup.js').requireSource('parse.js')
+jscov = require 'jscov'
+build = require(jscov.cover('../..', 'lib', 'build.js'))
+parse = require(jscov.cover('../..', 'lib', 'parse.js'))
 
 
 

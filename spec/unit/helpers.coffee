@@ -1,7 +1,7 @@
 fs = require 'fs'
 should = require 'should'
-helpers = require('../setup.js').requireSource('helpers.js')
-
+jscov = require 'jscov'
+helpers = require(jscov.cover('../..', 'lib', 'helpers.js'))
 
 
 it "should expose the expected helpers", ->

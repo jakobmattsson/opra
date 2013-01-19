@@ -1,7 +1,8 @@
 fs = require 'fs'
 should = require 'should'
 powerfs = require 'powerfs'
-serve = require('../setup.js').requireSource('serve.js')
+jscov = require 'jscov'
+serve = require(jscov.cover('../..', 'lib', 'serve.js'))
 
 
 dontCall = () -> throw "dont call"
