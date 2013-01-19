@@ -5,11 +5,9 @@ npm = require 'npm'
 powerfs = require 'powerfs'
 browserify = require 'browserify'
 _ = require 'underscore'
+helpers = require '../helpers'
 
-propagate = (callback, f) ->
-  (err) ->
-    return callback err if err
-    f.apply this, Array::slice.call(arguments, 1)
+propagate = helpers.propagate
 
 buildNPM = (folder, packages, prelude, callback) ->
   powerfs.mkdirp folder, propagate callback, ->
@@ -57,14 +55,8 @@ filesFromNPM = (first, assetRoot, d, filename, aliases, callback) ->
     delayedCallback()
 
   updateFile = ->
-    buildNPM filename, [ d ], first, (err, data) ->
-      if err
-        delayedCallback err
-        return
-      powerfs.writeFile versionFile, packageVersion, "utf8", (err) ->
-        if err
-          delayedCallback err
-          return
+    buildNPM filename, [ d ], first, propagate delayedCallback, (data) ->
+      powerfs.writeFile versionFile, packageVersion, "utf8", propagate delayedCallback, ->
         powerfs.writeFile packageFile, data, "utf8", delayedCallback
 
   powerfs.fileExists versionFile, (exists) ->
@@ -89,10 +81,7 @@ filter3 = (files, meta, callback) ->
     newName = "/" + path.join(".opra-cache", path.relative(assetRoot, item.absolutePath))
     r2 = path.join(assetRoot, newName)
     haveReplaced = false
-    fs.readFile item.absolutePath, item.encoding, (err, data) ->
-      if err
-        callback err
-        return
+    fs.readFile item.absolutePath, item.encoding, propagate callback, (data) ->
       newData = ""
       newData += "require.define('" + pathRelativeToRoot + "', function(require, module, exports, __dirname, __filename) {\n"  if type is "js"
       newData += "require.define '" + pathRelativeToRoot + "', (require, module, exports, __dirname, __filename) ->\n"  if type is "coffee"
@@ -100,10 +89,7 @@ filter3 = (files, meta, callback) ->
         "  " + x
       ).join("\n")
       newData += "\n});"  if type is "js"
-      powerfs.writeFile r2, newData, item.encoding, (err) ->
-        if err
-          callback err
-          return
+      powerfs.writeFile r2, newData, item.encoding, propagate callback, ->
         item.absolutePath = r2
         item.name = newName
         callback()
@@ -125,10 +111,7 @@ filter2 = (files, meta, callback) ->
     filesFromNPM not hasPreludedCommonJS, assetRoot, item.name, getNpmFolder(meta.assetRoot, meta.indexFile), aliases, (err) ->
       hasPreludedCommonJS = true
       callback err
-  ), (err) ->
-    if err
-      callback err
-      return
+  ), propagate callback, ->
     npmreqs.forEach (n) ->
       name = n.name
       n.absolutePath = path.join(getNpmFolder(meta.assetRoot, meta.indexFile), name.split("@")[0] + ".js")

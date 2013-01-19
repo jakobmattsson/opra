@@ -2,6 +2,11 @@ path = require 'path'
 async = require 'async'
 _ = require 'underscore'
 
+propagate = exports.propagate = (callback, func) ->
+  (err, args...) ->
+    return callback(err) if err
+    func.apply(this, args)
+
 exports.safeReplace = (str, target, newString) ->
   i = str.indexOf(target)
   return str if i == -1
@@ -55,9 +60,7 @@ exports.allEqual = (array) ->
 exports.firstNonNullSeries = (array, func, callback) ->
   breakObj = {}
   async.forEachSeries array, (item, callback) ->
-    func item, (err, value) ->
-      return callback(err) if err
-
+    func item, propagate callback, (value) ->
       if _.isUndefined(value)
         callback()
       else

@@ -8,12 +8,7 @@ powerfs = require 'powerfs'
 helpers = require './helpers'
 parse = require './parse'
 
-propagate = (callback, func) ->
-  (err) ->
-    if err
-      callback err
-      return
-    func.apply this, Array::slice.call(arguments, 1)
+propagate = helpers.propagate
 
 reduceArray = (seeds, reducers, transform) ->
   seeds.map (seed) ->

@@ -6,6 +6,8 @@ _ = require 'underscore'
 _s = require 'underscore.string'
 helpers = require './helpers.js'
 
+propagate = helpers.propagate
+
 _.mixin(require('underscore.string').exports())
 
 resolveIndexFileDir = exports.resolveIndexFileDir = (filename) ->
@@ -52,9 +54,7 @@ getMatches = exports.getMatches = (content, prefix, postfix) ->
 globMatches = exports.globMatches = (assetRoot, indexFileDir, matches, callback) ->
   async.map matches, (match, callback) ->
     async.mapSeries match.files, (file, callback) ->
-      globber file.name, assetRoot, indexFileDir, (err, globbedFiles) ->
-        return callback(err) if err
-
+      globber file.name, assetRoot, indexFileDir, propagate callback, (globbedFiles) ->
         console.error("Found no matches for pattern: " + file.name) if !globbedFiles
 
         callback null, _.extend({}, file, {
@@ -62,8 +62,8 @@ globMatches = exports.globMatches = (assetRoot, indexFileDir, matches, callback)
             filePathToAbsolute(globbedFile, assetRoot, indexFileDir).replace(new RegExp('\\\\', 'g'), "/")
         })
 
-    , (err, result) ->
-      callback err, _.extend({}, match, { files: result })
+    , propagate callback, (result) ->
+      callback null, _.extend({}, match, { files: result })
   , callback
 
 
@@ -114,9 +114,7 @@ flagMatches = exports.flagMatches = (matches, globalFlags) ->
 
 
 parseFile = exports.parseFile = (assetRoot, globalFlags, indexFile, indexFileDir, encoding, callback) ->
-  fs.readFile indexFile, encoding, (err, content) ->
-    return callback(err) if err
-
+  fs.readFile indexFile, encoding, propagate callback, (content) ->
     autoNumber = 0
 
     apa = (res) ->
@@ -143,8 +141,7 @@ parseFile = exports.parseFile = (assetRoot, globalFlags, indexFile, indexFileDir
 
       callback(null, res)
 
-    globMatches assetRoot, resolveIndexFileDir(indexFile), getMatches(content, "<!--OPRA", "-->"), (err, matches) ->
-      return callback(err) if err
+    globMatches assetRoot, resolveIndexFileDir(indexFile), getMatches(content, "<!--OPRA", "-->"), propagate callback, (matches) ->
       apa({
         matches: flagMatches(matches, globalFlags)
         content: content

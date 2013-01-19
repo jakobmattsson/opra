@@ -10,6 +10,7 @@ it "should expose the expected helpers", ->
     'safeReplaceAll'
     'execAll'
     'createTag'
+    'propagate'
     'firstNonNullSeries'
     'isPathAbsolute'
     'getValueForFirstKeyMatching'

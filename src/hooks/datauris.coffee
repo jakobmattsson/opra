@@ -5,12 +5,10 @@ powerfs = require 'powerfs'
 _ = require 'underscore'
 helpers = require '../helpers'
 
-dataUrl = (filename, callback) ->
-  fs.readFile filename, (err, data) ->
-    if err
-      callback err
-      return
+propagate = helpers.propagate
 
+dataUrl = (filename, callback) ->
+  fs.readFile filename, propagate callback, (data) ->
     mimes =
       png:  'image/png'
       jpeg: 'image/jpeg'
@@ -34,10 +32,7 @@ module.exports = (hooks) ->
       newName = "/" + path.join(".opra-cache", path.relative(assetRoot, item.absolutePath))
       r2 = path.join(assetRoot, newName)
       haveReplaced = false
-      fs.readFile item.absolutePath, item.encoding, (err, data) ->
-        if err
-          callback err
-          return
+      fs.readFile item.absolutePath, item.encoding, propagate callback, (data) ->
         exp = "url\\(\\s*['\"]?([^\\)'\"]*)\\.(png|jpeg|jpg|gif|woff)['\"]?\\s*\\)"
         matches = data.match(new RegExp(exp, "g")) or []
 
@@ -50,10 +45,7 @@ module.exports = (hooks) ->
           else
             absolutePath = path.join(path.dirname(item.absolutePath), filename)
 
-          dataUrl absolutePath, (err, encoded) ->
-            if err
-              callback err
-              return
+          dataUrl absolutePath, propagate callback, (encoded) ->
             haveReplaced = true
             data = helpers.safeReplace(data, match, encoded)
             callback()
