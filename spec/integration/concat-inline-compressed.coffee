@@ -31,7 +31,7 @@ test 'concat-inline-compressed', {
   <html>
     <script type="text/javascript">
       alert(1 + 1);
-      alert(4)
+      alert(4);
     </script>
     <script type="text/javascript">
       alert(1 + 1)

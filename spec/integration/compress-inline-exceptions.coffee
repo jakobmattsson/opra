@@ -26,7 +26,7 @@ test 'compress-inline-exceptions', {
   """
 }, { inline: true, compress: true }, """
   <html>
-    <script type="text/javascript">alert(1),2</script>
+    <script type="text/javascript">alert(1);</script>
     <script type="text/javascript">
       alert(2)
     </script>

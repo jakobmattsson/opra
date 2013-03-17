@@ -6,7 +6,7 @@ module.exports = (hooks) ->
   hooks.file = (tag) ->
     compressor =
       css: (code, callback) -> cleanCSS.process code
-      js: (code, callback) -> uglify code || ''
+      js: (code, callback) -> uglify.minify(code || '', { fromString: true }).code
 
     return tag if !tag.content? || !_(tag.file.params).contains('compress') || !compressor[tag.file.type]?
 
