@@ -129,10 +129,12 @@ exports.buildConstructor = (dependencies) ->
     if not callback and typeof settings is "function"
       callback = settings
       settings = {}
-    settings = settings or {}
+
+    settings = settings ? {}
     indexFileDir = resolveFileDir(indexFile)
-    encoding = settings.encoding or "utf8"
-    assetRoot = path.resolve(settings.assetRoot or indexFileDir)
+    encoding = settings.encoding ? "utf8"
+    assetRoot = path.resolve(settings.assetRoot ? indexFileDir)
+
     globalFlags =
       concat: settings.concat
       inline: settings.inline
@@ -145,68 +147,48 @@ exports.buildConstructor = (dependencies) ->
     extendedFetchers = hooks.fileFetcher.concat([ defaultFetcher ])
     extendedDataHooks = hooks.data.concat([ defaultSomething ])
     extendedCompilers = hooks.compiler.concat([ defaultCompiler() ])
-    getData = (file, opraBlock, callback) ->
-      anyTrue = hooks.preventContent.some((hook) ->
-        hook file, opraBlock
-      )
-      unless anyTrue
-        callback null,
-          file: file
-          content: `undefined`
 
-        return
-      helpers.firstNonNullSeries extendedCompilers, ((compiler, callback) ->
-        if _.isUndefined(compiler.from) or _.endsWith(file.name, "." + compiler.from)
-          compiler.compile file.absolutePath, file.encoding, assetRoot, callback
+    getData = (file, opraBlock, callback) ->
+      anyTrue = hooks.preventContent.some (hook) -> hook(file, opraBlock)
+      return callback(null, { file, content: undefined }) unless anyTrue
+
+      helpers.firstNonNullSeries extendedCompilers, (compiler, callback) ->
+        if !compiler.from? or _.endsWith(file.name, "." + compiler.from)
+          compiler.compile(file.absolutePath, file.encoding, assetRoot, callback)
         else
           callback()
-      ), propagate(callback, (data) ->
-        callback null,
-          file: file
-          content: data
-      )
+      , propagate callback, (data) ->
+        callback(null, { file, content: data })
 
-    parse.parseFile assetRoot, globalFlags, indexFile, indexFileDir, encoding, propagate(callback, (parseResult) ->
+    parse.parseFile assetRoot, globalFlags, indexFile, indexFileDir, encoding, propagate callback, (parseResult) ->
       async.reduce addTypes(parseResult.matches),
         cont: parseResult.content
         files: []
-      , ((cc, d, callback) ->
-        async.map d.files, ((file, callback) ->
-          async.map expandFilters, ((hook, callback) ->
-            hook file, assetRoot, indexFile, callback
-          ), propagate(callback, (suggestions) ->
-            callback null, _.first(_.compact(suggestions))
-          )
-        ), propagate(callback, (expandedFiles) ->
-          async.reduce hooks.preproc, _.flatten(expandedFiles), ((acc, hook, callback) ->
-            hook acc,
-              assetRoot: assetRoot
-              indexFile: indexFile
-            , callback
-          ), propagate(callback, (outs) ->
-            async.mapSeries outs, ((file, callback) ->
-              helpers.firstNonNullSeries extendedFetchers, ((hook, callback) ->
-                hook file, d, getData, callback
-              ), callback
-            ), propagate(callback, (data) ->
-              d2 = reduceArray(_.flatten(data), hooks.file, (acc, hook) ->
-                hook acc
-              )
-              helpers.firstNonNullSeries extendedDataHooks, ((hook, callback) ->
-                hook d2, d, hooks.concatable, callback
-              ), propagate(callback, (out) ->
-                tagify out.tags, propagate(callback, (data) ->
+      , (cc, d, callback) ->
+        async.map d.files, (file, callback) ->
+          async.map expandFilters, (hook, callback) ->
+            hook(file, assetRoot, indexFile, callback)
+          , propagate callback, (suggestions) ->
+            callback(null, _.first(_.compact(suggestions)))
+        , propagate callback, (expandedFiles) ->
+          async.reduce hooks.preproc, _.flatten(expandedFiles), (acc, hook, callback) ->
+            hook(acc, { assetRoot, indexFile }, callback)
+          , propagate callback, (outs) ->
+            async.mapSeries outs, (file, callback) ->
+              helpers.firstNonNullSeries extendedFetchers, (hook, callback) ->
+                hook(file, d, getData, callback)
+              , callback
+            , propagate callback, (data) ->
+              d2 = reduceArray _.flatten(data), hooks.file, (acc, hook) ->
+                hook(acc)
+              helpers.firstNonNullSeries extendedDataHooks, (hook, callback) ->
+                hook(d2, d, hooks.concatable, callback)
+              , propagate callback, (out) ->
+                tagify out.tags, propagate callback, (data) ->
                   callback null,
                     cont: helpers.safeReplace(cc.cont, d.match, data)
                     files: cc.files.concat(out.outfiles or [])
-                )
-              )
-            )
-          )
-        )
-      ), propagate(callback, (r) ->
-        fileSaver r.files, encoding, propagate(callback, ->
-          callback null, r.cont
-        )
-      )
-    )
+
+      , propagate callback, (r) ->
+        fileSaver r.files, encoding, propagate callback, ->
+          callback(null, r.cont)
