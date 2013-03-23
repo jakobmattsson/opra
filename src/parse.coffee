@@ -102,7 +102,7 @@ flagMatches = exports.flagMatches = (matches, globalFlags) ->
       })
 
   blockParams = ['concat'].sort()
-  fileParams = ['compress', 'datauris', 'paths', 'ids', 'escape', 'screen', 'ie7', 'print', 'npm', 'module', 'inline'].sort()
+  fileParams = ['compress', 'datauris', 'paths', 'ids', 'escape', 'screen', 'ie7', 'ie8', 'print', 'npm', 'module', 'inline'].sort()
   filePrefixes = ['as']
 
   matches.map (m) -> _.extend({}, m, {
