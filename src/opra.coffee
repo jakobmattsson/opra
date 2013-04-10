@@ -1,5 +1,7 @@
-serve = require './serve'
 build = require './build'
+serve = require './serve'
+server = require './server'
+exporter = require './export'
 
 b = build.buildConstructor({ })
 
@@ -7,6 +9,9 @@ exports.build = b.build
 exports.serve = serve.serveConstructor
   build: b.build
   log: console.log.bind(console)
+exports.server = server.construct({ serve: exports.serve })
+exports.export = exporter.exportConstructor({ opraBuild: b.build })
+
 
 exports.extend = b.extend
 

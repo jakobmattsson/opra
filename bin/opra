@@ -1,11 +1,5 @@
 #!/usr/bin/env node
 
-var http = require('http');
-var connect = require('connect');
-var fs = require('fs');
-var path = require('path');
-var jit = require('express-jit-coffee');
-var powerfs = require('powerfs');
 var optimist = require('optimist');
 var opra = require('../lib/opra.js');
 
@@ -29,27 +23,16 @@ if (argv.help) {
   console.log(optimist.help());
   return;
 }
+
 if (argv.version) {
-  fs.readFile(path.join(__dirname, '../package.json'), 'utf8', function(err, data) {
-    console.log(err ? err : JSON.parse(data).version);
-  });
+  console.log(require('../package.json').version);
   return;
 }
 
-var port = argv.port;
-var dir = path.resolve(process.cwd(), argv.root);
-var fourofour = argv['not-found'] ? path.relative(argv.root, argv['not-found']) : null;
+result = opra.server({
+  port: argv.port,
+  root: argv.root,
+  notFound: argv['not-found']
+})
 
-var app = connect().use(opra.serve(dir)).use(jit(dir)).use(connect.static(dir));
-
-if (fourofour) {
-  app.use(function(req, res, next) {
-    if (req.headers.accept.indexOf('text/html') != -1) {
-      req.url = '/' + fourofour;
-    }
-    next();
-  }).use(opra.serve(dir));
-}
-
-http.createServer(app).listen(port);
-console.log("Serving " + dir + " at port " + port + " with " + (fourofour || 'no response') + " for 404's");
+console.log("Serving " + result.dir + " at port " + argv.port + " with " + (result.fourofour || 'no response') + " for 404's");
