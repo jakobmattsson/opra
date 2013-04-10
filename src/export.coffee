@@ -21,11 +21,13 @@ exports.exportConstructor = ({ opraBuild }) ->
             fs.writeFile(path.resolve(targetDir, fileName), output, callback)
 
     async.parallel list, propagate callback, ->
-      extraFiles.forEach (e) ->
+      async.forEach extraFiles, (e, callback) ->
         source = path.resolve(sourceDir, e)
         target = path.resolve(targetDir, e)
-        if fs.statSync(source).isDirectory()
-          wrench.copyDirSyncRecursive(source, target)
-        else
-          fs.writeFileSync(target, fs.readFile(source))
-      callback()
+        powerfs.mkdirp path.dirname(target), ->
+          if fs.statSync(source).isDirectory()
+            wrench.copyDirSyncRecursive(source, target)
+          else
+            fs.writeFileSync(target, fs.readFileSync(source))
+          callback()
+      , callback
