@@ -51,6 +51,7 @@ exports.getValueForFirstKeyMatching = (obj, predicate) ->
   if r.length > 0 then obj[r[0]] else undefined
 
 exports.allEqual = (array) ->
+  return true if array.length < 2
   different = false
   array.map(JSON.stringify).reduce (x, y) ->
     different = true if !_.isEqual(x, y)
