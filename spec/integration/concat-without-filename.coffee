@@ -34,7 +34,6 @@ test 'concat-without-filename', {
     alert(1)
     1 + 1;
     (function() {
-
       alert(2);
 
     }).call(this);

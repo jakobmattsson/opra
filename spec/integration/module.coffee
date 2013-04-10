@@ -29,7 +29,6 @@ test 'module', files, { }, """
     </script>
     <script type="text/javascript">
       (function() {
-      
         require.define('two.coffee', function(require, module, exports, __dirname, __filename) {
           return exports.sqrt = function(x) {
             return Math.sqrt(x);
@@ -40,7 +39,6 @@ test 'module', files, { }, """
     </script>
     <script type="text/javascript">
       (function() {
-      
         exports.sqrt = function(x) {
           return Math.sqrt(x);
         };
