@@ -11,6 +11,9 @@ module.exports = (hooks) ->
     target: "css"
     compile: (filePath, encoding, assetRoot, callback) ->
       fs.readFile filePath, encoding, propagate callback, (content) ->
-        less.render content,
-          paths: [ assetRoot, path.dirname(filePath) ]
-        , callback
+        try
+          less.render content,
+            paths: [ assetRoot, path.dirname(filePath) ]
+          , callback
+        catch ex
+          callback(ex)
