@@ -1,3 +1,4 @@
+var _ = require('underscore');
 var path = require('path');
 var fs = require('fs');
 var glob = require('glob');
@@ -72,7 +73,17 @@ global.test = function(desc, mocks, args, output, del) {
             should.ifError(err);
             res.should.eql(output);
           } else {
-            output.error.should.eql(err);
+
+            if (typeof err == 'object') {
+              var obj = _.object(_.pairs(err).filter(function(p) {
+                var key = p[0];
+                var value = p[1];
+                return typeof value != 'undefined';
+              }));
+              output.error.should.eql(obj);
+            } else {
+              output.error.should.eql(err);
+            }
           }
         } catch (ex) {
           complete(function(err) {
