@@ -15,7 +15,7 @@ test 'less-error-hard', {
   error:
     type: "Name"
     message: ".apa is undefined"
-    filename: "input"
+    filename: null
     index: 6
     line: 2
     column: 2
