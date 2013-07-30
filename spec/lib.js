@@ -47,8 +47,14 @@ global.test = function(desc, mocks, args, output, del) {
                         content.should.include(text);
                       });
                     } else {
-                      if (content !== del[d]) {
-                        content.should.eql(del[d]);
+                      if (Array.isArray(del[d])) {
+                        if (del[d].indexOf(content) == -1) {
+                          content.should.eql(del[d][0]);
+                        }
+                      } else {
+                        if (content !== del[d]) {
+                          content.should.eql(del[d]);
+                        }
                       }
                     }
 
