@@ -4,3 +4,10 @@ npm-debug.log
 src-cov
 test-coverage
 lib
+tmp
+
+!.gitignore
+!.npmignore
+!.bowerrc
+!.travis.yml
+

@@ -27,21 +27,43 @@ test 'local-never-params', {
   'three.css': """
     a { color: red }
   """
-}, { paths: true, compress: true, ids: true, inline: true }, """
-  <html>
-    <script type="text/x-opra" id="opra-one" data-path="one.tpl">
-      alert(1)
-      1 + 1
-    </script>
-    <script type="text/javascript" data-path="two.js">alert(2);</script>
-    <style type="text/css" data-path="three.css">a{color:red}</style>
-    <script type="text/x-opra" data-path="one.tpl">
-      alert(1)
-      1 + 1
-    </script>
-    <script type="text/javascript">alert(2);</script>
-    <style type="text/css" data-path="three.css">
-      a { color: red }
-    </style>
-  </html>
-"""
+}, { paths: true, compress: true, ids: true, inline: true }, [
+  """
+    <html>
+      <script type="text/x-opra" id="opra-one" data-path="one.tpl">
+        alert(1)
+        1 + 1
+      </script>
+      <script type="text/javascript" data-path="two.js">alert(2);</script>
+      <style type="text/css" data-path="three.css">a{color:red}</style>
+      <script type="text/x-opra" data-path="one.tpl">
+        alert(1)
+        1 + 1
+      </script>
+      <script type="text/javascript">alert(2);</script>
+      <style type="text/css" data-path="three.css">
+        a { color: red }
+      </style>
+    </html>
+  """
+,
+  """
+    <html>
+      <script type="text/x-opra" id="opra-one" data-path="one.tpl">
+        alert(1)
+        1 + 1
+      </script>
+      <script type="text/javascript" data-path="two.js">alert(2)</script>
+      <style type="text/css" data-path="three.css">a{color:red}</style>
+      <script type="text/x-opra" data-path="one.tpl">
+        alert(1)
+        1 + 1
+      </script>
+      <script type="text/javascript">alert(2)</script>
+      <style type="text/css" data-path="three.css">
+        a { color: red }
+      </style>
+    </html>
+  """
+]
+

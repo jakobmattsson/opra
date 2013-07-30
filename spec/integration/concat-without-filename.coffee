@@ -30,15 +30,27 @@ test 'concat-without-filename', {
     <link rel="stylesheet" type="text/css" href="__opra-concat-2" />
   </html>
 """, {
-  '__opra-concat-1': """
-    alert(1)
-    1 + 1;
-    (function() {
-      alert(2);
+  '__opra-concat-1': [
+    """
+      alert(1)
+      1 + 1;
+      (function() {
 
-    }).call(this);
+        alert(2);
 
-  """
+      }).call(this);
+
+    """
+  ,
+    """
+      alert(1)
+      1 + 1;
+      (function() {
+        alert(2);
+
+      }).call(this);
+    """
+  ]
   '__opra-concat-2': """
     div { color: green }
     div { color: red }
