@@ -1,6 +1,5 @@
 fs = require("fs")
 path = require("path")
-less = require("less")
 _ = require("underscore")
 module.exports = (hooks) ->
   hooks.tagCreator = (file, content, callback) ->

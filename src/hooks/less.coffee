@@ -1,11 +1,15 @@
 fs = require("fs")
 path = require("path")
-less = require("less")
+less = try require("less")
+
 helpers = require '../helpers'
 
 propagate = helpers.propagate
 
 module.exports = (hooks) ->
+
+  return if !less
+
   hooks.compiler =
     from: "less"
     target: "css"
