@@ -3,7 +3,7 @@ var path = require('path');
 var fs = require('fs');
 var glob = require('glob');
 var should = require('should');
-var sugar = require('sugar');
+// var sugar = require('sugar');
 var powerfs = require('powerfs');
 var async = require('async');
 var jscov = require('jscov');
@@ -30,7 +30,7 @@ global.test = function(desc, mocks, args, output, del) {
     }, function(err) {
       should.ifError(err);
 
-      var complete = function(callback) {
+      var complete = _.once(function(callback) {
         async.forEach(Object.keys(mocks), function(f, callback) {
           fs.unlink(path.join(powerfs.isPathAbsolute(f) ? assetRoot : __dirname, f), callback);
         }, propagate(callback, function() {
@@ -65,7 +65,7 @@ global.test = function(desc, mocks, args, output, del) {
             }));
           }, callback);
         }));
-      }.once();
+      });
 
       opra.build(path.join(__dirname, 'index.html'), args, function(err, res) {
         try {
