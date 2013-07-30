@@ -27,17 +27,34 @@ test 'concat-inline-compressed', {
   'c2.css': """
     a { color: red; }
   """
-}, { concat: true, inline: true }, """
-  <html>
-    <script type="text/javascript">
-      alert(1 + 1);
-      alert(4);
-    </script>
-    <script type="text/javascript">
-      alert(1 + 1)
-    </script>
-    <style type="text/css">a{color:#000}
-a { color: red; }
-a{color:#000}</style>
-  </html>
-"""
+}, { concat: true, inline: true }, [
+  """
+    <html>
+      <script type="text/javascript">
+        alert(1 + 1);
+        alert(4);
+      </script>
+      <script type="text/javascript">
+        alert(1 + 1)
+      </script>
+      <style type="text/css">a{color:#000}
+    a { color: red; }
+    a{color:#000}</style>
+    </html>
+  """
+,
+  """
+    <html>
+      <script type="text/javascript">
+        alert(1 + 1);
+        alert(4)
+      </script>
+      <script type="text/javascript">
+        alert(1 + 1)
+      </script>
+      <style type="text/css">a{color:#000}
+    a { color: red; }
+    a{color:#000}</style>
+    </html>
+  """
+]
