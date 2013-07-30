@@ -6,6 +6,8 @@ jscov = require 'jscov'
 powerfs = require 'powerfs'
 opra = require jscov.cover('../..', 'lib', 'opra.js')
 
+existsSync = fs.existsSync || path.existsSync # Compatible with node 0.6 and 0.8
+
 describe 'something', ->
 
   it "whatever", (done) ->
@@ -26,8 +28,8 @@ describe 'something', ->
         }
       }, (err) ->
         should.not.exist err
-        fs.existsSync(path.resolve(outdir, 'index.html')).should.eql true
-        fs.existsSync(path.resolve(outdir, 'bots')).should.eql true
-        fs.existsSync(path.resolve(outdir, 'extras/crap.txt')).should.eql true
+        existsSync(path.resolve(outdir, 'index.html')).should.eql true
+        existsSync(path.resolve(outdir, 'bots')).should.eql true
+        existsSync(path.resolve(outdir, 'extras/crap.txt')).should.eql true
         fs.readdirSync(path.resolve(outdir, '.code')).should.have.length 3
         done()
