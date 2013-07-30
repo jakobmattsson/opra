@@ -1,10 +1,13 @@
 fs = require 'fs'
-coffee = require 'coffee-script'
+coffee = try require 'coffee-script'
 helpers = require '../helpers'
 
 propagate = helpers.propagate
 
 module.exports = (hooks) ->
+
+  return if !coffee
+
   hooks.compiler =
     from: 'coffee'
     target: 'js'
