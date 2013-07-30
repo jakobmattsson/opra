@@ -46,10 +46,11 @@ test 'type-detection', {
       
       }).call(this);
     </script>
-    <style type="text/css">
+    <script type="text/x-opra">
+      @base: #f938ab;
       a {
-        color: #f938ab;
+        color: @base;
       }
-    </style>
+    </script>
   </html>
 """

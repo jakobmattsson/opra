@@ -11,17 +11,12 @@ test 'less-error-light', {
       color: apa ();
     }
   """
-}, { inline: true }, {
-  error:
-    type: "Parse"
-    message: "Unrecognised input"
-    index: 6
-    filename: "input"
-    line: 2
-    column: 2
-    extract: [
-      "a {",
-      "  color: apa ();",
-      "}"
-    ]
-}
+}, { inline: true }, """
+  <html>
+    <script type="text/x-opra">
+      a {
+        color: apa ();
+      }
+    </script>
+  </html>
+"""

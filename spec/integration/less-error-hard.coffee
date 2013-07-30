@@ -11,17 +11,12 @@ test 'less-error-hard', {
       .apa ();
     }
   """
-}, { inline: true }, {
-  error:
-    type: "Name"
-    message: ".apa is undefined"
-    filename: "input"
-    index: 6
-    line: 2
-    column: 2
-    extract: [
-      "a {",
-      "  .apa ();",
-      "}"
-    ]
-}
+}, { inline: true }, """
+  <html>
+    <script type="text/x-opra">
+      a {
+        .apa ();
+      }
+    </script>
+  </html>
+"""
