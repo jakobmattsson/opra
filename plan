@@ -19,3 +19,8 @@ Hooks
 * Should be possible to add a timestamp in the names of the generated files
 * Include files remotely (http/https). Cache them so they dont have to be downloaded all the time.
 * Add caching for all compilation/compression so files that have not changed can be served faster
+
+
+Other notes
+===========
+A better way to deal with whitespacing differences between versions, of coffee-script for example, would be to compare the AST of the output, rather than the actual strings.
