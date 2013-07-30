@@ -14,9 +14,9 @@ test 'less-error-light', {
 }, { inline: true }, {
   error:
     type: "Parse"
-    message: "Unrecognised input"
+    message: "Syntax Error on line 2"
     index: 6
-    filename: "input"
+    filename: null
     line: 2
     column: 2
     extract: [
