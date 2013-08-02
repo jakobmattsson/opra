@@ -12,7 +12,7 @@ exports.construct = ({ serve }) ->
 
     if fourofour
       app.use (req, res, next) ->
-        if req.headers.accept.indexOf('text/html') != -1
+        if req.headers.accept.indexOf('text/html') != -1 or req.headers.accept.indexOf('*/*') != -1
           req.url = '/' + fourofour
         next()
 
