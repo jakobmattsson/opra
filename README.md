@@ -1,3 +1,5 @@
+[![NPM](https://nodei.co/npm/opra.png?downloads=true)](https://nodei.co/npm/opra/)
+
 ### What
 
 One Page to Rule them All
