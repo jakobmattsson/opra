@@ -1,4 +1,4 @@
-test 'concat', {
+test 'concat-js-and-coffee', {
   'index.html': """
     <html>
       <!--OPRA foo.js

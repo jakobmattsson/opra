@@ -1,4 +1,4 @@
-test 'concat', {
+test 'concat-css-and-less', {
   'index.html': """
     <html>
       <!--OPRA bar.css
