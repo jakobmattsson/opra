@@ -3,6 +3,7 @@ path = require 'path'
 async = require 'async'
 wrench = require 'wrench'
 powerfs = require 'powerfs'
+_ = require 'underscore'
 
 propagate = (onErr, onSucc) ->
   (err, rest...) ->
@@ -17,7 +18,7 @@ exports.exportConstructor = ({ opraBuild }) ->
     list = Object.keys(opraFiles).map (fileName) ->
       (callback) ->
         powerfs.mkdirp path.resolve(targetDir, path.dirname(fileName)), propagate callback, ->
-          opraBuild path.resolve(sourceDir, fileName), opraFiles[fileName], propagate callback, (output) ->
+          opraBuild path.resolve(sourceDir, fileName), _.extend({ assetRoot: sourceDir }, opraFiles[fileName]), propagate callback, (output) ->
             fs.writeFile(path.resolve(targetDir, fileName), output, callback)
 
     async.parallel list, propagate callback, ->
