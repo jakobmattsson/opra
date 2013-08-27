@@ -33,6 +33,10 @@ result = opra.server({
   port: argv.port,
   root: argv.root,
   notFound: argv['not-found']
-})
-
-console.log("Serving " + result.dir + " at port " + argv.port + " with " + (result.fourofour || 'no response') + " for 404's");
+}, function(err, result) {
+  if (err) {
+    console.log(err);
+  } else {
+    console.log("Serving " + result.dir + " at port " + argv.port + " with " + (result.fourofour || 'no response') + " for 404's");
+  }
+});
