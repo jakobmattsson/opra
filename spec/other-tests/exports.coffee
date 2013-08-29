@@ -21,7 +21,7 @@ describe 'something', ->
 
       opra.export {
         targetDir: outdir
-        sourceDir: source
+        root: source
         extraFiles: ['extras', '.code', 'bots']
         opraFiles: {
           'index.html': {}
