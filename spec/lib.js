@@ -44,7 +44,7 @@ global.test = function(desc, mocks, args, output, del) {
 
                     if (match.contains) {
                       match.contains.forEach(function(text) {
-                        content.should.include(text);
+                        content.should.containEql(text);
                       });
                     } else {
                       if (Array.isArray(del[d])) {

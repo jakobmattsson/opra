@@ -13,6 +13,7 @@ test 'less-error-hard', {
   """
 }, { inline: true }, {
   error:
+    callLine: NaN
     type: "Name"
     message: ".apa is undefined"
     filename: "input"

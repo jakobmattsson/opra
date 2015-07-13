@@ -13,6 +13,7 @@ test 'less-error-light', {
   """
 }, { inline: true }, {
   error:
+    callLine: NaN
     type: "Parse"
     message: "Unrecognised input"
     index: 6

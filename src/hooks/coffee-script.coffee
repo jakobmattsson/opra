@@ -2,6 +2,8 @@ fs = require 'fs'
 coffee = try require 'coffee-script'
 helpers = require '../helpers'
 
+coffee.register()
+
 propagate = helpers.propagate
 
 module.exports = (hooks) ->
