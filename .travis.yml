@@ -1,14 +1,15 @@
 language: node_js
 node_js:
-  - "0.6"
-  - "0.7"
-  - "0.8"
-  - "0.9"
-  - "0.10"
-  - "0.11"
-branches:
-  only:
-    - master
-    - "no-less"
-    - "old-coffeescript"
-    - "min-versions"
+- '0.10'
+- '0.12'
+sudo: false
+deploy:
+  skip_cleanup: true
+  provider: npm
+  email: jakob.mattsson@gmail.com
+  api_key:
+    secure: srX0B2G1kbTHBOTbqq6zKGQMrBrzw9g2iRK2ttGuHLgBoq/t/XJlYutxnerrZnvG76gkdAOYPB7HtBzb/M0DwZUfu6vQnay2ViLV0tMJ3YJ8+ZQelSIGeR2wxsumAyOg09ftdaSE5vIay7zetzQ7OylA/daMY5tTL0VKoyYcubU=
+  on:
+    tags: true
+    branch: master
+    repo: jakobmattsson/opra
