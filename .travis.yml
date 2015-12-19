@@ -9,7 +9,7 @@ deploy:
   provider: npm
   email: jakob.mattsson@gmail.com
   api_key:
-    secure: srX0B2G1kbTHBOTbqq6zKGQMrBrzw9g2iRK2ttGuHLgBoq/t/XJlYutxnerrZnvG76gkdAOYPB7HtBzb/M0DwZUfu6vQnay2ViLV0tMJ3YJ8+ZQelSIGeR2wxsumAyOg09ftdaSE5vIay7zetzQ7OylA/daMY5tTL0VKoyYcubU=
+    secure: m86BQTdFLx0wJIX7KD8A4kHgHAzlo+UdbO9NFysbjaACdKxXwovKkjNJXFHgTIVi3xgW8t6aBJb7ScLQLhybWXXnc5hhrFRiTEcVoiyg1J3VsQ4t/869qwIGLl4Ap1Agr1VHmndLxo9KmzLLS3yz16OuZjQtfxtJUZtbM/yYrY4=
   on:
     tags: true
     branch: master
