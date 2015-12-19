@@ -5,7 +5,7 @@
   "bin": {
     "opra": "./bin/opra"
   },
-  "version": "0.19.2",
+  "version": "0.19.3",
   "author": "Jakob Mattsson <jakob.mattsson@gmail.com> (jakobmattsson.se)",
   "license": "MIT",
   "repository": {
