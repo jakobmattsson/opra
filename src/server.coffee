@@ -1,6 +1,7 @@
 http = require 'http'
 path = require 'path'
 connect = require 'connect'
+serveStatic = require 'serve-static'
 jit = require 'express-jit-coffee'
 
 exports.construct = ({ serve }) ->
@@ -8,7 +9,7 @@ exports.construct = ({ serve }) ->
     dir = path.resolve(process.cwd(), root)
     fourofour = if notFound? then path.relative(root, notFound) else null
 
-    app = connect().use(serve(dir)).use(jit(dir)).use(connect.static(dir))
+    app = connect().use(serve(dir)).use(jit(dir)).use(serveStatic(dir))
 
     if fourofour
       app.use (req, res, next) ->
